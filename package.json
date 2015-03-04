@@ -1,0 +1,36 @@
+{
+  "name": "declaire",
+  "version": "0.1.6",
+  "author": "Björn Breitgoff <syntheticore@gmail.com>",
+  "description": "Declarative, full-stack web application framework",
+  "main": "declaire.js",
+  "dependencies": {
+    "body-parser": "*",
+    "browserify": "*",
+    "compression": "*",
+    "errorhandler": "*",
+    "express": "*",
+    "express-session": "*",
+    "jumanji": "*",
+    "method-override": "*",
+    "mongodb": "*",
+    "morgan": "*",
+    "multer": "*",
+    "nib": "*",
+    "serve-favicon": "*",
+    "stylus": "*",
+    "underscore": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/syntheticore/declaire.git"
+  },
+  "keywords": [
+    "web",
+    "realtime",
+    "offline",
+    "streaming",
+    "templating"
+  ],
+  "license": "MIT"
+}
