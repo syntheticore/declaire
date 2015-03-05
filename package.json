@@ -32,5 +32,9 @@
     "streaming",
     "templating"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/syntheticore/declaire/issues"
+  },
+  "homepage": "https://github.com/syntheticore/declaire"
 }

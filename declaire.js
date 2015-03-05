@@ -224,6 +224,7 @@ module.exports = {
   // Initialize express server with middleware,
   // connect to database, call application hooks and listen for requests
   start: function(options, cb) {
+    console.log("Starting declaire app");
     options = _.defaults(options, {
       mongoUrl: process.env.MONGOHQ_URL || process.env.MONGOLAB_URI || 'mongodb://127.0.0.1:27017/declaire'
     });

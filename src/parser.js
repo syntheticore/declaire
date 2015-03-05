@@ -28,10 +28,10 @@ var Parser = {
       // Ignore comments
       var ci = line.indexOf('//');
       if(ci == 0) return;
-      // Strip off inline comments
-      if(ci != -1) {
-        line = line.slice(0, ci);
-      }
+      // // Strip off inline comments
+      // if(ci != -1) {
+      //   line = line.slice(0, ci);
+      // }
       // Ignore empty lines
       if(!line.replace(/\s/g, '').length) return;
       // Parse individual parts from line
