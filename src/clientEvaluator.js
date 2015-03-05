@@ -184,7 +184,7 @@ var Template = function(topNode, viewModels) {
           self.register(elem);
         }
         // Register action handlers
-        if(_.keys(node.actions).length) {
+        // if(_.keys(node.actions).length) {
           for(var action in node.actions) {
             var method = node.actions[action];
             //XXX Remove handler when a parent gets updated
@@ -193,7 +193,7 @@ var Template = function(topNode, viewModels) {
               //XXX Read text from inputs and supply as argument to method
             });
           }
-        }
+        // }
         frag.append(elem);
       } else if(node.type == 'Text') {
         frag.append(node.content);
