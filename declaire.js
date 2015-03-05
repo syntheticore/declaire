@@ -146,11 +146,20 @@ module.exports = {
       if(err) throw err;
       db = dbs;
       console.log("Connected to database");
-      var port = process.env.PORT || 3000;
-      var server = app.listen(port, function () {
-        console.log('Listening on port ' + port);
-        cb && cb(app, db);
-      });
+      var connect = function() {
+        var port = process.env.PORT || 3000;
+        var server = app.listen(port, function () {
+          console.log('Listening on port ' + port);
+          cb && cb(app, db);
+        });
+      };
+      if(options.beforeConnect) {
+        options.beforeConnect(db, function() {
+          connect();
+        });
+      } else {
+        connect();
+      }
     });
   }
 };
