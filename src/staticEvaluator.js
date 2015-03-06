@@ -131,6 +131,7 @@ var Template = function(topNode, viewModels) {
             break;
           case 'view':
             var viewModel = viewModels[node.viewModel];
+            if(!viewModel) throw 'View model not found: ' + node.viewModel;
             var view = viewModel.create();
             var newScope = scope.clone().addLayer(view);
             recurse(newScope);

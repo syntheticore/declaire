@@ -68,7 +68,7 @@ var Parser = {
     } else if(line.indexOf('|') == 0) {
       return {
         type: 'Text',
-        content: line.slice(2)
+        content: line.slice(2) + '\n'
       };
     // Tag definition
     } else {

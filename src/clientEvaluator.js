@@ -137,6 +137,7 @@ var Template = function(topNode, viewModels) {
           case 'view':
             // var viewModel = eval(node.viewModel);
             var viewModel = viewModels[node.viewModel];
+            if(!viewModel) throw 'View model not found: ' + node.viewModel;
             var view = viewModel.create();
             //XXX Set view.$el
             var newScope = scope.clone().addLayer(view);
