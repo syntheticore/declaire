@@ -145,7 +145,7 @@ app.get('/events', function (req, res) {
 
 // Broadcast a message to all connected clients
 var emit = function(eventName, data) {
-  db.collection('pubsub').insert(fields, function(err, items) {
+  db.collection('pubsub').insert(data, function(err, items) {
     if(err) console.log(err);
   });
 };
@@ -178,7 +178,7 @@ var serveResource = function(name) {
 
   // Create item
   app.post(baseUrl, function(req, res) {
-    var fields = __.defaults(req.body, {createdAt: new Date(), updatedAt: new Date()});
+    var fields = _.defaults(req.body, {createdAt: new Date(), updatedAt: new Date()});
     db.collection(name).insert(fields, function(err, items) {
       emit('create', {url: baseUrl + '/' + items[0]._id, values: items[0]});
       res.json(items[0]);
@@ -197,7 +197,7 @@ var serveResource = function(name) {
   });
 
   // Update item
-  app.put(baseUrl + '/:id', function(req, res) {
+  app.post(baseUrl + '/:id', function(req, res) {
     var data = req.body;
     delete data._id;
     delete data.createdAt;

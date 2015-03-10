@@ -29,6 +29,8 @@ if(typeof(localStorage) == undefined) {
   };
 }
 
+var db;
+
 
 var Instance = function() {
   return {
@@ -44,6 +46,11 @@ var Instance = function() {
     // The server URL of this model instance
     url: function() {
       return this.id && window.location.origin + '/api/' + this.model.name + '/' + this.id;
+    },
+
+    // The server URL of this model's collection
+    baseUrl: function() {
+      return window.location.origin + '/api/' + this.model.name;
     },
 
     // Return the current value at the given key
@@ -100,7 +107,6 @@ var Instance = function() {
     revert: function() {
       var locals = this.data.local;
       this.data.local = [];
-      this.save(); //XXX should only save if object was already persisted
       for(var key in locals) {
         this.emit('change', key);
       }
@@ -117,12 +123,16 @@ var Instance = function() {
       self.localId = _.uniqueId(self.model.name);
       LocalStore.set(self.localId, self.data);
       if(self.isDirty() || !self.id) {
-        $.post(self.url(), self.data.local, function(data) {
-          self.data.remote = self.properties();
+        var url = self.id ? self.url() : self.baseUrl();
+        $.post(url, self.data.local, function(data) {
           if(!self.id) {
-            self.id = data.id;
+            self.data.remote = data;
+            self.id = data._id;
             self.connect();
+          } else {
+            self.data.remote = merge(self.data.remote, data);
           }
+          self.data.local = [];
           cb && cb();
           self.emit('save');
         });
@@ -308,7 +318,6 @@ module.exports = Model;
 
 
 // TODO:
-// Generate REST URLs for models
 // Local-/remote-id handling
 // Object deletion
 // EventSource / Mongo-PubSub
