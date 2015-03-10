@@ -1,5 +1,5 @@
 exports.isServer = function() {
-  return typeof module !== 'undefined' && module.exports;
+  return typeof(window) == 'undefined';
 };
 
 // Return all matches of the given regex

@@ -4,6 +4,12 @@ var Evaluator = require('./clientEvaluator.js');
 var Model = require('./model.js');
 var ViewModel = require('./viewModel.js');
 
+// var Utils = require('./node_modules/declaire/src/utils.js');
+// var Parser = require('./node_modules/declaire/src/parser.js');
+// var Evaluator = require('./node_modules/declaire/src/clientEvaluator.js');
+// var Model = require('./node_modules/declaire/src/model.js');
+// var ViewModel = require('./node_modules/declaire/src/viewModel.js');
+
 var viewModels = {};
 
 // Load template requested by name from the server

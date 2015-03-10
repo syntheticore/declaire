@@ -45,15 +45,33 @@ app.use(require('jumanji'));
 
 // Serve static pages with a less heavyweight layout
 app.get('/', function(req, res) {
-  res.render('index');
+  res.redirect('/pages/index');
 });
 
 // Serve client-side implementation of Declaire
-fs.writeFileSync(__dirname + '/src/app.js', fs.readFileSync(__dirname + '/../../app.js'));
-var b = browserify();
-b.add(__dirname + '/src/app.js');
+var prepareBundle = function(cb) {
+  // Use executed application as main script on the client as well
+  var appPath = process.argv[1];
+  var code = fs.readFileSync(appPath).toString();
+  // Exchange declaire include for client side implementation
+  code = code.replace('require(\'declaire\')', 'require(\'./node_modules/declaire/src/clientAPI.js\')');
+  var outputPath = __dirname + '/../../_declaire_client.js';
+  // Write program back und bundle includes with browserify
+  fs.writeFileSync(outputPath, code);
+  var b = browserify();
+  b.add(outputPath);
+  b.bundle(function(err, buf) {
+    if(err) throw err;
+    fs.unlink(outputPath);
+    cb && cb(buf);
+  });
+};
+
 app.get('/bundle.js', function(req, res) {
-  b.bundle().pipe(res);
+  prepareBundle(function(bundle) {
+    // b.bundle().pipe(res);
+    res.send(bundle);
+  });
 });
 
 // Let New Relic measure uptime
