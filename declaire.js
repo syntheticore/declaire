@@ -49,7 +49,9 @@ app.get('/', function(req, res) {
 });
 
 // Serve client-side implementation of Declaire
+var bundle;
 var prepareBundle = function(cb) {
+  if(app.get('env') == 'production' && bundle) return cb(bundle);
   // Use executed application as main script on the client as well
   var appPath = process.argv[1];
   var code = fs.readFileSync(appPath).toString();
@@ -63,7 +65,8 @@ var prepareBundle = function(cb) {
   b.bundle(function(err, buf) {
     if(err) throw err;
     fs.unlink(outputPath);
-    cb && cb(buf);
+    bundle = buf;
+    cb(buf);
   });
 };
 
