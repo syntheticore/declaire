@@ -18,6 +18,7 @@ var Utils = require('./src/utils.js');
 var Parser = require('./src/parser.js');
 var Evaluator = require('./src/staticEvaluator.js');
 var Model = require('./src/model.js');
+var Collection = require('./src/collection.js');
 var ViewModel = require('./src/viewModel.js');
 
 
@@ -234,6 +235,8 @@ module.exports = {
     serveResource(name);
     return m;
   },
+
+  Collection: Collection,
 
   // Declare a new view model
   ViewModel: function(name, reference) {

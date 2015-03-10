@@ -2,6 +2,7 @@ var Utils = require('./utils.js');
 var Parser = require('./parser.js');
 var Evaluator = require('./clientEvaluator.js');
 var Model = require('./model.js');
+var Collection = require('./collection.js');
 var ViewModel = require('./viewModel.js');
 
 var viewModels = {};
@@ -53,6 +54,7 @@ evtSource.addEventListener('update', function(e) {
 
 module.exports = {
   Model: Model,
+  Collection: Collection,
 
   ViewModel: function(name, reference) {
     var vm = ViewModel(reference);
