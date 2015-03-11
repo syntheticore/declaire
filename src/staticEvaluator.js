@@ -25,7 +25,12 @@ var Template = function(topNode, viewModels) {
   };
 
   var closeDOMElement = function(tag) {
-    return '</' + tag + '>';
+    var html = '';
+    var nonCLosingTags = ['br', 'input', 'hr', 'img', 'link', 'param', 'meta', 'area', 'base', 'col', 'command', 'embed', 'keygen', 'source', 'track', 'wbr'];
+    if(!_.contains(nonCLosingTags, tag)) {
+      html += '</' + tag + '>';
+    }
+    return html;
   };
 
   // Replace all mustaches in text with the value of their paths
