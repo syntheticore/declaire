@@ -121,15 +121,17 @@ var Template = function(topNode, viewModels) {
             frag.append(elem);
             var items = evalExpr(scope, node.itemsPath);
             node.paths = [node.itemsPath];
-            for(var i in items) {
-              var item = items[i];
+            items.each(function(item) {
+            // for(var i in items) {
+            //   var item = items[i];
               var itemData = {};
               itemData[node.itemPath] = item;
               if(node.children.length) {
                 var newScope = scope.clone().addLayer(itemData);
                 recurse(elem, newScope);
               }
-            }
+            // }
+            });
             elem.node = node;
             elem.scope = scope;
             self.register(elem);

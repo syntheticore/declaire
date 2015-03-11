@@ -27,6 +27,18 @@ exports.improveExceptions = function(filename, cb) {
   }
 };
 
+// Return new object with the fields from both given objects
+exports.merge = function(obj1, obj2) {
+  var obj = {};
+  for(var i in obj1) {
+    obj[i] = obj1[i];
+  }
+  for(var i in obj2) {
+    obj[i] = obj2[i];
+  }
+  return obj;
+};
+
 exports.defer = function(cb) {
   setTimeout(cb, 0);
 };

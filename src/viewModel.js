@@ -1,7 +1,7 @@
 var Model = require('./model.js');
 
 var ViewModel = function(reference) {
-  return Model('view', reference);
+  return Model('_view', reference);
 };
 
 module.exports = ViewModel;

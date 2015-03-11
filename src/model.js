@@ -1,4 +1,5 @@
 var Utils = require('./utils.js');
+var eventMethods = require('./events.js');
 
 var LocalStore;
 if(typeof(localStorage) == undefined) {
@@ -33,7 +34,8 @@ var db;
 
 
 var Instance = function() {
-  return {
+  return Utils.merge(eventMethods, {
+    klass: 'Model',
     model: null,
     id: null,
     listeners: [],
@@ -41,6 +43,7 @@ var Instance = function() {
       local: {},
       remote: {}
     },
+    collections: {},
     computedProperties: {},
 
     // The server URL of this model instance
@@ -56,7 +59,7 @@ var Instance = function() {
     // Return the current value at the given key
     get: function(key) {
       //XXX Should return a deep copy of defaults and remote data
-      var value = this.data.local[key] || this.data.remote[key] || this.model.defaults[key];
+      var value = this.collections[key] || this.data.local[key] || this.data.remote[key] || this.model.defaults[key];
       // Functions called through get() are treated as computed properties
       if(typeof(this[key]) == 'function') {
         if(!value) {
@@ -80,7 +83,7 @@ var Instance = function() {
       if(value != undefined) {
         this.data.local[key] = value;
       }
-      //XXX Catch attempt to set a computed property
+      //XXX Catch attempt to set a computed property or collection
       this.emit('change', key);
       // Emit change events for computed properties as well
       for(var k in this.computedProperties) {
@@ -95,7 +98,7 @@ var Instance = function() {
     // The current state of the object,
     // including local modifications
     properties: function() {
-      return merge(this.data.remote, this.data.local); //XXX Should the defaults be merged in as well?
+      return Utils.merge(this.data.remote, this.data.local); //XXX Should the defaults be merged in as well?
     },
 
     // Are local modifications present that need to be saved?
@@ -130,7 +133,7 @@ var Instance = function() {
             self.id = data._id;
             self.connect();
           } else {
-            self.data.remote = merge(self.data.remote, data);
+            self.data.remote = Utils.merge(self.data.remote, data);
           }
           self.data.local = [];
           cb && cb();
@@ -157,7 +160,7 @@ var Instance = function() {
       var self = this;
       if(self.connected || !self.id) return;
       db && db.subscribe(self.url(), function(data) {
-        self.data.remote = merge(self.data.remote, data);
+        self.data.remote = Utils.merge(self.data.remote, data);
         for(var key in data) {
           self.emit('change', key);
         }
@@ -171,66 +174,8 @@ var Instance = function() {
     disconnect: function() {
       db.unsubscribe(self.url());
       return this;
-    },
-
-    // Register a handler to be called every time an event happens
-    on: function(action, cb) {
-      var res = action.split(':');
-      this.listeners.push({
-        action: res[0],
-        key: res[1],
-        cb: cb
-      });
-      return this;
-    },
-
-    // Remove a handler from all events it was registered for
-    off: function(handler) {
-      for (var i = this.listeners.length - 1; i >= 0; i--) {
-        var l = this.listeners[i];
-        if(l.cb === handler) {
-          this.listeners.splice(i, 1);
-        }
-      }
-      return this;
-    },
-
-    // Register a handler to be called as soon as an event happens
-    once: function(action, cb) {
-      var self = this;
-      var handler = function() {
-        cb();
-        Utils.defer(function() {
-          self.off(handler);
-        });
-      };
-      self.on(action, handler);
-      return handler;
-    },
-
-    // Call all handlers that listen to this event
-    emit: function(action, key) {
-      var self = this;
-      Utils.defer(function() {
-        // console.log('emit ' + action + key);
-        for(var i in self.listeners) {
-          var l = self.listeners[i];
-          if(l.action == action) {
-            if(key) {
-              if(l.key == key) {
-                l.cb();
-              }
-            } else {
-              if(!l.key) {
-                l.cb();
-              }
-            }
-          }
-        }
-      });
-      return self;
     }
-  }
+  });
 };
 
 
@@ -240,15 +185,27 @@ var Model = function(modelName, reference) {
   var model = {
     name: modelName,
     defaults: ref.defaults,
+
     // Create a fresh model instance
     create: function() {
-      var obj = Instance();
-      obj.model = this;
+      var inst = Instance();
+      inst.model = this;
       for(var key in ref.methods) {
-        obj[key] = ref.methods[key];
+        inst[key] = ref.methods[key];
       }
-      return obj;
+      for(var key in ref.collections) {
+        var collection = ref.collections[key].clone();
+        collection.on('change', function() {
+          inst.set(key);
+          if(modelName != '_view') {
+            inst.save();
+          }
+        });
+        inst.collections[key] = collection;
+      }
+      return inst;
     },
+
     // Load the object with the given id
     // Local storage will be used immediately if available
     // Server data gets fetched afterwards
@@ -272,18 +229,6 @@ var Model = function(modelName, reference) {
 };
 
 
-// Return new object with the fields from both given objects
-var merge = function(obj1, obj2) {
-  var obj = {};
-  for(var i in obj1) {
-    obj[i] = obj1[i];
-  }
-  for(var i in obj2) {
-    obj[i] = obj2[i];
-  }
-  return obj;
-};
-
 // Log all getters called while generating a computed property
 var propertiesUsed = [];
 var findDependencies = function(cb) {
@@ -299,12 +244,15 @@ var findDependencies = function(cb) {
 var separateMethods = function(reference) {
   var ret = {
     defaults: {},
-    methods: {}
+    methods: {},
+    collections: {}
   };
   for(var key in reference) {
     var val = reference[key];
     if(typeof(val) == 'function') {
       ret.methods[key] = val;
+    } else if(val && val.klass == 'Collection') {
+      ret.collections[key] = val;
     } else {
       ret.defaults[key] = val;
     }

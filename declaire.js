@@ -67,7 +67,7 @@ var prepareBundle = function(cb) {
     if(err) throw err;
     fs.unlink(outputPath);
     bundle = buf;
-    cb(buf);
+    cb(bundle);
   });
 };
 
@@ -139,6 +139,7 @@ app.get('/events', function (req, res) {
   // Delete connection on disconnect
   res.on('close', function () {
     clients.splice(clients.indexOf(res), 1);
+    console.log("Client disconnected");
   });
   console.log("Serving " + clients.length + " clients");
 });

@@ -118,15 +118,17 @@ var Template = function(topNode, viewModels) {
           case 'for':
             html += openDOMElement('span', null, ['placeholder']);
             var items = evalExpr(scope, node.itemsPath);
-            for(var i in items) {
-              var item = items[i];
+            items.each(function(item) {
+            // for(var i in items) {
+            //   var item = items[i];
               var itemData = {};
               itemData[node.itemPath] = item;
               if(node.children.length) {
                 var newScope = scope.clone().addLayer(itemData);
                 recurse(newScope);
               }
-            }
+            // }
+            });
             html += closeDOMElement('span');
             break;
           case 'view':
