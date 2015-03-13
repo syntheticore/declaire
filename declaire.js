@@ -60,9 +60,11 @@ var prepareBundle = function(cb) {
   code = code.replace('require(\'declaire\')', 'require(\'./node_modules/declaire/src/clientAPI.js\')');
   var outputPath = __dirname + '/../../_declaire_client.js';
   // Write program back und bundle includes with browserify
+  //XXX use b.transform() instead of changing file on disk
   fs.writeFileSync(outputPath, code);
   var b = browserify();
   b.add(outputPath);
+  b.exclude('newrelic'); //XXX Add more common, server-only packages
   b.bundle(function(err, buf) {
     if(err) throw err;
     fs.unlink(outputPath);
