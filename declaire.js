@@ -201,7 +201,7 @@ var serveResource = function(name) {
 
   // Update item
   app.post(baseUrl + '/:id', function(req, res) {
-    var data = req.body;
+    var data = JSON.parse(req.body.data);
     delete data._id;
     delete data.createdAt;
     data.updatedAt = new Date();

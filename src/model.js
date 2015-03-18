@@ -128,7 +128,7 @@ var Instance = function() {
       LocalStore.set(self.localId, self.data);
       if(self.isDirty() || !self.id) {
         var url = self.id ? self.url() : self.baseUrl();
-        $.post(url, self.data.local, function(data) {
+        $.post(url, {data: JSON.stringify(self.data.local)}, function(data) {
           if(!self.id) {
             self.data.remote = data;
             self.id = data._id;
@@ -173,8 +173,24 @@ var Instance = function() {
 
     // Unsubscribe from updates
     disconnect: function() {
-      db.unsubscribe(self.url());
+      db && db.unsubscribe(self.url());
+      this.connected = false;
       return this;
+    },
+
+    // Delete object from all local models and collections it's referenced from
+    // Also delete from the database, if model was persisted
+    // All references from remote models and collections will auto-dissolve on next read
+    delete: function(cb) {
+      var self = this;
+      $.ajax({url: self.url(), type: 'DELETE'})
+      .done(function() {})
+      .fail(function() {
+        //XXX Handle offline case
+      })
+      .always(function() {
+        cb && cb();
+      });
     }
   });
 };
