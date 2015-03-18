@@ -2,7 +2,8 @@ var Utils = require('./utils.js');
 var eventMethods = require('./events.js');
 
 var LocalStore;
-if(typeof(localStorage) == undefined) {
+// Use a dummy local store on the server, that never caches values
+if(typeof(localStorage) == 'undefined') {
   LocalStore = {
     get: function(key) {
       return undefined;
@@ -48,12 +49,12 @@ var Instance = function() {
 
     // The server URL of this model instance
     url: function() {
-      return this.id && window.location.origin + '/api/' + this.model.name + '/' + this.id;
+      return this.id && '/api/' + this.model.name + '/' + this.id;
     },
 
     // The server URL of this model's collection
     baseUrl: function() {
-      return window.location.origin + '/api/' + this.model.name;
+      return '/api/' + this.model.name;
     },
 
     // Return the current value at the given key
@@ -148,7 +149,7 @@ var Instance = function() {
     fetch: function(cb) {
       var self = this;
       $.get(self.url(), function(data) {
-        self.data.remote = JSON.parse(data);
+        self.data.remote = data;
         cb();
         self.emit('fetch');
       });

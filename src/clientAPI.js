@@ -9,6 +9,7 @@ var ViewModel = require('./viewModel.js');
 // for lookup during evaluation
 var viewModels = {};
 
+// Create main model singleton instance
 var mainModel = ViewModel('_main', {
   _page: null
 }).create();
@@ -32,6 +33,7 @@ evtSource.addEventListener('update', function(e) {
   var obj = JSON.parse(e.data);
   // console.log(obj.time);
 }, false);
+
 
 module.exports = {
   Model: Model,
@@ -66,3 +68,4 @@ module.exports = {
 // Else clauses
 // Client-/Server-only code segments
 // Remote execution
+// Load js using async attribute

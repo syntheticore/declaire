@@ -64,7 +64,7 @@ var prepareBundle = function(cb) {
   fs.writeFileSync(outputPath, code);
   var b = browserify();
   b.add(outputPath);
-  b.exclude('newrelic'); //XXX Add more common, server-only packages
+  b.ignore('newrelic'); //XXX Add more common, server-only packages
   b.bundle(function(err, buf) {
     if(err) throw err;
     fs.unlink(outputPath);
