@@ -12,6 +12,7 @@ var fs = require('fs');
 var stylus = require('stylus');
 var mongo = require('mongodb');
 var browserify = require('browserify');
+var Minifyify = require('minifyify');
 var _ = require('underscore');
 
 var Utils = require('./src/utils.js');
@@ -64,9 +65,10 @@ var prepareBundle = function(cb) {
   // Write program back und bundle includes with browserify
   //XXX use b.transform() instead of changing file on disk
   fs.writeFileSync(outputPath, code);
-  var b = browserify();
+  var b = new browserify({debug: true});
   b.add(outputPath);
   b.ignore('newrelic'); //XXX Add more common, server-only packages
+  b.plugin(Minifyify, {output: 'public/bundle.js.map', map: 'bundle.js.map'});
   b.bundle(function(err, buf) {
     if(err) throw err;
     fs.unlink(outputPath);

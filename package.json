@@ -1,6 +1,6 @@
 {
   "name": "declaire",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "author": "Björn Breitgoff <syntheticore@gmail.com>",
   "description": "Declarative, full-stack web application framework",
   "main": "declaire.js",
@@ -13,6 +13,7 @@
     "express-session": "*",
     "jumanji": "*",
     "method-override": "*",
+    "minifyify": "*",
     "mongodb": "*",
     "morgan": "*",
     "multer": "*",
