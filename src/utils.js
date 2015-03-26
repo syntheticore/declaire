@@ -20,6 +20,20 @@ exports.scan = function(str, re) {
   return matches;
 };
 
+exports.each = function(items, cb) {
+  for(var key in items) {
+    cb(items[key], key);
+  }
+};
+
+exports.map = function(items, cb) {
+  var out = [];
+  exports.each(items, function(item) {
+    out.push(cb(item));
+  });
+  return out;
+};
+
 // Execute the given function, while modifying raised exceptions to
 // point to the parsed Template, instead of the library code
 var $debug = true;
@@ -45,6 +59,10 @@ exports.merge = function(obj1, obj2) {
     obj[i] = obj2[i];
   }
   return obj;
+};
+
+exports.deepMerge = function(obj1, obj2) {
+  return exports.merge(obj1, obj2);
 };
 
 exports.defer = function(cb, millis) {

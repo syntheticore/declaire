@@ -57,7 +57,7 @@ var Collection = function(array) {
     serialize: function() {
       var out = [];
       this.each(function(item) {
-        if(item.klass == 'Model') {
+        if(item.klass == 'Instance') {
           var ref = item.reference();
           if(ref) {
             out.push(ref);

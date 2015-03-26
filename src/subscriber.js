@@ -1,3 +1,6 @@
+var Utils = require('./utils.js');
+
+
 // Receive push updates from the server
 var Subscriber = function() {
   var subscribers = {};
@@ -7,31 +10,37 @@ var Subscriber = function() {
   evtSource.addEventListener('pubsub', function(e) {
     var obj = JSON.parse(e.data);
     // Call all matching subscribers
-    var key = obj.type + obj.collection + (obj.id || '');
-    var handlers = subscribers[key];
-    for(var i in handlers) {
+    var colKey = obj.type + obj.collection;
+    var itemKey = colKey + obj.id;
+    Utils.each(subscribers[itemKey], function(handler) {
       handler(obj.data);
-    }
+    });
+    Utils.each(subscribers[colKey], function(handler) {
+      handler(obj.data);
+    });
   }, false);
 
   return {
     // Subscribe to all messages of a whole collection
     // Or supply an ID for just a single item
-    subscribe: function(type, collection, idOrCb, handler) {
+    subscribe: function(types, collection, idOrCb, handler) {
       var id;
       if(!handler) {
         handler = idOrCb;
       } else {
         id = idOrCb;
       }
-      var key;
-      if(id) {
-        key = type + collection + id;
-      } else {
-        key = type + collection;
-      }
-      if(!subscribers[key]) subscribers[key] = [];
-      subscribers[key].push(handler);
+      types = types.split(' ');
+      Utils.each(types, function(type) {
+        var key;
+        if(id) {
+          key = type + collection + id;
+        } else {
+          key = type + collection;
+        }
+        if(!subscribers[key]) subscribers[key] = [];
+        subscribers[key].push(handler);
+      });
       return handler;
     },
 

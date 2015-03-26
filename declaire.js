@@ -18,8 +18,9 @@ var Utils = require('./src/utils.js');
 var Parser = require('./src/parser.js');
 var Evaluator = require('./src/serverEvaluator.js');
 var Model = require('./src/model.js');
-var Collection = require('./src/collection.js');
 var ViewModel = require('./src/viewModel.js');
+var Collection = require('./src/collection.js');
+var Query = require('./src/query.js');
 var DataInterface = require('./src/serverDataInterface.js');
 
 
@@ -168,8 +169,6 @@ module.exports = function(options, cb) {
       };
 
       var api = {
-        Collection: Collection,
-
         // Declare a new model type
         Model: function(name, reference) {
           var interface = DataInterface(name, app, db, publisher).serveResource();
@@ -181,6 +180,12 @@ module.exports = function(options, cb) {
           var vm = ViewModel(reference);
           viewModels[name] = vm;
           return vm;
+        },
+
+        Collection: Collection,
+
+        Query: function(modelOrCollection, query) {
+          return Query(null, modelOrCollection, query);
         }
       };
 

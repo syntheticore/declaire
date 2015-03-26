@@ -27,7 +27,7 @@ if(Utils.onServer()) {
 
 var Instance = function(dataInterface, pubSub) {
   return Utils.merge(eventMethods, {
-    klass: 'Model',
+    klass: 'Instance',
     model: null,
     id: null,
     listeners: [],
@@ -35,7 +35,7 @@ var Instance = function(dataInterface, pubSub) {
       local: {},
       remote: {}
     },
-    collections: {},
+    // collections: {},
     computedProperties: {},
 
     // The server URL of this model instance
@@ -215,7 +215,7 @@ var references = function(values) {
   var out = {};
   for(var key in values) {
     var value = values[key];
-    if(value.klass == 'Model') {
+    if(value.klass == 'Instance') {
       out[key] = value.reference();
     } else if(value.klass == 'Collection') {
       out[key] = value.serialize();
@@ -231,8 +231,10 @@ var references = function(values) {
 var Model = function(dbCollection, reference, dataInterface, pubSub) {
   var ref = separateMethods(reference);
   var model = {
+    klass: 'Model',
     name: dbCollection,
     defaults: ref.defaults,
+    dataInterface: dataInterface,
 
     // The server URL of this model's collection
     url: function() {
@@ -260,6 +262,13 @@ var Model = function(dbCollection, reference, dataInterface, pubSub) {
         });
         // inst.collections[key] = collection;
         inst.set(key, collection);
+      }
+      for(var key in ref.queries) {
+        var query = ref.queries[key].clone();
+        query.on('change', function() {
+          inst.set(key, inst.get(key));
+        });
+        inst.set(key, query);
       }
       inst.set(Utils.merge(this.defaults, values));
       return inst;
@@ -313,7 +322,8 @@ var separateMethods = function(reference) {
   var ret = {
     defaults: {},
     methods: {},
-    collections: {}
+    collections: {},
+    queries: {}
   };
   for(var key in reference) {
     var val = reference[key];
@@ -321,6 +331,8 @@ var separateMethods = function(reference) {
       ret.methods[key] = val;
     } else if(val && val.klass == 'Collection') {
       ret.collections[key] = val;
+    } else if(val && val.klass == 'Query') {
+      ret.queries[key] = val;
     } else {
       ret.defaults[key] = val;
     }

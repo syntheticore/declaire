@@ -4,9 +4,11 @@ var ClientDataInterface = function(name) {
     all: function(options, cb) {
       $.get(url)
       .done(function(data) {
+        // console.log(data);
         cb(null, data);
       })
       .fail(function(err) {
+        console.log('fail');
         cb(err, null);
       });
     },

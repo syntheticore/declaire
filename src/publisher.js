@@ -17,6 +17,7 @@ var Publisher = function(app, db) {
             // Write new data to connected clients
             for(var i in clients) {
               var res = clients[i];
+              delete doc._id;
               res.write('event: ' + 'pubsub' + '\n');
               res.write('data: ' + JSON.stringify(doc) + '\n\n');
               res.flush();

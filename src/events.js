@@ -3,8 +3,9 @@ var Utils = require('./utils.js');
 
 module.exports = {
   // Register a handler to be called every time an event happens
+  //XXX Support registering multiple events at once
   on: function(action, cb) {
-    var res = action.split(':');
+    var res = action.split(':'); ///XXX not needed -> use event:key directly as event name
     this.listeners.push({
       action: res[0],
       key: res[1],

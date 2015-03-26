@@ -1,8 +1,9 @@
 var Utils = require('./utils.js');
 var Evaluator = require('./clientEvaluator.js');
 var Model = require('./model.js');
-var Collection = require('./collection.js');
 var ViewModel = require('./viewModel.js');
+var Collection = require('./collection.js');
+var Query = require('./query.js');
 var DataInterface = require('./clientDataInterface.js');
 
 
@@ -54,13 +55,17 @@ module.exports = function(options, cb) {
       return Model(name, reference, interface, subscriber);
     },
 
-    Collection: Collection,
-
     // Declare a new view model type
     ViewModel: function(name, reference) {
       var vm = ViewModel(reference);
       viewModels[name] = vm;
       return vm;
+    },
+
+    Collection: Collection,
+
+    Query: function(modelOrCollection, query) {
+      return Query(subscriber, modelOrCollection, query);
     }
   };
 
