@@ -13,7 +13,7 @@
     "express-session": "*",
     "jumanji": "*",
     "method-override": "*",
-    "minifyify": "*",
+    "minifyify": "^6.3.2",
     "mongodb": "*",
     "morgan": "*",
     "multer": "*",
