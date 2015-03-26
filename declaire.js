@@ -95,6 +95,7 @@ var mainModel = Model('_main', {
 var layout = __dirname + '/../../views/layout.tmpl';
 var topNode;
 var evaluator;
+var viewModels = {};
 var parseLayout = function() {
   Utils.improveExceptions(layout, function() {
     topNode = Parser.parseTemplate(fs.readFileSync(layout, 'utf8'));
@@ -139,7 +140,6 @@ if(app.get('env') == 'development') {
 
 var db;
 var publisher;
-var viewModels = {};
 
 // Server-side implementation of Declaire API
 module.exports = function(options, cb) {
