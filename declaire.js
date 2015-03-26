@@ -16,10 +16,11 @@ var _ = require('underscore');
 
 var Utils = require('./src/utils.js');
 var Parser = require('./src/parser.js');
-var Evaluator = require('./src/staticEvaluator.js');
+var Evaluator = require('./src/serverEvaluator.js');
 var Model = require('./src/model.js');
 var Collection = require('./src/collection.js');
 var ViewModel = require('./src/viewModel.js');
+var DataInterface = require('./src/serverDataInterface.js');
 
 
 var app = express();
@@ -91,7 +92,6 @@ var mainModel = Model('_main', {
 // Load all templates recursively from layout
 // and supply evaluator with main model
 var layout = __dirname + '/../../views/layout.tmpl';
-var viewModels = {};
 var topNode;
 var evaluator;
 var parseLayout = function() {
@@ -131,174 +131,62 @@ app.get('/pages/:page', function(req, res) {
   });
 });
 
-// Server-sent event stream
-var clients = [];
-app.get('/events', function (req, res) {
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  // Save response stream for later
-  clients.push(res);
-  // Delete connection on disconnect
-  res.on('close', function () {
-    clients.splice(clients.indexOf(res), 1);
-    console.log("Client disconnected");
-  });
-  console.log("Serving " + clients.length + " clients");
-});
-
-// Broadcast a message to all connected clients
-var emit = function(eventName, data) {
-  db.collection('pubsub').insert(data, function(err, items) {
-    if(err) console.log(err);
-  });
-};
-
 // Show stack traces in development
 if(app.get('env') == 'development') {
   app.use(errorHandler({dumpExceptions: true, showStack: true}));
 }
 
-// Serve RESTful resource
-var serveResource = function(name) {
-  var baseUrl = '/api/' + name;
-  console.log("Serving resource " + baseUrl);
-
-  // Get all items
-  app.get(baseUrl, function(req, res) {
-    var from = parseInt(req.query.queryFrom) || 0;
-    var limit = parseInt(req.query.queryLimit) || 0;
-    delete req.query._;
-    delete req.query.queryFrom;
-    delete req.query.queryLimit;
-    db.collection(name).find(req.query, {image:0, salt:0, hash:0}).skip(from).limit(limit).toArray(function(err, items) {
-      if(err) {
-        res.send(404, err);
-      } else {
-        res.json(items);
-      }
-    });
-  });
-
-  // Create item
-  app.post(baseUrl, function(req, res) {
-    var fields = _.defaults(req.body, {createdAt: new Date(), updatedAt: new Date()});
-    db.collection(name).insert(fields, function(err, items) {
-      emit('create', {url: baseUrl + '/' + items[0]._id, values: items[0]});
-      res.json(items[0]);
-    });
-  });
-
-  // Get one item
-  app.get(baseUrl + '/:id', function(req, res) {
-    db.collection(name).findOne({_id: new mongo.ObjectID(req.params.id)}, {image:0, salt:0, hash:0}, function(err, item) {
-      if(err) {
-        res.send(404, err);
-      } else {
-        res.json(item);
-      }
-    });
-  });
-
-  // Update item
-  app.post(baseUrl + '/:id', function(req, res) {
-    var data = JSON.parse(req.body.data);
-    delete data._id;
-    delete data.createdAt;
-    data.updatedAt = new Date();
-    db.collection(name).update({_id: new mongo.ObjectID(req.params.id)}, {$set: data}, function(err) {
-      if(err) {
-        res.send(404, err);
-      } else {
-        emit('update', {url: baseUrl + '/' + req.params.id, values: data});
-        res.json({updatedAt: data.updatedAt});
-      }
-    });
-  });
-
-  // Delete item
-  app.delete(baseUrl + '/:id', function(req, res) {
-    var data = req.body;
-    delete data._id;
-    db.collection(name).remove({_id: new mongo.ObjectID(req.params.id)}, function(err) {
-      emit('delete', {url: baseUrl + '/' + req.params.id});
-      res.end();
-    });
-  });
-};
-
-var models = {};
+var db;
+var publisher;
+var viewModels = {};
 
 // Server-side implementation of Declaire API
-var db;
-module.exports = {
-  // Declare a new model type
-  Model: function(name, reference) {
-    var m = Model(name, reference);
-    models[name] = m;
-    serveResource(name);
-    return m;
-  },
-
-  Collection: Collection,
-
-  // Declare a new view model
-  ViewModel: function(name, reference) {
-    var vm = ViewModel(reference);
-    viewModels[name] = vm;
-    return vm;
-  },
-
+module.exports = function(options, cb) {
+  options = _.defaults(options, {
+    mongoUrl: process.env.MONGOHQ_URL || process.env.MONGOLAB_URI || 'mongodb://127.0.0.1:27017/declaire',
+    beforeConnect: function(app, db, cb) { cb() }
+  });
+  if(options.mongoDevUrl && app.get('env') == 'development') {
+    options.mongoUrl = options.mongoDevUrl;
+  }
   // Initialize express server with middleware,
   // connect to database, call application hooks and listen for requests
-  start: function(options, cb) {
-    console.log("Starting declaire app");
-    options = _.defaults(options, {
-      mongoUrl: process.env.MONGOHQ_URL || process.env.MONGOLAB_URI || 'mongodb://127.0.0.1:27017/declaire'
-    });
-    if(options.mongoDevUrl && app.get('env') == 'development') {
-      options.mongoUrl = options.mongoDevUrl;
-    }
-    // Connect to database and listen after successful connect
-    mongo.MongoClient.connect(options.mongoUrl, function(err, dbs) {
-      if(err) throw err;
-      db = dbs;
-      console.log("Connected to " + options.mongoUrl);
-      // Mongo PubSub
-      db.collection('pubsub').drop();
-      db.createCollection('pubsub', {capped: true, size: 10000}, function(err, pubsub){
-        if(err) throw err;
-        pubsub.insert({type: 'init'}, function(err, items) {
-          if(err) throw err;
-          pubsub
-          .find({}, {tailable: true, awaitdata: true, numberOfRetries: -1})
-          .sort({$natural: 1})
-          .each(function(err, doc) {
-            if(doc) {
-              _.each(clients, function(res) {
-                res.write('event: ' + 'pubsub' + '\n');
-                res.write('data: ' + JSON.stringify(doc) + '\n\n');
-                res.flush();
-              });
-            }
-          });
-        });
-      });
+  // Connect to database and listen after successful connect
+  mongo.MongoClient.connect(options.mongoUrl, function(err, dbs) {
+    if(err) throw err;
+    db = dbs;
+    console.log("Connected to " + options.mongoUrl);
+    // Mongo PubSub
+    publisher = require('./src/publisher.js')(app, db).init(function() {
       // Listen and call back
-      var connect = function() {
+      var start = function(cb) {
         var port = options.port || process.env.PORT || 3000;
         var server = app.listen(port, function () {
           console.log('Listening on port ' + port);
-          cb && cb(app, db);
+          cb && cb();
         });
       };
-      // Database hook
-      if(options.beforeConnect) {
-        options.beforeConnect(db, function() {
-          connect();
-        });
-      } else {
-        connect();
-      }
+
+      var api = {
+        Collection: Collection,
+
+        // Declare a new model type
+        Model: function(name, reference) {
+          var interface = DataInterface(name, app, db, publisher).serveResource();
+          return Model(name, reference, interface);
+        },
+
+        // Declare a new view model
+        ViewModel: function(name, reference) {
+          var vm = ViewModel(reference);
+          viewModels[name] = vm;
+          return vm;
+        }
+      };
+
+      options.beforeConnect(app, db, function() {
+        cb(api, start);
+      });
     });
-  }
+  });
 };

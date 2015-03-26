@@ -1,23 +1,16 @@
 var Utils = require('./utils.js');
 var eventMethods = require('./events.js');
 
+
 var LocalStore;
 // Use a dummy local store on the server, that never caches values
-if(typeof(localStorage) == 'undefined') {
+if(Utils.onServer()) {
   LocalStore = {
     get: function(key) {
       return undefined;
     },
+
     set: function(key, value) {}
-  };
-  $ = {
-    get: function(url, cb) {
-
-    },
-
-    post: function(url, data, cb) {
-
-    }
   };
 } else {
   LocalStore = {
@@ -31,10 +24,8 @@ if(typeof(localStorage) == 'undefined') {
   };
 }
 
-var db;
 
-
-var Instance = function() {
+var Instance = function(dataInterface, pubSub) {
   return Utils.merge(eventMethods, {
     klass: 'Model',
     model: null,
@@ -49,19 +40,15 @@ var Instance = function() {
 
     // The server URL of this model instance
     url: function() {
-      return this.id && '/api/' + this.model.name + '/' + this.id;
-    },
-
-    // The server URL of this model's collection
-    baseUrl: function() {
-      return '/api/' + this.model.name;
+      return this.id && this.model.url() + '/' + this.id;
     },
 
     // Return the current value at the given key
     get: function(key) {
       //XXX Should return a deep copy of defaults and remote data
-      var value = this.collections[key] || this.data.local[key] || this.data.remote[key] || this.model.defaults[key];
-      // Functions called through get() are treated as computed properties
+      // var value = this.collections[key] || this.data.local[key] || this.data.remote[key] || this.model.defaults[key];
+      var value = this.data.local[key] || this.data.remote[key] || this.model.defaults[key];
+      // Methods called through get() are treated as computed properties
       if(typeof(this[key]) == 'function') {
         if(!value) {
           var self = this;
@@ -79,27 +66,39 @@ var Instance = function() {
     },
 
     // Register a local change
-    // Can be called without a value after changes to a deeper structure
-    set: function(key, value) {
-      if(value != undefined) {
-        this.data.local[key] = value;
+    set: function(valuesOrKey, value) {
+      var values;
+      if(value === undefined) {
+        values = valuesOrKey;
+      } else {
+        values = {};
+        values[valuesOrKey] = value;
       }
-      //XXX Catch attempt to set a computed property or collection
-      this.emit('change', key);
-      // Emit change events for computed properties as well
-      for(var k in this.computedProperties) {
-        if(_.contains(this.computedProperties[k], key)) {
-          this.emit('change', k);
+      for(var key in values) {
+        this.data.local[key] = values[key];
+        //XXX Catch attempt to set a computed property or collection
+        this.emit('change', key);
+        // Emit change events for computed properties as well
+        //XXX Don't emit multiple times if CP depends on several values
+        for(var k in this.computedProperties) {
+          if(_.contains(this.computedProperties[k], key)) {
+            this.emit('change', k);
+          }
         }
       }
       this.emit('change');
       return this;
     },
 
+    // Returns a reference object, usable for storage in the db
+    reference: function() {
+      return this.id && {_ref: {id: this.id, collection: this.model.name}};
+    },
+
     // The current state of the object,
     // including local modifications
     properties: function() {
-      return Utils.merge(this.data.remote, this.data.local); //XXX Should the defaults be merged in as well?
+      return Utils.merge(this.model.defaults, Utils.merge(this.data.remote, this.data.local));
     },
 
     // Are local modifications present that need to be saved?
@@ -121,25 +120,34 @@ var Instance = function() {
 
     // Persist object
     // Also save local modifications to the server if possible
-    //XXX Allow passing an object of properties to set and save directly
-    save: function(cb) {
+    save: function(values, cb) {
       var self = this;
+      if(values) {
+        self.set(values);
+      }
       self.localId = _.uniqueId(self.model.name);
       LocalStore.set(self.localId, self.data);
       if(self.isDirty() || !self.id) {
-        var url = self.id ? self.url() : self.baseUrl();
-        $.post(url, {data: JSON.stringify(self.data.local)}, function(data) {
-          if(!self.id) {
+        var url = self.id ? self.url() : self.model.url();
+        if(self.id) {
+          dataInterface.update(self.id, self.data.local, function(err, updatedValues) {
+            self.data.remote = Utils.merge(self.data.remote, updatedValues);
+            finish();
+          });
+        } else {
+          dataInterface.create(self.data.local, function(err, data) {
             self.data.remote = data;
             self.id = data._id;
             self.connect();
-          } else {
-            self.data.remote = Utils.merge(self.data.remote, data);
-          }
+            finish();
+          });
+        }
+        //XXX offline case
+        var finish = function() {
           self.data.local = [];
           cb && cb();
           self.emit('save');
-        });
+        };
       }
       return self;
     },
@@ -148,34 +156,18 @@ var Instance = function() {
     // but leave local modifications intact
     fetch: function(cb) {
       var self = this;
-      $.get(self.url(), function(data) {
-        self.data.remote = data;
-        cb();
-        self.emit('fetch');
-      });
-      return self;
-    },
-
-    // Subscribe to push updates from the server
-    connect: function() {
-      var self = this;
-      if(self.connected || !self.id) return;
-      db && db.subscribe(self.url(), function(data) {
-        self.data.remote = Utils.merge(self.data.remote, data);
-        for(var key in data) {
-          self.emit('change', key);
+      dataInterface.one(self.id, function(err, data) {
+        if(err) {
+          cb(null);
+        } else {
+          //XXX Rebuild collections
+          //XXX Trigger change events
+          self.data.remote = data;
+          cb(self);
+          self.emit('fetch');
         }
-        self.emit('change');
       });
-      self.connected = true;
       return self;
-    },
-
-    // Unsubscribe from updates
-    disconnect: function() {
-      db && db.unsubscribe(self.url());
-      this.connected = false;
-      return this;
     },
 
     // Delete object from all local models and collections it's referenced from
@@ -183,43 +175,93 @@ var Instance = function() {
     // All references from remote models and collections will auto-dissolve on next read
     delete: function(cb) {
       var self = this;
-      $.ajax({url: self.url(), type: 'DELETE'})
-      .done(function() {})
-      .fail(function() {
-        //XXX Handle offline case
-      })
-      .always(function() {
+      self.disconnect();
+      dataInterface.delete(self.id, function() {
         cb && cb();
+        self.emit('delete');
       });
+    },
+
+    // Subscribe to push updates from the server
+    connect: function() {
+      var self = this;
+      if(self.connected || !self.id) return;
+      pubSub.subscribe('update', self.model.name, self.id, function(data) {
+        console.log("Received push update");
+        self.data.remote = Utils.merge(self.data.remote, data);
+        for(var key in data) {
+          self.emit('change', key);
+        }
+        self.emit('change');
+      });
+      pubSub.subscribe('delete', self.model.name, self.id, function() {
+        console.log("Received push delete");
+        self.delete();
+      });
+      self.connected = true;
+      return self;
+    },
+
+    // Unsubscribe from updates
+    disconnect: function() {
+      pubSub.unsubscribe(self.model.name, self.id);
+      this.connected = false;
+      return this;
     }
   });
 };
 
+var references = function(values) {
+  var out = {};
+  for(var key in values) {
+    var value = values[key];
+    if(value.klass == 'Model') {
+      out[key] = value.reference();
+    } else if(value.klass == 'Collection') {
+      out[key] = value.serialize();
+    } else {
+      out[key] = value;
+    }
+  }
+  return out;
+};
+
 
 // Define a new data model under the given name
-var Model = function(modelName, reference) {
+var Model = function(dbCollection, reference, dataInterface, pubSub) {
   var ref = separateMethods(reference);
   var model = {
-    name: modelName,
+    name: dbCollection,
     defaults: ref.defaults,
 
+    // The server URL of this model's collection
+    url: function() {
+      return '/api/' + this.name;
+    },
+
     // Create a fresh model instance
-    create: function() {
-      var inst = Instance();
+    create: function(values) {
+      var inst = Instance(dataInterface, pubSub);
       inst.model = this;
+      // Mix in methods from reference object
       for(var key in ref.methods) {
         inst[key] = ref.methods[key];
       }
+      // Copy default collections to instance
       for(var key in ref.collections) {
         var collection = ref.collections[key].clone();
+        // Re-emit change events from collection, so that computed properties and views can update
+        //XXX Templates should listen for the more fine-grained 'add' and 'remove' events
         collection.on('change', function() {
-          inst.set(key);
-          if(modelName != '_view') {
-            inst.save();
-          }
+          inst.set(key, inst.get(key));
+          // if(dbCollection != '_view') {
+          //   inst.save();
+          // }
         });
-        inst.collections[key] = collection;
+        // inst.collections[key] = collection;
+        inst.set(key, collection);
       }
+      inst.set(Utils.merge(this.defaults, values));
       return inst;
     },
 
@@ -231,15 +273,24 @@ var Model = function(modelName, reference) {
       obj.id = id;
       var localData = LocalStore.get(id);
       if(localData) {
+        console.log("local data");
         obj.data = localData;
-        cb();
-        obj.fetch();
+        cb(obj);
+        obj.fetch(function(success) {
+          // Object has been deleted on server -> Terminate local instance as well
+          if(!success) {
+            console.log("retroactively deleting local model");
+            obj.delete();
+          }
+        });
       } else {
-        obj.fetch(cb);
+        console.log("remote data");
+        obj.fetch(function(obj) {
+          cb(obj);
+        });
       }
       // Also subscribe to updates
       obj.connect();
-      return obj;
     }
   };
   return model;
@@ -284,8 +335,6 @@ module.exports = Model;
 
 // TODO:
 // Local-/remote-id handling
-// Object deletion
-// EventSource / Mongo-PubSub
 // Collections
 // Model relations
 // Access permissions

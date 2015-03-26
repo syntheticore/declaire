@@ -1,5 +1,13 @@
-exports.isServer = function() {
-  return typeof(window) == 'undefined';
+exports.onServer = function(cb) {
+  var server = (typeof(window) == 'undefined');
+  if(server && cb) cb(server);
+  return server;
+};
+
+exports.onClient = function(cb) {
+  var client = !exports.onServer();
+  if(client && cb) cb(client);
+  return client;
 };
 
 // Return all matches of the given regex
@@ -39,6 +47,6 @@ exports.merge = function(obj1, obj2) {
   return obj;
 };
 
-exports.defer = function(cb) {
-  setTimeout(cb, 0);
+exports.defer = function(cb, millis) {
+  setTimeout(cb, millis || 0);
 };

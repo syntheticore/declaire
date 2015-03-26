@@ -3,6 +3,7 @@ var Evaluator = require('./clientEvaluator.js');
 var Model = require('./model.js');
 var Collection = require('./collection.js');
 var ViewModel = require('./viewModel.js');
+var DataInterface = require('./clientDataInterface.js');
 
 
 // Collect view model definitions
@@ -10,53 +11,60 @@ var ViewModel = require('./viewModel.js');
 var viewModels = {};
 
 // Create main model singleton instance
-var mainModel = ViewModel('_main', {
+var mainModel = ViewModel({
   _page: null
 }).create();
 
 // Load pre-parsed template and
 // install evaluator on the document body
-var install = function() {
+var install = function(cb) {
   $.getJSON('/template.json', function(topNode) {
     var body = topNode.children[1];
     var evaluator = Evaluator(body, viewModels);
     evaluator.baseScope.addLayer(mainModel);
     var frag = evaluator.evaluate();
     $('body').replaceWith(frag);
+    cb();
   });
 };
 
-// Receive push updates from the server,
-// containing new model data
-var evtSource = new EventSource('/events');
-evtSource.addEventListener('update', function(e) {
-  var obj = JSON.parse(e.data);
-  // console.log(obj.time);
-}, false);
+var subscriber = require('./subscriber.js')();
 
+module.exports = function(options, cb) {
 
-module.exports = {
-  Model: Model,
-  Collection: Collection,
-
-  ViewModel: function(name, reference) {
-    var vm = ViewModel(reference);
-    viewModels[name] = vm;
-    return vm;
-  },
-
-  start: function(options, cb) {
-    install();
-    var Router = Backbone.Router.extend({
-      routes: {
-        'pages/:page': function(page) {
-          mainModel.set('_page', window.location.pathname);
+  var start = function(cbb) {
+    install(function() {
+      var Router = Backbone.Router.extend({
+        routes: {
+          'pages/:page': function(page) {
+            mainModel.set('_page', window.location.pathname);
+          }
         }
-      }
+      });
+      new Router();
+      Backbone.history.start({pushState: true});
+      cbb && cbb();
     });
-    new Router();
-    Backbone.history.start({pushState: true});
-  }
+  };
+
+  var api = {
+    // Declare a new model type
+    Model: function(name, reference) {
+      var interface = DataInterface(name);
+      return Model(name, reference, interface, subscriber);
+    },
+
+    Collection: Collection,
+
+    // Declare a new view model type
+    ViewModel: function(name, reference) {
+      var vm = ViewModel(reference);
+      viewModels[name] = vm;
+      return vm;
+    }
+  };
+
+  cb(api, start);
 };
 
 
@@ -64,8 +72,6 @@ module.exports = {
 // Router
 // Template imports
 // Server rendering/streaming
-// View references
 // Else clauses
-// Client-/Server-only code segments
 // Remote execution
 // Load js using async attribute

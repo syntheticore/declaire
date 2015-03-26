@@ -52,19 +52,18 @@ var Collection = function(array) {
       return items.length;
     },
 
-    filter: function(query) {
-      return Query(this, query);
-    },
-
     // Return a simple array of all values,
     // but collapse contained model instances to serializable references
     serialize: function() {
       var out = [];
       this.each(function(item) {
         if(item.klass == 'Model') {
-          out.push()
+          var ref = item.reference();
+          if(ref) {
+            out.push(ref);
+          }
         } else {
-
+          out.push(item);
         }
       });
       return out;
@@ -75,7 +74,11 @@ var Collection = function(array) {
     },
 
     clone: function() {
-      return this.map(function(item) { return item; });
+      return this.map(function(item) { return item });
+    },
+
+    filter: function(query) {
+      return Query(this, query);
     }
   });
 };

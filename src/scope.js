@@ -18,10 +18,10 @@ var Scope = function() {
         var layer = layers[i];
         if(layer.model) {
           var val = layer.get(key);
-          if(val != undefined) {
+          if(val !== undefined) {
             return val;
           }
-        } else if(layer[key] != undefined) {
+        } else if(layer[key] !== undefined) {
           return layer[key];
         }
       }
@@ -31,7 +31,7 @@ var Scope = function() {
     getFirstRespondent: function(key) {
       for(var i = layers.length - 1; i >= 0; i--) {
         var layer = layers[i];
-        if(layer[key] != undefined || (layer.model && layer.get(key) != undefined)) {
+        if(layer[key] !== undefined || (layer.model && layer.get(key) !== undefined)) {
           return layer;
         }
       }
