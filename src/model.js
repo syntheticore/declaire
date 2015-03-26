@@ -1,5 +1,6 @@
 var Utils = require('./utils.js');
 var eventMethods = require('./events.js');
+var Query = require('./query.js');
 
 
 var LocalStore;
@@ -239,6 +240,10 @@ var Model = function(dbCollection, reference, dataInterface, pubSub) {
     // The server URL of this model's collection
     url: function() {
       return '/api/' + this.name;
+    },
+
+    all: function() {
+      return Query(pubSub, this);
     },
 
     // Create a fresh model instance
