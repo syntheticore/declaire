@@ -28,10 +28,31 @@ exports.each = function(items, cb) {
 
 exports.map = function(items, cb) {
   var out = [];
-  exports.each(items, function(item) {
-    out.push(cb(item));
+  exports.each(items, function(item, key) {
+    out.push(cb(item, key));
   });
   return out;
+};
+
+exports.select = function(items, cb) {
+  var out = [];
+  exports.each(items, function(item, key) {
+    if(cb(item, key)) {
+      out.push(item);
+    }
+  });
+  return out;
+};
+
+exports.all = function(items, cb) {
+  return exports.select(items, cb).length == items.length;
+};
+
+exports.uuid = function() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+    return v.toString(16);
+  });
 };
 
 // Execute the given function, while modifying raised exceptions to

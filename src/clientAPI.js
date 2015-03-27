@@ -6,6 +6,7 @@ var Collection = require('./collection.js');
 var Query = require('./query.js');
 var DataInterface = require('./clientDataInterface.js');
 
+var localStore = require('./localStore.js')();
 
 // Collect view model definitions
 // for lookup during evaluation
@@ -29,7 +30,29 @@ var install = function(cb) {
   });
 };
 
+// Allow subscribing to database updates
 var subscriber = require('./subscriber.js')();
+
+// Process all database operations that happened while offline
+var flushPendingOperations = function() {
+  var ops = localStore.pendingOperations();
+  Utils.each(ops.save, function(data, key) {
+    //XXX Load and update model
+  });
+  Utils.each(ops.delete, function(data, key) {
+    //XXX Load and delete model
+  });
+};
+flushPendingOperations();
+
+// Process pending database operations when connectivity
+// gets established anew
+mainModel.on('change:_online', function(online) {
+  if(online) {
+    flushPendingOperations();
+  }
+});
+
 
 module.exports = function(options, cb) {
 

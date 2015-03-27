@@ -84,19 +84,4 @@ var Collection = function(array) {
 };
 
 
-var Query = function(collectionOrUrl, query) {
-  var items = Collection(model);
-  return {};
-};
-
-
-var Reference = function(model, id) {
-  return {
-    resolve: function(cb) {
-      model.load(id, cb);
-    }
-  };
-};
-
-
 module.exports = Collection;

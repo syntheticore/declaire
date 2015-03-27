@@ -3,10 +3,10 @@ var eventMethods = require('./events.js');
 var Query = require('./query.js');
 
 
-var LocalStore;
+var localStore;
 // Use a dummy local store on the server, that never caches values
 if(Utils.onServer()) {
-  LocalStore = {
+  localStore = {
     get: function(key) {
       return undefined;
     },
@@ -14,15 +14,7 @@ if(Utils.onServer()) {
     set: function(key, value) {}
   };
 } else {
-  LocalStore = {
-    get: function(key) {
-      return JSON.parse(localStorage.getItem(key));
-    },
-
-    set: function(key, value) {
-      localStorage.setItem(key, JSON.stringify(value));
-    }
-  };
+  localStore = require('./localStore.js')();
 }
 
 
@@ -31,6 +23,7 @@ var Instance = function(dataInterface, pubSub) {
     klass: 'Instance',
     model: null,
     id: null,
+    localId: Utils.uuid(),
     listeners: [],
     data: {
       local: {},
@@ -126,8 +119,8 @@ var Instance = function(dataInterface, pubSub) {
       if(values) {
         self.set(values);
       }
-      self.localId = _.uniqueId(self.model.name);
-      LocalStore.set(self.localId, self.data);
+      // LocalStore.set(self.localId, self.data);
+      localStore.save(self.localId, self.data);
       if(self.isDirty() || !self.id) {
         var url = self.id ? self.url() : self.model.url();
         if(self.id) {
@@ -285,7 +278,7 @@ var Model = function(dbCollection, reference, dataInterface, pubSub) {
     load: function(id, cb) {
       var obj = this.create();
       obj.id = id;
-      var localData = LocalStore.get(id);
+      var localData = localStore.get(id);
       if(localData) {
         console.log("local data");
         obj.data = localData;

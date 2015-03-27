@@ -1,3 +1,6 @@
+var Utils = require('./utils.js');
+
+
 var ClientDataInterface = function(name) {
   var url = '/api/' + name;
   return {
