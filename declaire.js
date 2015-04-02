@@ -68,7 +68,7 @@ var prepareBundle = function(cb) {
   var b = new browserify({debug: true});
   b.add(outputPath);
   b.ignore('newrelic'); //XXX Add more common, server-only packages
-  b.plugin(Minifyify, {output: 'public/bundle.js.map', map: 'bundle.js.map'});
+  if(app.get('env') == 'production') b.plugin(Minifyify, {output: 'public/bundle.js.map', map: 'bundle.js.map'});
   b.bundle(function(err, buf) {
     if(err) throw err;
     fs.unlink(outputPath);
@@ -126,6 +126,7 @@ app.get('/pages/:page', function(req, res) {
   res.setHeader('Content-Type', 'text/html');
   res.write('<!DOCTYPE html><html>');
   mainModel.set('_page', '/pages/' + req.params.page);
+  console.log(mainModel);
   render(function(chunk) {
     res.write(chunk.data);
     if(chunk.eof) {

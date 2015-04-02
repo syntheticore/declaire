@@ -60,7 +60,8 @@ var Scope = function() {
     // Resolve path segment by using getter or direct property access
     // Functions are called immediately
     readAttribute: function(obj, seg) {
-      if(!obj) throw('Path not found: ' + seg);
+      // if(!obj) throw('Path not found: ' + seg);
+      if(!obj) return null;
       if(obj.model) {
         return obj.get(seg);
       } else {

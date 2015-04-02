@@ -18,6 +18,7 @@
     "morgan": "*",
     "multer": "*",
     "nib": "*",
+    "rsvp": "^3.0.18",
     "serve-favicon": "*",
     "stylus": "*",
     "underscore": "*"

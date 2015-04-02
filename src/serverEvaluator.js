@@ -139,9 +139,11 @@ var Template = function(topNode, viewModels) {
           case 'view':
             var viewModel = viewModels[node.viewModel];
             if(!viewModel) throw 'View model not found: ' + node.viewModel;
-            var view = viewModel.create();
-            var newScope = scope.clone().addLayer(view);
-            recurse(newScope);
+            viewModel.create(function(view) {
+              console.log(view);
+              var newScope = scope.clone().addLayer(view);
+              recurse(newScope);
+            });
             break;
         }
       } else if(node.type == 'HTMLTag') {
@@ -152,8 +154,7 @@ var Template = function(topNode, viewModels) {
           var value = node.attributes[key];
           if(value.indexOf('{') != -1) {
             var expr = value.slice(1, -1);
-            var res = scope.resolvePath(expr);
-            attributes[key] = res.value;
+            attributes[key] = scope.resolvePath(expr).value;
             paths.push(expr);
           } else {
             attributes[key] = value;

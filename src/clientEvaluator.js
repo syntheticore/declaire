@@ -2,7 +2,7 @@ var Utils = require('./utils.js');
 var Scope = require('./scope.js');
 
 
-var Template = function(topNode, viewModels) {
+var Evaluator = function(topNode, viewModels) {
 
   // Create a fresh, jQuery-wrapped DOM element
   var createDOMElement = function(tag, id, classes, attributes) {
@@ -140,12 +140,13 @@ var Template = function(topNode, viewModels) {
             // var viewModel = eval(node.viewModel);
             var viewModel = viewModels[node.viewModel];
             if(!viewModel) throw 'View model not found: ' + node.viewModel;
-            var view = viewModel.create();
-            //XXX Set view.$el
-            var newScope = scope.clone().addLayer(view);
-            view.$el = $('body');
-            view.scope = newScope;
-            recurse(frag, newScope);
+            viewModel.create(function(view) {
+              //XXX Set view.$el
+              var newScope = scope.clone().addLayer(view);
+              view.$el = $('body');
+              view.scope = newScope;
+              recurse(frag, newScope);
+            });
             break;
         }
       } else if(node.type == 'HTMLTag') {
@@ -159,8 +160,7 @@ var Template = function(topNode, viewModels) {
           var value = node.attributes[key];
           if(value.indexOf('{') != -1) {
             var expr = value.slice(1, -1);
-            var res = scope.resolvePath(expr);
-            attributes[key] = res.value;
+            attributes[key] = scope.resolvePath(expr).value;
             paths.push(expr);
           } else {
             attributes[key] = value;
@@ -239,4 +239,81 @@ var Template = function(topNode, viewModels) {
 };
 
 
-module.exports = Template;
+var DOMInterface = {
+  createFragment: function() {
+    return $(document.createDocumentFragment());
+  },
+
+  createDOMElement: function(tag, id, classes, attributes) {
+    var elem = document.createElement(tag);
+    elem.id = id;
+    elem.className = classes.join(' ');
+    Utils.each(attributes, function(value, key) {
+      elem.setAttribute(key, value);
+    });
+    return $(elem);
+  }
+};
+
+
+var StreamInterface = {
+  createFragment: function() {
+    return {
+      _fragment: true,
+      children: [],
+
+      append: function(elem) {
+        this.children.push(elem);
+      },
+
+      serialize: function() {
+        var html = '';
+        Utils.each(this.children, function(child) {
+
+        });
+      }
+    };
+  },
+
+  createDOMElement: function(tag, id, classes, attributes) {
+    return {
+      tag: tag,
+      id: id,
+      classes: classes,
+      attributes: attributes,
+      children: [],
+
+      on: function() {
+        // Don't register actions handlers on the server
+      },
+
+      append: function(elem) {
+        this.children.push(elem);
+      },
+
+      serialize: function(fillCb, finalCb) {
+        var html = '<' + this.tag;
+        var addAttr = function(key, val) {
+          if(!val) return;
+          html += ' ' + key + '="' + val + '"';
+        };
+        if(this.id) addAttr('id', this.id);
+        if(this.classes && this.classes.length) addAttr('class', this.classes.join(' '));
+        if(this.attributes) {
+          for(var attr in this.attributes) {
+            var val = this.attributes[attr];
+            addAttr(attr, val);
+          }
+        }
+        html += '>';
+        fillCb(function() {
+
+        });
+        return html.toString();
+      }
+    };
+  }
+};
+
+
+module.exports = Evaluator;

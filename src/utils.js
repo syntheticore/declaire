@@ -27,18 +27,18 @@ exports.each = function(items, cb) {
 };
 
 exports.map = function(items, cb) {
-  var out = [];
+  var out = Array.isArray(items) ? [] : {};
   exports.each(items, function(item, key) {
-    out.push(cb(item, key));
+    out[key] = cb(item, key);
   });
   return out;
 };
 
 exports.select = function(items, cb) {
-  var out = [];
+  var out = Array.isArray(items) ? [] : {};
   exports.each(items, function(item, key) {
     if(cb(item, key)) {
-      out.push(item);
+      out[key] = item;
     }
   });
   return out;

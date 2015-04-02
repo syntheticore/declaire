@@ -1,7 +1,15 @@
 var Model = require('./model.js');
 
 var ViewModel = function(reference) {
-  return Model('_view', reference);
+  var model = Model('_view', reference);
+  return {
+    create: function(cb) {
+      var inst = model.create();
+      inst.resolve(function() {
+      });
+      cb(inst);
+    }
+  };
 };
 
 module.exports = ViewModel;

@@ -13,7 +13,7 @@ var localStore = require('./localStore.js')();
 var viewModels = {};
 
 // Create main model singleton instance
-var mainModel = ViewModel({
+var mainModel = Model('_main', {
   _page: null
 }).create();
 
@@ -45,8 +45,8 @@ var flushPendingOperations = function() {
 };
 flushPendingOperations();
 
-// Process pending database operations when connectivity
-// gets established anew
+// Process pending database operations whenever
+// connectivity gets established anew
 mainModel.on('change:_online', function(online) {
   if(online) {
     flushPendingOperations();
@@ -55,21 +55,6 @@ mainModel.on('change:_online', function(online) {
 
 
 module.exports = function(options, cb) {
-
-  var start = function(cbb) {
-    install(function() {
-      var Router = Backbone.Router.extend({
-        routes: {
-          'pages/:page': function(page) {
-            mainModel.set('_page', window.location.pathname);
-          }
-        }
-      });
-      new Router();
-      Backbone.history.start({pushState: true});
-      cbb && cbb();
-    });
-  };
 
   var api = {
     // Declare a new model type
@@ -92,7 +77,23 @@ module.exports = function(options, cb) {
     }
   };
 
-  cb(api, start);
+  // Return the API methods and a starter function to be
+  // called as soon as all models have been defined
+  cb(api, function(cbb) {
+    install(function() {
+      var Router = Backbone.Router.extend({
+        routes: {
+          'pages/:page': function(page) {
+            mainModel.set('_page', window.location.pathname);
+            console.log(mainModel.get('_page'));
+          }
+        }
+      });
+      new Router();
+      Backbone.history.start({pushState: true});
+      cbb && cbb();
+    });
+  });
 };
 
 

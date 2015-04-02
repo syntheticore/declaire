@@ -1,17 +1,19 @@
+var RSVP = require('rsvp');
+
+var Query = require('./query.js');
 var Utils = require('./utils.js');
 var eventMethods = require('./events.js');
-var Query = require('./query.js');
 
 
 var localStore;
 // Use a dummy local store on the server, that never caches values
-if(Utils.onServer()) {
+if(Utils.onServer() || true) {
   localStore = {
     get: function(key) {
       return undefined;
     },
-
-    set: function(key, value) {}
+    save: function(key, value) {},
+    delete: function(key, value) {}
   };
 } else {
   localStore = require('./localStore.js')();
@@ -41,7 +43,10 @@ var Instance = function(dataInterface, pubSub) {
     get: function(key) {
       //XXX Should return a deep copy of defaults and remote data
       // var value = this.collections[key] || this.data.local[key] || this.data.remote[key] || this.model.defaults[key];
-      var value = this.data.local[key] || this.data.remote[key] || this.model.defaults[key];
+      var value = this.data.local[key];
+      if(value === undefined) {
+        value = this.data.remote[key];
+      }
       // Methods called through get() are treated as computed properties
       if(typeof(this[key]) == 'function') {
         if(!value) {
@@ -176,6 +181,25 @@ var Instance = function(dataInterface, pubSub) {
       });
     },
 
+    // Load all referenced model instances
+    resolve: function(cb) {
+      var self = this;
+      var resolved = Utils.map(self.data.remote, function(item) {
+        if(item._ref) {
+          var model = models[item._ref.collection];
+          return model.load(item._ref.id);
+        } else {
+          return RSVP.resolve(item);
+        }
+      });
+      RSVP.hash(resolved).then(function(instances) {
+        Utils.each(instances, function(inst, key) {
+          self.data.remote[key] = inst;
+        });
+        cb();
+      });
+    },
+
     // Subscribe to push updates from the server
     connect: function() {
       var self = this;
@@ -220,6 +244,8 @@ var references = function(values) {
   return out;
 };
 
+
+var models = {};
 
 // Define a new data model under the given name
 var Model = function(dbCollection, reference, dataInterface, pubSub) {
@@ -275,31 +301,37 @@ var Model = function(dbCollection, reference, dataInterface, pubSub) {
     // Load the object with the given id
     // Local storage will be used immediately if available
     // Server data gets fetched afterwards
-    load: function(id, cb) {
-      var obj = this.create();
-      obj.id = id;
-      var localData = localStore.get(id);
-      if(localData) {
-        console.log("local data");
-        obj.data = localData;
-        cb(obj);
-        obj.fetch(function(success) {
-          // Object has been deleted on server -> Terminate local instance as well
-          if(!success) {
-            console.log("retroactively deleting local model");
-            obj.delete();
-          }
-        });
-      } else {
-        console.log("remote data");
-        obj.fetch(function(obj) {
-          cb(obj);
-        });
-      }
-      // Also subscribe to updates
-      obj.connect();
+    load: function(id) {
+      return new RSVP.Promise(function(resolve, reject) {
+        var obj = this.create();
+        obj.id = id;
+        var localData = localStore.get(id);
+        // Return immediately with local data if possible
+        if(localData) {
+          console.log("local data");
+          obj.data = localData;
+          resolve(obj);
+          // Fetch anyways to receive more recent data
+          obj.fetch(function(success) {
+            // Object has been deleted on server -> Terminate local instance as well
+            if(!success) {
+              console.log("retroactively deleting local model");
+              obj.delete();
+            }
+          });
+        } else {
+          console.log("remote data");
+          // Fetch data from remote server
+          obj.fetch(function(obj) {
+            resolve(obj);
+          });
+        }
+        // Also subscribe to updates
+        obj.connect();
+      });
     }
   };
+  models[model.name] = model;
   return model;
 };
 
