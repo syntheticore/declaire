@@ -68,7 +68,7 @@ var prepareBundle = function(cb) {
   var b = new browserify({debug: true});
   b.add(outputPath);
   b.ignore('newrelic'); //XXX Add more common, server-only packages
-  if(app.get('env') == 'production' || true) b.plugin(Minifyify, {output: 'public/bundle.js.map', map: 'bundle.js.map'});
+  if(app.get('env') == 'production') b.plugin(Minifyify, {output: 'public/bundle.js.map', map: 'bundle.js.map'});
   b.bundle(function(err, buf) {
     if(err) throw err;
     fs.unlink(outputPath);

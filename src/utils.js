@@ -98,6 +98,17 @@ exports.merge = function(obj1, obj2) {
   return obj;
 };
 
+exports.union = function(items1, items2) {
+  var out = [];
+  exports.each(items1, function(item) {
+    out.push(item);
+  });
+  exports.each(items2, function(item) {
+    out.push(item);
+  });
+  return out;
+};
+
 exports.deepMerge = function(obj1, obj2) {
   return exports.merge(obj1, obj2);
 };

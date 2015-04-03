@@ -167,7 +167,7 @@ var Evaluator = function(topNode, viewModels, interface) {
           if(hasMustaches(node.content)) {
             var resolved = resolveMustaches(node.content, scope);
             elem.text(resolved.text);
-            paths = Utils.merge(paths, resolved.paths);
+            paths = Utils.union(paths, resolved.paths);
           } else {
             elem.text(node.content);
           }
