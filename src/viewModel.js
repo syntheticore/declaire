@@ -1,3 +1,4 @@
+var Utils = require('./utils.js');
 var Model = require('./model.js');
 
 var ViewModel = function(reference) {
@@ -6,8 +7,8 @@ var ViewModel = function(reference) {
     create: function(cb) {
       var inst = model.create();
       inst.resolve(function() {
+        cb(inst);  
       });
-      cb(inst);
     }
   };
 };

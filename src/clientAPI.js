@@ -1,5 +1,6 @@
 var Utils = require('./utils.js');
-var Evaluator = require('./clientEvaluator.js');
+var Evaluator = require('./evaluator.js');
+var DOMInterface = require('./domInterface.js');
 var Model = require('./model.js');
 var ViewModel = require('./viewModel.js');
 var Collection = require('./collection.js');
@@ -22,7 +23,7 @@ var mainModel = Model('_main', {
 var install = function(cb) {
   $.getJSON('/template.json', function(topNode) {
     var body = topNode.children[1];
-    var evaluator = Evaluator(body, viewModels);
+    var evaluator = Evaluator(body, viewModels, DOMInterface);
     evaluator.baseScope.addLayer(mainModel);
     var frag = evaluator.evaluate();
     $('body').replaceWith(frag);
@@ -80,19 +81,23 @@ module.exports = function(options, cb) {
   // Return the API methods and a starter function to be
   // called as soon as all models have been defined
   cb(api, function(cbb) {
-    install(function() {
-      var Router = Backbone.Router.extend({
-        routes: {
-          'pages/:page': function(page) {
-            mainModel.set('_page', window.location.pathname);
-            console.log(mainModel.get('_page'));
+    var installed = false;
+    var Router = Backbone.Router.extend({
+      routes: {
+        'pages/:page': function(page) {
+          mainModel.set('_page', window.location.pathname);
+          if(!installed) {
+            install(function() {
+              installed = true;
+              cbb && cbb();
+            });
           }
         }
-      });
-      new Router();
-      Backbone.history.start({pushState: true});
-      cbb && cbb();
+      }
     });
+    new Router();
+    Backbone.history.start({pushState: true});
+    cbb && cbb();
   });
 };
 

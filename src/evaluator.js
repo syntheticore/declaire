@@ -1,27 +1,9 @@
 var Utils = require('./utils.js');
 var Scope = require('./scope.js');
+var _ = require('underscore');
 
 
-var Evaluator = function(topNode, viewModels) {
-
-  // Create a fresh, jQuery-wrapped DOM element
-  var createDOMElement = function(tag, id, classes, attributes) {
-    var html = '<' + tag;
-    var addAttr = function(key, val) {
-      if(!val) return;
-      html += ' ' + key + '="' + val + '"';
-    };
-    if(id) addAttr('id', id);
-    if(classes && classes.length) addAttr('class', classes.join(' '));
-    if(attributes) {
-      for(var attr in attributes) {
-        var val = attributes[attr];
-        addAttr(attr, val);
-      }
-    }
-    html += '>';
-    return $(html);
-  };
+var Evaluator = function(topNode, viewModels, interface) {
 
   // Replace all mustaches in text with the value of their paths
   var resolveMustaches = function(text, scope) {
@@ -79,7 +61,8 @@ var Evaluator = function(topNode, viewModels) {
       var self = this;
       if(!node) node = self.topNode;
       if(!scope) scope = self.baseScope;
-      var frag = $(document.createDocumentFragment());
+      // var frag = $(document.createDocumentFragment());
+      var frag = node.keyword == 'view' ? interface.createDOMElement('span', null, ['placeholder']) : interface.createFragment();
       var recurse = function(frag, scope) {
         _.each(node.children, function(child) {
           frag.append(self.evaluate(child, scope));
@@ -87,7 +70,7 @@ var Evaluator = function(topNode, viewModels) {
       };
       if(node.type == 'Instruction') {
         var evaluateIf = function(expressions, condition) {
-          var elem = createDOMElement('span', null, ['placeholder']);
+          var elem = interface.createDOMElement('span', null, ['placeholder']);
           frag.append(elem);
           var values = _.map(expressions, function(expr) {
             return evalExpr(scope, expr);
@@ -117,7 +100,7 @@ var Evaluator = function(topNode, viewModels) {
             });
             break;
           case 'for':
-            var elem = createDOMElement('span', null, ['placeholder']);
+            var elem = interface.createDOMElement('span', null, ['placeholder']);
             frag.append(elem);
             var items = evalExpr(scope, node.itemsPath);
             node.paths = [node.itemsPath];
@@ -140,19 +123,21 @@ var Evaluator = function(topNode, viewModels) {
             // var viewModel = eval(node.viewModel);
             var viewModel = viewModels[node.viewModel];
             if(!viewModel) throw 'View model not found: ' + node.viewModel;
+            frag.unfinish && frag.unfinish();
             viewModel.create(function(view) {
               //XXX Set view.$el
               var newScope = scope.clone().addLayer(view);
-              view.$el = $('body');
+              view.el = frag;
               view.scope = newScope;
               recurse(frag, newScope);
+              frag.finish && frag.finish();
             });
             break;
         }
       } else if(node.type == 'HTMLTag') {
         // Don't regenerate script tags as these
         // would be downloaded and reexecuted each time
-        if(node.tag == 'script') return frag;
+        if(node.tag == 'script' && Utils.onClient()) return frag;
         var attributes = {};
         var paths = [];
         // Resolve dynamic attributes
@@ -166,7 +151,7 @@ var Evaluator = function(topNode, viewModels) {
             attributes[key] = value;
           }
         }
-        var elem = createDOMElement(node.tag, node.id, node.classes, attributes);
+        var elem = interface.createDOMElement(node.tag, node.id, node.classes, attributes);
         // Nodes have either content or children
         if(node.content) {
           if(hasMustaches(node.content)) {
@@ -221,6 +206,7 @@ var Evaluator = function(topNode, viewModels) {
     // should the data at one of its paths change
     register: function(elem) {
       var self = this;
+      if(Utils.onServer()) return;
       elem.handlers = [];
       _.each(elem.node.paths, function(path) {
         if(isPath(path)) {
@@ -236,83 +222,6 @@ var Evaluator = function(topNode, viewModels) {
       });
     }
   };
-};
-
-
-var DOMInterface = {
-  createFragment: function() {
-    return $(document.createDocumentFragment());
-  },
-
-  createDOMElement: function(tag, id, classes, attributes) {
-    var elem = document.createElement(tag);
-    elem.id = id;
-    elem.className = classes.join(' ');
-    Utils.each(attributes, function(value, key) {
-      elem.setAttribute(key, value);
-    });
-    return $(elem);
-  }
-};
-
-
-var StreamInterface = {
-  createFragment: function() {
-    return {
-      _fragment: true,
-      children: [],
-
-      append: function(elem) {
-        this.children.push(elem);
-      },
-
-      serialize: function() {
-        var html = '';
-        Utils.each(this.children, function(child) {
-
-        });
-      }
-    };
-  },
-
-  createDOMElement: function(tag, id, classes, attributes) {
-    return {
-      tag: tag,
-      id: id,
-      classes: classes,
-      attributes: attributes,
-      children: [],
-
-      on: function() {
-        // Don't register actions handlers on the server
-      },
-
-      append: function(elem) {
-        this.children.push(elem);
-      },
-
-      serialize: function(fillCb, finalCb) {
-        var html = '<' + this.tag;
-        var addAttr = function(key, val) {
-          if(!val) return;
-          html += ' ' + key + '="' + val + '"';
-        };
-        if(this.id) addAttr('id', this.id);
-        if(this.classes && this.classes.length) addAttr('class', this.classes.join(' '));
-        if(this.attributes) {
-          for(var attr in this.attributes) {
-            var val = this.attributes[attr];
-            addAttr(attr, val);
-          }
-        }
-        html += '>';
-        fillCb(function() {
-
-        });
-        return html.toString();
-      }
-    };
-  }
 };
 
 

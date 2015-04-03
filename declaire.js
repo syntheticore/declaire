@@ -17,7 +17,8 @@ var _ = require('underscore');
 
 var Utils = require('./src/utils.js');
 var Parser = require('./src/parser.js');
-var Evaluator = require('./src/serverEvaluator.js');
+var Evaluator = require('./src/evaluator.js');
+var StreamInterface = require('./src/streamInterface.js');
 var Model = require('./src/model.js');
 var ViewModel = require('./src/viewModel.js');
 var Collection = require('./src/collection.js');
@@ -101,20 +102,11 @@ var viewModels = {};
 var parseLayout = function() {
   Utils.improveExceptions(layout, function() {
     topNode = Parser.parseTemplate(fs.readFileSync(layout, 'utf8'));
-    evaluator = Evaluator(topNode, viewModels);
+    evaluator = Evaluator(topNode, viewModels, StreamInterface());
   });
   evaluator.baseScope.addLayer(mainModel);
 };
 parseLayout();
-
-// Stream chunks of rendered html to callback function
-var render = function(cb) {
-  if(app.get('env') == 'development') parseLayout();
-  cb({
-    data: evaluator.evaluate(),
-    eof: true
-  });
-};
 
 // Make parse tree available to client-side evaluator
 app.get('/template.json', function(req, res) {
@@ -125,9 +117,10 @@ app.get('/template.json', function(req, res) {
 app.get('/pages/:page', function(req, res) {
   res.setHeader('Content-Type', 'text/html');
   res.write('<!DOCTYPE html><html>');
+  if(app.get('env') == 'development') parseLayout();
   mainModel.set('_page', '/pages/' + req.params.page);
-  console.log(mainModel);
-  render(function(chunk) {
+  // Stream chunks of rendered html
+  evaluator.evaluate().render(function(chunk) {
     res.write(chunk.data);
     if(chunk.eof) {
       res.write('</html>');
