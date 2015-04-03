@@ -378,7 +378,5 @@ module.exports = Model;
 
 // TODO:
 // Local-/remote-id handling
-// Collections
-// Model relations
 // Access permissions
 // Selectively update data structures using deep merge

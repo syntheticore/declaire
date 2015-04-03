@@ -65,8 +65,8 @@ module.exports = function(options, cb) {
     },
 
     // Declare a new view model type
-    ViewModel: function(name, reference) {
-      var vm = ViewModel(reference);
+    ViewModel: function(name, reference, constructor) {
+      var vm = ViewModel(reference, constructor);
       viewModels[name] = vm;
       return vm;
     },
@@ -105,7 +105,6 @@ module.exports = function(options, cb) {
 // TODO:
 // Router
 // Template imports
-// Server rendering/streaming
 // Else clauses
 // Remote execution
 // Load js using async attribute

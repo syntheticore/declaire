@@ -174,8 +174,8 @@ module.exports = function(options, cb) {
         },
 
         // Declare a new view model
-        ViewModel: function(name, reference) {
-          var vm = ViewModel(reference);
+        ViewModel: function(name, reference, constructor) {
+          var vm = ViewModel(reference, constructor);
           viewModels[name] = vm;
           return vm;
         },
