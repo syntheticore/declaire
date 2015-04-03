@@ -34,6 +34,22 @@ exports.map = function(items, cb) {
   return out;
 };
 
+exports.contains = function(items, item) {
+  return items.indexOf(item) != -1;
+};
+
+exports.times = function(n, cb) {
+  for(var i = 0; i < n; i++) {
+    cb(i);
+  }
+};
+
+exports.zip = function(items1, items2, cb) {
+  exports.each(items1, function(item1, i) {
+    cb(item1, items2[i]);
+  });
+};
+
 exports.select = function(items, cb) {
   var out = Array.isArray(items) ? [] : {};
   exports.each(items, function(item, key) {

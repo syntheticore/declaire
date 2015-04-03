@@ -1,6 +1,5 @@
 var Utils = require('./utils.js');
 var Scope = require('./scope.js');
-var _ = require('underscore');
 
 
 var Evaluator = function(topNode, viewModels, interface) {
@@ -8,7 +7,7 @@ var Evaluator = function(topNode, viewModels, interface) {
   // Replace all mustaches in text with the value of their paths
   var resolveMustaches = function(text, scope) {
     var paths = [];
-    _.each(Utils.scan(text, /{(.*?)}/g).reverse(), function(m) {
+    Utils.each(Utils.scan(text, /{(.*?)}/g).reverse(), function(m) {
       var i = m.index;
       var l = m[0].length;
       var expr = m[1];
@@ -34,15 +33,23 @@ var Evaluator = function(topNode, viewModels, interface) {
   // which can either be a JS literal or a path
   var evalExpr = function(scope, expr) {
     var m;
+    // Boolean
+    if(expr == 'true') {
+      return true;
+    } else if(expr == 'false') {
+      return false;
+    // Null
+    } else if(expr == 'null') {
+      return null;
     // Number
-    if(!isNaN(expr)) {
+    } else if(!isNaN(expr)) {
       return parseFloat(expr);
     // String
     } else if(m = (expr.match && expr.match(/(["'])(.*)\1/))) {
       return m[2];
     // Array
     } else if(m = expr.match(/\[(.*)\]/)) {
-      return _.map(m[1].split(','), function(item) {
+      return Utils.map(m[1].split(','), function(item) {
         return evalExpr(scope, item);
       });
     } else {
@@ -64,7 +71,7 @@ var Evaluator = function(topNode, viewModels, interface) {
       // var frag = $(document.createDocumentFragment());
       var frag = node.keyword == 'view' ? interface.createDOMElement('span', null, ['placeholder']) : interface.createFragment();
       var recurse = function(frag, scope) {
-        _.each(node.children, function(child) {
+        Utils.each(node.children, function(child) {
           frag.append(self.evaluate(child, scope));
         });
       };
@@ -72,7 +79,7 @@ var Evaluator = function(topNode, viewModels, interface) {
         var evaluateIf = function(expressions, condition) {
           var elem = interface.createDOMElement('span', null, ['placeholder']);
           frag.append(elem);
-          var values = _.map(expressions, function(expr) {
+          var values = Utils.map(expressions, function(expr) {
             return evalExpr(scope, expr);
           });
           node.paths = expressions;
@@ -160,7 +167,7 @@ var Evaluator = function(topNode, viewModels, interface) {
           if(hasMustaches(node.content)) {
             var resolved = resolveMustaches(node.content, scope);
             elem.text(resolved.text);
-            paths = _.union(paths, resolved.paths);
+            paths = Utils.merge(paths, resolved.paths);
           } else {
             elem.text(node.content);
           }
@@ -197,7 +204,7 @@ var Evaluator = function(topNode, viewModels, interface) {
     // Replace DOM from this node downward with an updated version
     updateElement: function(elem) {
       //XXX Unbind event handlers for all elements below this one first
-      _.each(elem.handlers, function(h) {
+      Utils.each(elem.handlers, function(h) {
         Utils.defer(function() {
           h.obj.off(h.handler);
         });
@@ -211,7 +218,7 @@ var Evaluator = function(topNode, viewModels, interface) {
       var self = this;
       if(Utils.onServer()) return;
       elem.handlers = [];
-      _.each(elem.node.paths, function(path) {
+      Utils.each(elem.node.paths, function(path) {
         if(isPath(path)) {
           var reference = elem.scope.resolvePath(path).ref;
           if(reference.obj.model) {

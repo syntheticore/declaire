@@ -80,7 +80,7 @@ var Instance = function(dataInterface, pubSub) {
         // Emit change events for computed properties as well
         //XXX Don't emit multiple times if CP depends on several values
         for(var k in this.computedProperties) {
-          if(_.contains(this.computedProperties[k], key)) {
+          if(Utils.contains(this.computedProperties[k], key)) {
             this.emit('change', k);
           }
         }
@@ -102,7 +102,7 @@ var Instance = function(dataInterface, pubSub) {
 
     // Are local modifications present that need to be saved?
     isDirty: function() {
-      return !!_.keys(this.data.local).length;
+      return !!Object.keys(this.data.local).length;
     },
 
     // Discard local modifications and revert to server state

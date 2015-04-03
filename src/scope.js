@@ -1,4 +1,5 @@
-var _ = require('underscore');
+var Utils = require('./utils.js');
+
 
 // A hierarchical structure for the lookup of keys that act like
 // local variables in a programming language
@@ -48,7 +49,7 @@ var Scope = function() {
       var lastObj = self.getFirstRespondent(firstSegment);
       var obj = self.readAttribute(lastObj, firstSegment);
       // Then follow the regular object structure
-      _.each(segments, function(segment) {
+      Utils.each(segments, function(segment) {
         lastObj = obj;
         obj = self.readAttribute(obj, segment);
       });

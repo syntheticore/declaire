@@ -13,7 +13,6 @@ var stylus = require('stylus');
 var mongo = require('mongodb');
 var browserify = require('browserify');
 var Minifyify = require('minifyify');
-var _ = require('underscore');
 
 var Utils = require('./src/utils.js');
 var Parser = require('./src/parser.js');
@@ -141,10 +140,10 @@ var publisher;
 
 // Server-side implementation of Declaire API
 module.exports = function(options, cb) {
-  options = _.defaults(options, {
+  options = Utils.merge({
     mongoUrl: process.env.MONGOHQ_URL || process.env.MONGOLAB_URI || 'mongodb://127.0.0.1:27017/declaire',
     beforeConnect: function(app, db, cb) { cb() }
-  });
+  }, options);
   if(options.mongoDevUrl && app.get('env') == 'development') {
     options.mongoUrl = options.mongoDevUrl;
   }

@@ -1,4 +1,3 @@
-var _ = require('underscore');
 var Utils = require('./utils');
 
 
@@ -18,7 +17,7 @@ var Parser = {
     };
     var lastNode = top;
     var stack = [top];
-    _.each(lines, function(line) {
+    Utils.each(lines, function(line) {
       lineNum++;
       if(!line) return;
       // Remove indentation
@@ -41,7 +40,7 @@ var Parser = {
         if(lastNode.content) throw({message: 'Elements cannot have both text and children elements', lineNum: lineNum});
         stack.push(lastNode);
       } else if(indent < lastIndent) {
-        _.times(lastIndent - indent, function() {
+        Utils.times(lastIndent - indent, function() {
           stack.pop();
         });
       }
@@ -92,12 +91,12 @@ var Parser = {
       } else {
         attrDefinitions = inParens;
       }
-      _.each(Utils.scan(attrDefinitions, /([\w-]+?)=(['"])(.+?)\2\s?/g), function(m) { // '
+      Utils.each(Utils.scan(attrDefinitions, /([\w-]+?)=(['"])(.+?)\2\s?/g), function(m) { // '
         var key = m[1];
         var value = m[3];
         attributes[key] = value;
       });
-      _.each(Utils.scan(actionDefinitions, /{{(\w+)\s(\w+)\s(\w+)}}/g), function(m) {
+      Utils.each(Utils.scan(actionDefinitions, /{{(\w+)\s(\w+)\s(\w+)}}/g), function(m) {
         actions[m[2]] = m[3];
       });
     }

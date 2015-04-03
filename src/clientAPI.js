@@ -6,6 +6,7 @@ var ViewModel = require('./viewModel.js');
 var Collection = require('./collection.js');
 var Query = require('./query.js');
 var DataInterface = require('./clientDataInterface.js');
+var Router = require('./router.js');
 
 var localStore = require('./localStore.js')();
 
@@ -82,28 +83,22 @@ module.exports = function(options, cb) {
   // called as soon as all models have been defined
   cb(api, function(cbb) {
     var installed = false;
-    var Router = Backbone.Router.extend({
-      routes: {
-        'pages/:page': function(page) {
-          mainModel.set('_page', window.location.pathname);
-          if(!installed) {
-            install(function() {
-              installed = true;
-              cbb && cbb();
-            });
-          }
-        }
+    var router = Router();
+    router.on('/pages/:page', function(page) {
+      console.log(page);
+      mainModel.set('_page', page);
+      if(!installed) {
+        install(function() {
+          installed = true;
+          cbb && cbb();
+        });
       }
     });
-    new Router();
-    Backbone.history.start({pushState: true});
-    cbb && cbb();
   });
 };
 
 
 // TODO:
-// Router
 // Template imports
 // Else clauses
 // Remote execution

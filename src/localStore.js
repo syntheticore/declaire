@@ -1,6 +1,22 @@
 var Utils = require('./utils.js');
 
 
+var each = function(cb) {
+  for(var i = 0; i < localStorage.length; i++) {
+    var key = localStorage.key(i);
+    var value = localStorage.getItem(key);
+    cb(value, key);
+  }
+};
+
+var allKeys = function() {
+  var keys = [];
+  each(function(value, key) {
+    keys.push(key);
+  });
+  return keys;
+};
+
 var LocalStore = function() {
   // Retrieve object data from local storage
   var get = function(key) {
@@ -32,7 +48,7 @@ var LocalStore = function() {
   // Return all objects in local storage that match the given query
   var query = function(query) {
     var out = {};
-    Utils.each(localStorage, function(item, key) {
+    each(function(item, key) {
       var item = get(key);
       if(matches(item, query)) out[key] = item;
     });
@@ -44,7 +60,7 @@ var LocalStore = function() {
   var purge = function(maxItems, deletePercentage) {
     maxItems = maxItems || 100;
     deletePercentage = deletePercentage || 20;
-    var keys = Object.keys(localStorage);
+    var keys = allKeys();
     if(keys.length > maxItems) {
       // Sort by descending popularity
       keys.sort(function(a, b) {
