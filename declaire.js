@@ -123,6 +123,7 @@ app.get('/pages/:page', function(req, res) {
   evaluator.evaluate().render(function(chunk) {
     console.log(chunk);
     res.write(chunk.data);
+    res.flush();
     if(chunk.eof) {
       res.write('</html>');
       res.end();
