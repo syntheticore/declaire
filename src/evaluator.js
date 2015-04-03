@@ -104,6 +104,7 @@ var Evaluator = function(topNode, viewModels, interface) {
             frag.append(elem);
             var items = evalExpr(scope, node.itemsPath);
             node.paths = [node.itemsPath];
+            frag.unfinish && frag.unfinish();
             items.each(function(item) {
             // for(var i in items) {
             //   var item = items[i];
@@ -114,6 +115,8 @@ var Evaluator = function(topNode, viewModels, interface) {
                 recurse(elem, newScope);
               }
             // }
+            }, function() {
+              frag.finish && frag.finish();
             });
             elem.node = node;
             elem.scope = scope;

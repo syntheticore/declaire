@@ -35,12 +35,13 @@ var Query = function(subscriber, modelOrCollection, query) {
       getItems(true, cb);
     },
 
-    each: function(cb) {
+    each: function(cb, finalCb) {
       var self = this;
       getItems(false, function(items) {
         for(var i in items) {
           cb(items[i]);
         }
+        finalCb && finalCb();
       });
     },
 

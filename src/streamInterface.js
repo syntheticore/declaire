@@ -2,7 +2,7 @@ var Utils = require('./utils.js');
 
 
 var StreamInterface = function() {
-  var pending = [];
+  var pending = 0;
   var streamCb;
   var topNode;
 
@@ -36,12 +36,12 @@ var StreamInterface = function() {
 
         unfinish: function() {
           this.finished = false;
-          pending.push(this);
+          pending++;
         },
 
         finish: function() {
           this.finished = true;
-          pending.splice(pending.indexOf(this), 1);
+          pending--;
           topNode && topNode.render();
         },
 
@@ -82,7 +82,7 @@ var StreamInterface = function() {
               break;
             }
           }
-          if(!this.bottomSerialized && !terminated && (!pending.length || !this.children.length) && !this._fragment) {
+          if(!this.bottomSerialized && !terminated && !this._fragment) {
             html += '</' + this.tag + '>';
             this.bottomSerialized = true;
           }
@@ -95,7 +95,7 @@ var StreamInterface = function() {
             topNode = this;
           }
           var segment = this.serialize().html;
-          streamCb({data: segment, eof: !pending.length});
+          streamCb({data: segment, eof: !pending});
         }
       };
     }

@@ -121,6 +121,7 @@ app.get('/pages/:page', function(req, res) {
   mainModel.set('_page', '/pages/' + req.params.page);
   // Stream chunks of rendered html
   evaluator.evaluate().render(function(chunk) {
+    console.log(chunk);
     res.write(chunk.data);
     if(chunk.eof) {
       res.write('</html>');

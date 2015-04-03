@@ -7,7 +7,7 @@ var eventMethods = require('./events.js');
 
 var localStore;
 // Use a dummy local store on the server, that never caches values
-if(Utils.onServer() || true) {
+if(Utils.onServer()) {
   localStore = {
     get: function(key) {
       return undefined;
@@ -162,6 +162,7 @@ var Instance = function(dataInterface, pubSub) {
           //XXX Rebuild collections
           //XXX Trigger change events
           self.data.remote = data;
+          localStore.save(self.localId, self.data);
           cb(self);
           self.emit('fetch');
         }
