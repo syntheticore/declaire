@@ -47,21 +47,23 @@ var StreamInterface = function() {
 
         serialize: function() {
           var html = '';
-          if(!this.topSerialized && !this._fragment) {
-            html += '<' + this.tag;
-            var addAttr = function(key, val) {
-              if(!val) return;
-              html += ' ' + key + '="' + val + '"';
-            };
-            if(this.id) addAttr('id', this.id);
-            if(this.classes && this.classes.length) addAttr('class', this.classes.join(' '));
-            if(this.attributes) {
-              for(var attr in this.attributes) {
-                var val = this.attributes[attr];
-                addAttr(attr, val);
+          if(!this.topSerialized) {
+            if(!this._fragment) {
+              html += '<' + this.tag;
+              var addAttr = function(key, val) {
+                if(!val) return;
+                html += ' ' + key + '="' + val + '"';
+              };
+              if(this.id) addAttr('id', this.id);
+              if(this.classes && this.classes.length) addAttr('class', this.classes.join(' '));
+              if(this.attributes) {
+                for(var attr in this.attributes) {
+                  var val = this.attributes[attr];
+                  addAttr(attr, val);
+                }
               }
+              html += '>';
             }
-            html += '>';
             if(this.tekst) {
               html += this.tekst;
             }

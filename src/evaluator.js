@@ -195,7 +195,7 @@ var Evaluator = function(topNode, viewModels, interface) {
         // }
         frag.append(elem);
       } else if(node.type == 'Text') {
-        frag.append(node.content);
+        frag.text(node.content);
       } else if(node.type == 'TOP') {
         recurse(frag, scope);
       }
