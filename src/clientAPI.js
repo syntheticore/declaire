@@ -85,7 +85,6 @@ module.exports = function(options, cb) {
     var installed = false;
     var router = Router();
     router.on('/pages/:page', function(page) {
-      console.log(page);
       mainModel.set('_page', page);
       if(!installed) {
         install(function() {

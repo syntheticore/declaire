@@ -186,7 +186,8 @@ var Evaluator = function(topNode, viewModels, interface) {
           for(var action in node.actions) {
             var method = node.actions[action];
             //XXX Remove handler when a parent gets updated
-            elem.on(action, function() {
+            elem.on(action, function(e) {
+              e.preventDefault();
               scope.resolvePath(method);
               //XXX Read text from inputs and supply as argument to method
             });

@@ -17,6 +17,7 @@ var allKeys = function() {
   return keys;
 };
 
+
 var LocalStore = function() {
   // Retrieve object data from local storage
   var get = function(key) {
