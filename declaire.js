@@ -117,7 +117,7 @@ app.get('/pages/:page', function(req, res) {
   res.setHeader('Content-Type', 'text/html');
   res.write('<!DOCTYPE html><html>');
   if(app.get('env') == 'development') parseLayout();
-  mainModel.set('_page', '/pages/' + req.params.page);
+  mainModel.set('_page', req.params.page);
   // Stream chunks of rendered html
   evaluator.evaluate().render(function(chunk) {
     console.log(chunk);
