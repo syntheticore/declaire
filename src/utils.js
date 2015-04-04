@@ -10,16 +10,6 @@ exports.onClient = function(cb) {
   return client;
 };
 
-// Return all matches of the given regex
-exports.scan = function(str, re) {
-  var matches = [];
-  var m;
-  while(m = re.exec(str)) {
-    matches.push(m);
-  }
-  return matches;
-};
-
 exports.each = function(items, cb) {
   for(var key in items) {
     cb(items[key], key);
@@ -32,10 +22,6 @@ exports.map = function(items, cb) {
     out[key] = cb(item, key);
   });
   return out;
-};
-
-exports.contains = function(items, item) {
-  return items.indexOf(item) != -1;
 };
 
 exports.times = function(n, cb) {
@@ -64,6 +50,51 @@ exports.all = function(items, cb) {
   return exports.select(items, cb).length == items.length;
 };
 
+exports.contains = function(items, item) {
+  return items.indexOf(item) != -1;
+};
+
+exports.union = function(items1, items2) {
+  var out = [];
+  exports.each(items1, function(item) {
+    out.push(item);
+  });
+  exports.each(items2, function(item) {
+    out.push(item);
+  });
+  return out;
+};
+
+// Return new object with the fields from both given objects
+exports.merge = function(obj1, obj2) {
+  var obj = {};
+  for(var i in obj1) {
+    obj[i] = obj1[i];
+  }
+  for(var i in obj2) {
+    obj[i] = obj2[i];
+  }
+  return obj;
+};
+
+exports.deepMerge = function(obj1, obj2) {
+  return exports.merge(obj1, obj2);
+};
+
+exports.defer = function(cb, millis) {
+  setTimeout(cb, millis || 0);
+};
+
+// Return all matches of the given regex
+exports.scan = function(str, re) {
+  var matches = [];
+  var m;
+  while(m = re.exec(str)) {
+    matches.push(m);
+  }
+  return matches;
+};
+
 exports.uuid = function() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
     var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
@@ -84,35 +115,4 @@ exports.improveExceptions = function(filename, cb) {
       throw('Error: ' + filename + ':' + e.lineNum + ': ' + e.message);
     }
   }
-};
-
-// Return new object with the fields from both given objects
-exports.merge = function(obj1, obj2) {
-  var obj = {};
-  for(var i in obj1) {
-    obj[i] = obj1[i];
-  }
-  for(var i in obj2) {
-    obj[i] = obj2[i];
-  }
-  return obj;
-};
-
-exports.union = function(items1, items2) {
-  var out = [];
-  exports.each(items1, function(item) {
-    out.push(item);
-  });
-  exports.each(items2, function(item) {
-    out.push(item);
-  });
-  return out;
-};
-
-exports.deepMerge = function(obj1, obj2) {
-  return exports.merge(obj1, obj2);
-};
-
-exports.defer = function(cb, millis) {
-  setTimeout(cb, millis || 0);
 };
