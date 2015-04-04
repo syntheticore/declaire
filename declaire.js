@@ -55,7 +55,7 @@ app.get('/', function(req, res) {
 // Serve client-side implementation of Declaire
 var bundle;
 var prepareBundle = function(cb) {
-  if(app.get('env') == 'production' && bundle) return cb(bundle);
+  if(bundle) return cb(bundle);
   // Use executed application as main script on the client as well
   var appPath = process.argv[1];
   var code = fs.readFileSync(appPath).toString();
@@ -67,7 +67,9 @@ var prepareBundle = function(cb) {
   fs.writeFileSync(outputPath, code);
   var b = new browserify({debug: true});
   b.add(outputPath);
-  b.ignore('newrelic'); //XXX Add more common, server-only packages
+  b.exclude('newrelic');
+  b.exclude('express');
+  b.exclude('connect');
   if(app.get('env') == 'production') b.plugin(Minifyify, {output: 'public/bundle.js.map', map: 'bundle.js.map'});
   b.bundle(function(err, buf) {
     if(err) throw err;
