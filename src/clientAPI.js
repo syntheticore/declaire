@@ -1,3 +1,4 @@
+var $ = require('jquery');
 var Utils = require('./utils.js');
 var Evaluator = require('./evaluator.js');
 var DOMInterface = require('./domInterface.js');
