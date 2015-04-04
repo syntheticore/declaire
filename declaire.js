@@ -119,7 +119,7 @@ app.get('/pages/:page', function(req, res) {
   if(app.get('env') == 'development') parseLayout();
   mainModel.set('_page', req.params.page);
   // Stream chunks of rendered html
-  evaluator.evaluate().render(function(chunk) {
+  evaluator.render().render(function(chunk) {
     console.log(chunk);
     res.write(chunk.data);
     res.flush();

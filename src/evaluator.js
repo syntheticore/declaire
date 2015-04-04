@@ -58,17 +58,45 @@ var Evaluator = function(topNode, viewModels, interface) {
     }
   };
 
+  var renderCb;
+  var pending = 0;
+
+  var unfinish = function(frag) {
+    frag.unfinish && frag.unfinish();
+    pending++;
+  };
+
+  var finish = function(frag) {
+    frag.finish && frag.finish();
+    pending--;
+    if(!pending) {
+      renderCb && renderCb();
+      renderCb = null;
+    }
+  };
+
   return {
-    topNode: topNode,
     baseScope: Scope(),
+
+    // Render the complete template
+    // Returns a document fragment on the client and a virtual DOM on the server
+    // The optional callback is called when all views have been fully resolved
+    render: function(cb) {
+      renderCb = cb;
+      var frag = this.evaluate(topNode, this.baseScope);
+      if(!pending) {
+        Utils.defer(function() {
+          renderCb && renderCb();
+          renderCb = null;
+        });
+      }
+      return frag;
+    },
 
     // Evaluate the given node in the context of the given scope
     // Returns a document fragment
     evaluate: function(node, scope) {
       var self = this;
-      if(!node) node = self.topNode;
-      if(!scope) scope = self.baseScope;
-      // var frag = $(document.createDocumentFragment());
       var frag = node.keyword == 'view' ? interface.createDOMElement('span', null, ['placeholder']) : interface.createFragment();
       var recurse = function(frag, scope) {
         Utils.each(node.children, function(child) {
@@ -111,36 +139,32 @@ var Evaluator = function(topNode, viewModels, interface) {
             frag.append(elem);
             var items = evalExpr(scope, node.itemsPath);
             node.paths = [node.itemsPath];
-            frag.unfinish && frag.unfinish();
+            unfinish(frag);
             items.each(function(item) {
-            // for(var i in items) {
-            //   var item = items[i];
               var itemData = {};
               itemData[node.itemPath] = item;
               if(node.children.length) {
                 var newScope = scope.clone().addLayer(itemData);
                 recurse(elem, newScope);
               }
-            // }
             }, function() {
-              frag.finish && frag.finish();
+              finish(frag);
             });
             elem.node = node;
             elem.scope = scope;
             self.register(elem);
             break;
           case 'view':
-            // var viewModel = eval(node.viewModel);
             var viewModel = viewModels[node.viewModel];
             if(!viewModel) throw 'View model not found: ' + node.viewModel;
-            frag.unfinish && frag.unfinish();
+            unfinish(frag);
             viewModel.create(function(view) {
               //XXX Set view.$el
               var newScope = scope.clone().addLayer(view);
               view.el = frag;
               view.scope = newScope;
               recurse(frag, newScope);
-              frag.finish && frag.finish();
+              finish(frag);
             });
             break;
         }

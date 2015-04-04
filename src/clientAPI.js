@@ -24,11 +24,12 @@ var mainModel = Model('_main', {
 var install = function(cb) {
   $.getJSON('/template.json', function(topNode) {
     var body = topNode.children[1];
-    var evaluator = Evaluator(body, viewModels, DOMInterface);
+    var evaluator = Evaluator(body, viewModels, DOMInterface());
     evaluator.baseScope.addLayer(mainModel);
-    var frag = evaluator.evaluate();
-    $('body').replaceWith(frag);
-    cb();
+    var frag = evaluator.render(function() {
+      $('body').replaceWith(frag);
+      cb();
+    });
   });
 };
 
@@ -87,8 +88,8 @@ module.exports = function(options, cb) {
     router.on('/pages/:page', function(page) {
       mainModel.set('_page', page);
       if(!installed) {
+        installed = true;
         install(function() {
-          installed = true;
           cbb && cbb();
         });
       }

@@ -49,8 +49,6 @@ var Parser = {
       lastIndent = indent;
       lastNode = node;
     });
-    // var template = Object.create(Template);
-    // template.topNode = top;
     return top;
   },
 
