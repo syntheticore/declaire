@@ -1,6 +1,6 @@
 {
   "name": "declaire",
-  "version": "0.1.26",
+  "version": "0.1.27",
   "author": "Björn Breitgoff <syntheticore@gmail.com>",
   "description": "Declarative, full-stack web application framework",
   "main": "declaire.js",
