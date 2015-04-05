@@ -1,8 +1,9 @@
 {
   "name": "declaire",
   "version": "0.1.26",
-  "author": "Björn Breitgoff <syntheticore@gmail.com>",
   "description": "Declarative, full-stack web application framework",
+  "author": "Björn Breitgoff <syntheticore@gmail.com>",
+  "homepage": "https://github.com/syntheticore/declaire",
   "main": "declaire.js",
   "dependencies": {
     "body-parser": "*",
@@ -23,6 +24,13 @@
     "serve-favicon": "*",
     "stylus": "*"
   },
+  "devDependencies": {
+    "chai": "^2.2.0",
+    "mocha": "^2.2.1"
+  },
+  "scripts": {
+    "test": "make test"
+  },
   "repository": {
     "type": "git",
     "url": "git://github.com/syntheticore/declaire.git"
@@ -37,6 +45,5 @@
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/syntheticore/declaire/issues"
-  },
-  "homepage": "https://github.com/syntheticore/declaire"
+  }
 }
