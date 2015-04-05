@@ -55,7 +55,7 @@ app.get('/', function(req, res) {
 // Serve client-side implementation of Declaire
 var bundle;
 var prepareBundle = function(cb) {
-  if(app.get('env') == 'production' && bundle) return cb(bundle);
+  if(bundle) return cb(bundle);
   // Use executed application as main script on the client as well
   var appPath = process.argv[1];
   var code = fs.readFileSync(appPath).toString();
@@ -67,7 +67,9 @@ var prepareBundle = function(cb) {
   fs.writeFileSync(outputPath, code);
   var b = new browserify({debug: true});
   b.add(outputPath);
-  b.ignore('newrelic'); //XXX Add more common, server-only packages
+  b.ignore('newrelic');
+  b.ignore('express');
+  b.ignore('connect');
   if(app.get('env') == 'production') b.plugin(Minifyify, {output: 'public/bundle.js.map', map: 'bundle.js.map'});
   b.bundle(function(err, buf) {
     if(err) throw err;
@@ -115,7 +117,6 @@ app.get('/template.json', function(req, res) {
 // Render layout for the requested page
 app.get('/pages/:page', function(req, res) {
   res.setHeader('Content-Type', 'text/html');
-  res.write('<!DOCTYPE html><html>');
   if(app.get('env') == 'development') parseLayout();
   mainModel.set('_page', req.params.page);
   // Stream chunks of rendered html
@@ -124,7 +125,6 @@ app.get('/pages/:page', function(req, res) {
     res.write(chunk.data);
     res.flush();
     if(chunk.eof) {
-      res.write('</html>');
       res.end();
     }
   });
@@ -183,7 +183,10 @@ module.exports = function(options, cb) {
 
         Query: function(modelOrCollection, query) {
           return Query(null, modelOrCollection, query);
-        }
+        },
+
+        Utils: Utils,
+        RSVP: require('rsvp')
       };
 
       options.beforeConnect(app, db, function() {
