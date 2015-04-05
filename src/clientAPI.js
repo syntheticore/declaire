@@ -78,7 +78,10 @@ module.exports = function(options, cb) {
 
     Query: function(modelOrCollection, query) {
       return Query(subscriber, modelOrCollection, query);
-    }
+    },
+
+    Utils: Utils,
+    RSVP: require('rsvp')
   };
 
   // Return the API methods and a starter function to be

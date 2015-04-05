@@ -55,9 +55,13 @@ var StreamInterface = function() {
           if(cb) {
             streamCb = cb;
             topNode = this;
+            streamCb({data: '<!DOCTYPE html><html>', eof: false});
           }
           var segment = this.serialize().html;
-          streamCb({data: segment, eof: !pending});
+          streamCb({data: segment, eof: false});
+          if(!pending) {
+            streamCb({data: '</html>', eof: true});
+          }
         },
 
         // Serialize recursively, but stop as soon as
