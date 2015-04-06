@@ -37,3 +37,25 @@ describe('#zip', function() {
     Utils.zip([1, 3], [2, 4]).should.equal([1, 2, 3, 4]);
   });
 });
+
+describe('#union', function() {
+  it('returns new object containing the values of both arguments', function() {
+    Utils.union([1, 2], [3, 4]).should.eql([1, 2, 3, 4]);
+  });
+});
+
+describe('#map', function() {
+  it('returns a list of doubled values', function() {
+    Utils.map([1, 2], function(n) {
+      return n * 2;
+    }).should.eql([2, 4]);
+  });
+});
+
+describe('#select', function() {
+  it('returns a list of filtered values', function() {
+    Utils.select([1, 2, 3, 4], function(n) {
+      return n % 2 == 0;
+    }).should.eql([2, 4]);
+  });
+});
