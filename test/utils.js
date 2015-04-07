@@ -45,7 +45,7 @@ describe('#union', function() {
 });
 
 describe('#map', function() {
-  it('returns a list of doubled values', function() {
+  it('returns a list of mutated values', function() {
     Utils.map([1, 2], function(n) {
       return n * 2;
     }).should.eql([2, 4]);

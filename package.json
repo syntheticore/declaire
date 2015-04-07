@@ -1,6 +1,6 @@
 {
   "name": "declaire",
-  "version": "0.1.27",
+  "version": "0.1.28",
   "description": "Declarative, full-stack web application framework",
   "author": "Björn Breitgoff <syntheticore@gmail.com>",
   "homepage": "https://github.com/syntheticore/declaire",
@@ -42,7 +42,10 @@
     "streaming",
     "templating"
   ],
-  "license": "MIT",
+  "license": {
+    "type": "MIT",
+    "url": "https://github.com/syntheticore/declaire/blob/master/LICENSE"
+  },
   "bugs": {
     "url": "https://github.com/syntheticore/declaire/issues"
   }

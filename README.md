@@ -19,8 +19,6 @@ Declarative, full-stack web application framework
 
   npm test
 
-## Contributing
+## License
 
-## Release History
-
-* 0.1.0 Initial release
+  MIT
