@@ -373,10 +373,3 @@ var separateMethods = function(reference) {
 
 
 module.exports = Model;
-
-
-
-// TODO:
-// Local-/remote-id handling
-// Access permissions
-// Selectively update data structures using deep merge

@@ -100,10 +100,3 @@ module.exports = function(options, cb) {
     });
   });
 };
-
-
-// TODO:
-// Template imports
-// Else clauses
-// Remote execution
-// Load js using async attribute
