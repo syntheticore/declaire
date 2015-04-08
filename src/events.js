@@ -39,8 +39,7 @@ module.exports = {
   },
 
   // Call all handlers that listen to this event
-  // Data is only used if a key is given
-  emit: function(action, key, data) {
+  emit: function(action, key) {
     var self = this;
     Utils.defer(function() {
       // console.log('emit ' + action + key);
@@ -49,7 +48,7 @@ module.exports = {
         if(l.action == action) {
           if(key) {
             if(l.key == key) {
-              l.cb(data);
+              l.cb();
             }
           } else {
             if(!l.key) {

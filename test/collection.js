@@ -28,10 +28,10 @@ describe('Collection', function() {
       c.length().should.equal(1);
     });
 
-    it('should report its new length when an item is added', function() {
+    it('should report its new length when an item is added', function(done) {
       var c = Collection();
-      c.on('change:length', function(length) {
-        length.should.equal(1);
+      c.on('change:length', function() {
+        c.length().should.equal(1);
         done();
       });
       c.add(null);

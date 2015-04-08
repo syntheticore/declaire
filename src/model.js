@@ -97,7 +97,7 @@ var Instance = function(dataInterface, pubSub) {
     // The current state of the object,
     // including local modifications
     properties: function() {
-      return Utils.merge(this.model.defaults, Utils.merge(this.data.remote, this.data.local));
+      return Utils.merge(this.data.remote, this.data.local);
     },
 
     // Are local modifications present that need to be saved?
