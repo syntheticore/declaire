@@ -47,7 +47,6 @@ app.use(express.static(__dirname + '/../../public'));
 app.use(compression());
 app.use(require('jumanji'));
 
-// Serve static pages with a less heavyweight layout
 app.get('/', function(req, res) {
   res.redirect('/pages/index');
 });
