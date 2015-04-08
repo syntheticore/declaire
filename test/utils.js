@@ -1,4 +1,4 @@
-var should = require('chai').should();
+require('chai').should();
 var Utils = require('../src/utils.js');
 
 

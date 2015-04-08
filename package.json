@@ -25,8 +25,10 @@
     "stylus": "*"
   },
   "devDependencies": {
+    "mocha": "^2.2.1",
     "chai": "^2.2.0",
-    "mocha": "^2.2.1"
+    "istanbul": "^0.3.13",
+    "coveralls": "^2.11.2"
   },
   "scripts": {
     "test": "make test"
