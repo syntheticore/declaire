@@ -1,4 +1,4 @@
-Declaire.js [![npm version](https://badge.fury.io/js/declaire@2x.png)](http://badge.fury.io/js/declaire) [![Build Status](https://travis-ci.org/syntheticore/declaire.svg?branch=master)](https://travis-ci.org/syntheticore/declaire) [![Dependency Status](https://david-dm.org/syntheticore/declaire.svg)](https://david-dm.org/syntheticore/declaire)
+Declaire.js [![npm version](https://badge.fury.io/js/declaire.svg)](http://badge.fury.io/js/declaire) [![Build Status](https://travis-ci.org/syntheticore/declaire.svg?branch=master)](https://travis-ci.org/syntheticore/declaire) [![Dependency Status](https://david-dm.org/syntheticore/declaire.svg)](https://david-dm.org/syntheticore/declaire)
 =========
 
 Declarative, full-stack web application framework
