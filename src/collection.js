@@ -10,9 +10,12 @@ var Collection = function(array) {
     listeners: [],
 
     add: function(item) {
-      items.push(item);
+      var itms = Array.isArray(item) ? item : [item];
+      Utils.each(itms, function(item) {
+        items.push(item);
+      });
       this.emit('add');
-      this.emit('change', 'length', this.length());
+      this.emit('change', 'length');
       this.emit('change');
       return this;
     },
@@ -20,7 +23,7 @@ var Collection = function(array) {
     remove: function(item) {
       items.splice(items.indexOf(item), 1);
       this.emit('remove');
-      this.emit('change', 'length', this.length());
+      this.emit('change', 'length');
       this.emit('change');
       return this;
     },
