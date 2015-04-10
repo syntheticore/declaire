@@ -149,6 +149,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
                   recurse(elem, newScope);
                 }
               });
+              self.register(elem);
             };
             var items = evalExpr(scope, node.itemsPath);
             if(items.klass == 'Query') {
@@ -162,7 +163,6 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             } else {
               loop(items);
             }
-            self.register(elem);
             break;
           case 'view':
             var viewModel = viewModels[node.viewModel];
