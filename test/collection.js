@@ -28,7 +28,7 @@ describe('Collection', function() {
       c.length().should.equal(1);
     });
 
-    it('should report its new length when an item is added', function(done) {
+    it('reports its new length when an item is added', function(done) {
       var c = Collection();
       c.on('change:length', function() {
         c.length().should.equal(1);

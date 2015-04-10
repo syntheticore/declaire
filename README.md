@@ -29,5 +29,6 @@ Declarative, full-stack web application framework
   - [ ] Update local storage IDs
   - [ ] Local queries
   - [ ] Selectively update data structures using deep merge
+  - [ ] History & Rollback
   - [ ] Access permissions
   - [ ] Remote blocks
