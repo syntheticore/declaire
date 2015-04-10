@@ -4,7 +4,7 @@ var Model = require('../src/model.js');
 describe('Model', function() {
   var Todo;
 
-  it('should allow the definition of data models', function() {
+  it('allows the definition of data models', function() {
     Todo = Model('todos', {
       title: 'Untitled',
       done: false,
@@ -20,13 +20,13 @@ describe('Model', function() {
   });
 
   describe('#create()', function() {
-    it('should allow the creation of model instances', function() {
+    it('allows the creation of model instances', function() {
       Todo.create();
     });
   });
 
   describe.skip('#load()', function() {
-    it('should allow the loading of model instances', function(done) {
+    it('allows the loading of model instances', function(done) {
       var todo = Todo.load(done);
     });
   });
@@ -35,21 +35,21 @@ describe('Model', function() {
   describe('Instance', function() {
 
     describe('#get()', function() {
-      it('should return default values', function() {
+      it('returns default values', function() {
         var todo = Todo.create();
         todo.get('title').should.equal('Untitled');
       });
 
-      it('should return the values passed to the constructor', function() {
+      it('returns the values passed to the constructor', function() {
         var todo = Todo.create({title: 'Foo'});
         todo.get('title').should.equal('Foo');
       });
 
-      it('should return previously set values', function() {
+      it('returns previously set values', function() {
         Todo.create().set({a: 'b', b: 'a'}).get('b').should.equal('a');
       });
 
-      it.skip('should save without error', function(done) {
+      it.skip('saves without error', function(done) {
         Todo.create().save(done);
       });
 
@@ -57,7 +57,7 @@ describe('Model', function() {
         Todo.create().isDirty().should.equal(true);
       });
 
-      it.skip('should emit a generic change event when a property is set', function(done) {
+      it.skip('emits a generic change event when a property is set', function(done) {
         var todo = Todo.create();
         todo.on('change', function() {
           todo.get('done').should.equal(true);
@@ -66,7 +66,7 @@ describe('Model', function() {
         todo.check();
       });
 
-      it.skip('should emit a specific change event when a property is set', function(done) {
+      it.skip('emits a specific change event when a property is set', function(done) {
         var todo = Todo.create();
         todo.on('change:done', function() {
           todo.get('done').should.equal(true);
@@ -75,7 +75,7 @@ describe('Model', function() {
         todo.check();
       });
 
-      it('should make computed properties from model methods', function(done) {
+      it('makes computed properties from model methods', function(done) {
         var todo = Todo.create();
         todo.get('computed');
         todo.on('change:computed', function() {
