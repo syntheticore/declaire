@@ -101,7 +101,7 @@ var viewsFolder = __dirname + '/../../../views/';
 var evaluator;
 var setupEvaluator = function() {
   var topNode = parseTrees['layout.tmpl'];
-  evaluator = Evaluator(topNode, viewModels, StreamInterface());
+  evaluator = Evaluator(topNode, viewModels, parseTrees, StreamInterface());
   evaluator.baseScope.addLayer(mainModel);
 };
 

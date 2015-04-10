@@ -161,7 +161,7 @@ var Parser = {
       return {
         type: 'Instruction',
         keyword: 'import',
-        templateName: m[1],
+        templateName: m[1] + '.tmpl',
         children: []
       };
     } else {

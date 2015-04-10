@@ -2,7 +2,7 @@ var Utils = require('./utils.js');
 var Scope = require('./scope.js');
 
 
-var Evaluator = function(topNode, viewModels, interface) {
+var Evaluator = function(topNode, viewModels, parseTrees, interface) {
 
   // Replace all mustaches in text with the value of their paths
   var resolveMustaches = function(text, scope) {
@@ -97,7 +97,7 @@ var Evaluator = function(topNode, viewModels, interface) {
     // Returns a document fragment
     evaluate: function(node, scope) {
       var self = this;
-      var frag = node.keyword == 'view' ? interface.createDOMElement('span', null, ['placeholder']) : interface.createFragment();
+      var frag = node.keyword == 'view' ? interface.createDOMElement('span', null, ['placeholder-view']) : interface.createFragment();
       var recurse = function(frag, scope) {
         Utils.each(node.children, function(child) {
           frag.append(self.evaluate(child, scope));
@@ -105,7 +105,7 @@ var Evaluator = function(topNode, viewModels, interface) {
       };
       if(node.type == 'Instruction') {
         var evaluateIf = function(expressions, condition) {
-          var elem = interface.createDOMElement('span', null, ['placeholder']);
+          var elem = interface.createDOMElement('span', null, ['placeholder-if']);
           frag.append(elem);
           var values = Utils.map(expressions, function(expr) {
             return evalExpr(scope, expr);
@@ -135,7 +135,7 @@ var Evaluator = function(topNode, viewModels, interface) {
             });
             break;
           case 'for':
-            var elem = interface.createDOMElement('span', null, ['placeholder']);
+            var elem = interface.createDOMElement('span', null, ['placeholder-for']);
             frag.append(elem);
             var items = evalExpr(scope, node.itemsPath);
             node.paths = [node.itemsPath];
@@ -168,8 +168,8 @@ var Evaluator = function(topNode, viewModels, interface) {
             });
             break;
           case 'import':
-            // node.templateName
-            recurse(frag, scope);
+            var importedNode = parseTrees[node.templateName];
+            frag.append(self.evaluate(importedNode, scope));
             break;
         }
       } else if(node.type == 'HTMLTag') {
