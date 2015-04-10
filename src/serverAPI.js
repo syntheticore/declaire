@@ -55,6 +55,7 @@ app.get('/', function(req, res) {
 var bundle;
 var prepareBundle = function(cb) {
   if(bundle) return cb(bundle);
+  console.log("Preparing bundle...");
   // Use executed application as main script on the client as well
   var appPath = process.argv[1];
   var code = fs.readFileSync(appPath).toString();
@@ -172,10 +173,13 @@ module.exports = function(options, cb) {
     publisher = require('./publisher.js')(app, db).init(function() {
       // Listen and call back
       var start = function(cb) {
-        var port = options.port || process.env.PORT || 3000;
-        var server = app.listen(port, function () {
-          console.log('Listening on port ' + port);
-          cb && cb();
+        // Make sure we have a cached bundle ready before listening for requests
+        prepareBundle(function() {
+          var port = options.port || process.env.PORT || 3000;
+          var server = app.listen(port, function () {
+            console.log('Listening on port ' + port);
+            cb && cb();
+          });
         });
       };
 
