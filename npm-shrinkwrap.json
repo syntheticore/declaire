@@ -1,6 +1,6 @@
 {
   "name": "declaire",
-  "version": "0.1.31",
+  "version": "0.1.32",
   "dependencies": {
     "body-parser": {
       "version": "1.12.0",
