@@ -10,10 +10,10 @@ var ViewModel = function(reference, constructor) {
   var model = Model('_view', reference);
   return {
     // Return a fully resolved and constructed view model instance
-    create: function(cb) {
+    create: function(args, cb) {
       var inst = model.create();
       inst.resolve(function() {
-        var promise = constructor && constructor.apply(inst);
+        var promise = constructor && constructor.apply(inst, args);
         if(promise) {
           promise.then(function() {
             cb(inst);

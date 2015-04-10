@@ -156,20 +156,31 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             break;
           case 'view':
             var viewModel = viewModels[node.viewModel];
-            if(!viewModel) throw 'View model not found: ' + node.viewModel;
-            unfinish(frag);
-            viewModel.create(function(view) {
-              //XXX Set view.$el
-              var newScope = scope.clone().addLayer(view);
-              view.el = frag;
-              view.scope = newScope;
-              recurse(frag, newScope);
-              finish(frag);
-            });
+            if(node.viewModel && !viewModel) throw 'View model not found: ' + node.viewModel;
+            if(viewModel) {
+              unfinish(frag);
+              // Evaluate constructor arguments
+              var args = Utils.map(node.arguments, function(arg) {
+                return evalExpr(scope, arg);
+              });
+              // Instantiate view model
+              viewModel.create(args, function(view) {
+                // Add view model instance to scope
+                var newScope = scope.clone().addLayer(view);
+                //XXX Set view.$el
+                view.el = frag;
+                view.scope = newScope;
+                recurse(frag, newScope);
+                finish(frag);
+              });
+            } else {
+              recurse(frag, scope.clone());
+            }
             break;
           case 'import':
             var importedNode = parseTrees[node.templateName];
-            frag.append(self.evaluate(importedNode, scope));
+            var newScope = Scope().addLayer({});
+            frag.append(self.evaluate(importedNode, newScope));
             break;
         }
       } else if(node.type == 'HTMLTag') {
@@ -247,6 +258,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       var self = this;
       if(Utils.onServer()) return;
       elem.handlers = [];
+      // console.log(elem); //XXX this gets called way too often
       Utils.each(elem.node.paths, function(path) {
         if(isPath(path)) {
           var reference = elem.scope.resolvePath(path).ref;

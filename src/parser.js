@@ -113,16 +113,16 @@ var Parser = {
   // Takes an instruction line and creates the approriate node
   parseInstruction: function(line) {
     var m;
+    // if
     if(m = line.match(/{{if\s+(.+)}}/)) {
-      // if
       return {
         type: 'Instruction',
         keyword: 'if',
         path: m[1],
         children: []
       };
+    // if-greater
     } else if(m = line.match(/{{if-greater\s+(.+)\s+(.+)}}/)) {
-      // if-greater
       return {
         type: 'Instruction',
         keyword: 'if-greater',
@@ -130,8 +130,8 @@ var Parser = {
         path2: m[2],
         children: []
       };
+    // if-greater
     } else if(m = line.match(/{{if-equal\s+(.+)\s+(.+)}}/)) {
-      // if-greater
       return {
         type: 'Instruction',
         keyword: 'if-equal',
@@ -139,8 +139,8 @@ var Parser = {
         path2: m[2],
         children: []
       };
+    // for
     } else if(m = line.match(/{{for\s+(\w+)\s+in\s+(.+)}}/)) {
-      // for
       return {
         type: 'Instruction',
         keyword: 'for',
@@ -148,20 +148,30 @@ var Parser = {
         itemsPath: m[2],
         children: []
       };
-    } else if(m = line.match(/{{view\s+(\w+)}}/)) {
-      // view
+    // view
+    } else if(m = line.match(/{{view\s+(\w+)?(\(.*\))?}}/)) {
+      var parens = m[2];
+      var arguments = parens ? Utils.map(parens.slice(1, -1).split(','), function(argument) {
+        return argument.replace(/\s/g, '');
+      }) : [];
       return {
         type: 'Instruction',
         keyword: 'view',
         viewModel: m[1],
+        arguments: arguments,
         children: []
       };
-    } else if(m = line.match(/{{import\s+(.+)}}/)) {
-      // import
+    // import
+    } else if(m = line.match(/{{import\s+(\w+)(\(.*\))?}}/)) {
+      var parens = m[2];
+      var arguments = parens ? Utils.map(m[2].slice(1, -1).split(','), function(argument) {
+        return argument.replace(/\w/g, '');
+      }) : [];
       return {
         type: 'Instruction',
         keyword: 'import',
         templateName: m[1] + '.tmpl',
+        arguments: arguments,
         children: []
       };
     } else {
