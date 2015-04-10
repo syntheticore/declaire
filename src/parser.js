@@ -156,6 +156,14 @@ var Parser = {
         viewModel: m[1],
         children: []
       };
+    } else if(m = line.match(/{{import\s+(.+)}}/)) {
+      // import
+      return {
+        type: 'Instruction',
+        keyword: 'import',
+        templateName: m[1] + '.tmpl',
+        children: []
+      };
     } else {
       throw('Unknown instruction: ' + line);
     }

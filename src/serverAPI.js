@@ -93,30 +93,45 @@ var mainModel = Model('_main', {
   _page: null
 }).create();
 
-// Load all templates recursively from layout
-// and supply evaluator with main model
-var layout = __dirname + '/../../../views/layout.tmpl';
-var topNode;
-var evaluator;
 var viewModels = {};
-var parseLayout = function() {
-  Utils.improveExceptions(layout, function() {
-    topNode = Parser.parseTemplate(fs.readFileSync(layout, 'utf8'));
-    evaluator = Evaluator(topNode, viewModels, StreamInterface());
-  });
+var viewsFolder = __dirname + '/../../../views/';
+
+// Build an evaluator for the main layout
+// and add the main model instance to its scope
+var evaluator;
+var setupEvaluator = function() {
+  var topNode = parseTrees['layout.tmpl'];
+  evaluator = Evaluator(topNode, viewModels, parseTrees, StreamInterface());
   evaluator.baseScope.addLayer(mainModel);
 };
-parseLayout();
 
-// Make parse tree available to client-side evaluator
-app.get('/template.json', function(req, res) {
-  res.send(JSON.stringify(topNode));
+// Load and parse all templates in the views folder
+var parseTrees;
+var parseTemplates = function() {
+  parseTrees = {};
+  Utils.each(fs.readdirSync(viewsFolder), function(file) {
+    if(path.extname(file) == '.tmpl'){
+      console.log("Parsing " + file);
+      var fn = viewsFolder + file;
+      Utils.improveExceptions(fn, function() {
+        var node = Parser.parseTemplate(fs.readFileSync(fn, 'utf8'));
+        parseTrees[file] = node;
+      });
+    }
+  });
+  setupEvaluator();
+};
+parseTemplates();
+
+// Make parse trees available to client-side evaluator
+app.get('/templates.json', function(req, res) {
+  res.send(JSON.stringify(parseTrees));
 });
 
 // Render layout for the requested page
 app.get('/pages/:page', function(req, res) {
   res.setHeader('Content-Type', 'text/html');
-  if(app.get('env') == 'development') parseLayout();
+  if(app.get('env') == 'development') parseTemplates();
   mainModel.set('_page', req.params.page);
   // Stream chunks of rendered html
   evaluator.render().render(function(chunk) {

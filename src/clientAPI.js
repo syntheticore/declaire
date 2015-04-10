@@ -23,9 +23,10 @@ var mainModel = Model('_main', {
 // Load pre-parsed template and
 // install evaluator on the document body
 var install = function(cb) {
-  $.getJSON('/template.json', function(topNode) {
+  $.getJSON('/templates.json', function(templates) {
+    var topNode = templates['layout.tmpl'];
     var body = topNode.children[1];
-    var evaluator = Evaluator(body, viewModels, DOMInterface());
+    var evaluator = Evaluator(body, viewModels, templates, DOMInterface());
     evaluator.baseScope.addLayer(mainModel);
     var frag = evaluator.render(function() {
       $('body').replaceWith(frag);
