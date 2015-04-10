@@ -167,6 +167,10 @@ var Evaluator = function(topNode, viewModels, interface) {
               finish(frag);
             });
             break;
+          case 'import':
+            // node.templateName
+            recurse(frag, scope);
+            break;
         }
       } else if(node.type == 'HTMLTag') {
         // Don't regenerate script tags as these
