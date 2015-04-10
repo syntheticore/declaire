@@ -157,12 +157,12 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           case 'view':
             var viewModel = viewModels[node.viewModel];
             if(node.viewModel && !viewModel) throw 'View model not found: ' + node.viewModel;
+            // Evaluate constructor arguments
+            var args = Utils.map(node.arguments, function(arg) {
+              return evalExpr(scope, arg);
+            });
             if(viewModel) {
               unfinish(frag);
-              // Evaluate constructor arguments
-              var args = Utils.map(node.arguments, function(arg) {
-                return evalExpr(scope, arg);
-              });
               // Instantiate view model
               viewModel.create(args, function(view) {
                 // Add view model instance to scope
@@ -179,7 +179,10 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             break;
           case 'import':
             var importedNode = parseTrees[node.templateName];
-            var newScope = Scope().addLayer({});
+            var args = Utils.map(node.arguments, function(expr) {
+              return evalExpr(scope, expr);
+            });
+            var newScope = Scope().addLayer(args);
             frag.append(self.evaluate(importedNode, newScope));
             break;
         }
@@ -262,7 +265,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       Utils.each(elem.node.paths, function(path) {
         if(isPath(path)) {
           var reference = elem.scope.resolvePath(path).ref;
-          if(reference.obj.model) {
+          if(reference.obj && reference.obj.model) {
             var handler = function() {
               self.updateElement(elem);
             };

@@ -151,27 +151,33 @@ var Parser = {
     // view
     } else if(m = line.match(/{{view\s+(\w+)?(\(.*\))?}}/)) {
       var parens = m[2];
-      var arguments = parens ? Utils.map(parens.slice(1, -1).split(','), function(argument) {
+      var args = parens ? Utils.map(parens.slice(1, -1).split(','), function(argument) {
         return argument.replace(/\s/g, '');
       }) : [];
       return {
         type: 'Instruction',
         keyword: 'view',
         viewModel: m[1],
-        arguments: arguments,
+        arguments: args,
         children: []
       };
     // import
     } else if(m = line.match(/{{import\s+(\w+)(\(.*\))?}}/)) {
       var parens = m[2];
-      var arguments = parens ? Utils.map(m[2].slice(1, -1).split(','), function(argument) {
-        return argument.replace(/\w/g, '');
-      }) : [];
+      var args = {};
+      if(parens) {
+        Utils.each(parens.slice(1, -1).split(','), function(argument) {
+          var pair = argument.replace(/\s/g, '').split(':');
+          var vari = pair[0];
+          var expr = pair[1];
+          args[vari] = expr;
+        });
+      }
       return {
         type: 'Instruction',
         keyword: 'import',
         templateName: m[1] + '.tmpl',
-        arguments: arguments,
+        arguments: args,
         children: []
       };
     } else {
