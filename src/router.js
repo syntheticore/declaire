@@ -1,3 +1,4 @@
+var $ = require('jquery');
 var Utils = require('./utils.js');
 
 
@@ -40,6 +41,20 @@ var Router = function() {
   return {
     on: function(path, cb) {
       listeners[path] = cb;
+    },
+
+    navigate: function(url) {
+      history.pushState({}, '', url);
+      window.onpopstate();
+    },
+
+    hijackLocalLinks: function() {
+      var self = this;
+      $('a').click(function(e) {
+        e.preventDefault();
+        self.navigate($(this).attr('href'));
+        return false;
+      });
     }
   };
 };

@@ -95,6 +95,7 @@ module.exports = function(options, cb) {
       if(!installed) {
         installed = true;
         install(function() {
+          router.hijackLocalLinks();
           cbb && cbb();
         });
       }
