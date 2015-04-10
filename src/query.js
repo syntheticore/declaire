@@ -35,16 +35,6 @@ var Query = function(subscriber, modelOrCollection, query) {
       getItems(true, cb);
     },
 
-    each: function(cb, finalCb) {
-      var self = this;
-      getItems(false, function(items) {
-        for(var i in items) {
-          cb(items[i]);
-        }
-        finalCb && finalCb();
-      });
-    },
-
     filter: function(moreQuery) {
       return Query(subscriber, modelOrCollection, Utils.deepMerge(query, moreQuery));
     },

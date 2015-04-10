@@ -103,7 +103,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           frag.append(self.evaluate(child, scope));
         });
       };
-      if(node.type == 'Instruction') {
+      if(node.type == 'Statement') {
         var evaluateIf = function(expressions, condition) {
           var elem = interface.createDOMElement('span', null, ['placeholder-if']);
           frag.append(elem);
@@ -137,21 +137,31 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           case 'for':
             var elem = interface.createDOMElement('span', null, ['placeholder-for']);
             frag.append(elem);
-            var items = evalExpr(scope, node.itemsPath);
             node.paths = [node.itemsPath];
-            unfinish(frag);
-            items.each(function(item) {
-              var itemData = {};
-              itemData[node.itemPath] = item;
-              if(node.children.length) {
-                var newScope = scope.clone().addLayer(itemData);
-                recurse(elem, newScope);
-              }
-            }, function() {
-              finish(frag);
-            });
             elem.node = node;
             elem.scope = scope;
+            var loop = function(items) {
+              Utils.each(items, function(item) {
+                var itemData = {};
+                itemData[node.itemPath] = item;
+                if(node.children.length) {
+                  var newScope = scope.clone().addLayer(itemData);
+                  recurse(elem, newScope);
+                }
+              });
+            };
+            var items = evalExpr(scope, node.itemsPath);
+            if(items.klass == 'Query') {
+              unfinish(frag);
+              items.all(function(items) {
+                loop(items);
+                finish(frag);
+              });
+            } else if(items.klass == 'Collection') {
+              loop(items.values());
+            } else {
+              loop(items);
+            }
             self.register(elem);
             break;
           case 'view':

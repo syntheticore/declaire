@@ -54,9 +54,9 @@ var Parser = {
 
   // Convert line into tree node
   parseLine: function(line) {
-    // Instruction
+    // Statement
     if(line.indexOf('{{') == 0) {
-      return this.parseInstruction(line);
+      return this.parseStatement(line);
     // Text
     } else if(line.indexOf('|') == 0) {
       return {
@@ -110,13 +110,13 @@ var Parser = {
     };
   },
 
-  // Takes an instruction line and creates the approriate node
-  parseInstruction: function(line) {
+  // Takes an statement line and creates the approriate node
+  parseStatement: function(line) {
     var m;
     // if
     if(m = line.match(/{{if\s+(.+)}}/)) {
       return {
-        type: 'Instruction',
+        type: 'Statement',
         keyword: 'if',
         path: m[1],
         children: []
@@ -124,7 +124,7 @@ var Parser = {
     // if-greater
     } else if(m = line.match(/{{if-greater\s+(.+)\s+(.+)}}/)) {
       return {
-        type: 'Instruction',
+        type: 'Statement',
         keyword: 'if-greater',
         path1: m[1],
         path2: m[2],
@@ -133,7 +133,7 @@ var Parser = {
     // if-greater
     } else if(m = line.match(/{{if-equal\s+(.+)\s+(.+)}}/)) {
       return {
-        type: 'Instruction',
+        type: 'Statement',
         keyword: 'if-equal',
         path1: m[1],
         path2: m[2],
@@ -142,7 +142,7 @@ var Parser = {
     // for
     } else if(m = line.match(/{{for\s+(\w+)\s+in\s+(.+)}}/)) {
       return {
-        type: 'Instruction',
+        type: 'Statement',
         keyword: 'for',
         itemPath: m[1],
         itemsPath: m[2],
@@ -155,7 +155,7 @@ var Parser = {
         return argument.replace(/\s/g, '');
       }) : [];
       return {
-        type: 'Instruction',
+        type: 'Statement',
         keyword: 'view',
         viewModel: m[1],
         arguments: args,
@@ -174,14 +174,14 @@ var Parser = {
         });
       }
       return {
-        type: 'Instruction',
+        type: 'Statement',
         keyword: 'import',
         templateName: m[1] + '.tmpl',
         arguments: args,
         children: []
       };
     } else {
-      throw('Unknown instruction: ' + line);
+      throw('Unknown statement: ' + line);
     }
   }
 };
