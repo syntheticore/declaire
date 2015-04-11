@@ -13,7 +13,8 @@ exports.onClient = function(cb) {
 
 exports.each = function(items, cb) {
   for(var key in items) {
-    cb(items[key], key);
+    var cancel = cb(items[key], key);
+    if(cancel) return;
   }
 };
 
@@ -37,12 +38,19 @@ exports.zip = function(items1, items2, cb) {
   });
 };
 
-exports.select = function(items, cb) {
-  var out = Array.isArray(items) ? [] : {};
+exports.select = function(items, cb, n) {
+  var ary = Array.isArray(items);
+  var out = ary ? [] : {};
+  var i = 0;
   exports.each(items, function(item, key) {
     if(cb(item, key)) {
-      out[key] = item;
+      if(ary) {
+        out.push(item);
+      } else {
+        out[key] = item;
+      }
     }
+    if(n && ++i == n) return true;
   });
   return out;
 };

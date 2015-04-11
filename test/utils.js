@@ -45,6 +45,16 @@ describe('Utils', function() {
     });
   });
 
+  describe('#merge()', function() {
+    it('return a new object with fields from both arguments', function() {
+      Utils.merge({a: 1}, {b: 2}).should.eql({a: 1, b: 2});
+    });
+
+    it('should prefer values from the second object', function() {
+      Utils.merge({a: 1, b: 3}, {a: 2}).should.eql({a: 2, b: 3});
+    });
+  });
+
   describe('#map()', function() {
     it('returns a list of mutated values', function() {
       Utils.map([1, 2], function(n) {
@@ -53,11 +63,23 @@ describe('Utils', function() {
     });
   });
 
-  describe.skip('#select()', function() {
-    it('returns a list of filtered values', function() {
+  describe('#select()', function() {
+    it('returns a list of filtered values from an array', function() {
       Utils.select([1, 2, 3, 4], function(n) {
         return n % 2 == 0;
       }).should.eql([2, 4]);
+    });
+
+    it('returns a list of filtered values from an object', function() {
+      Utils.select({a: 1, b: 2, c: 3}, function(n, key) {
+        return n % 2 == 0;
+      }).should.eql({b: 2});
+    });
+
+    it('returns no more than <max> items', function() {
+      Utils.select([1, 2, 3, 4], function(n) {
+        return true;
+      }, 2).length.should.equal(2);
     });
   });
 });

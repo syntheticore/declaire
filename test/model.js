@@ -49,32 +49,6 @@ describe('Model', function() {
         Todo.create().set({a: 'b', b: 'a'}).get('b').should.equal('a');
       });
 
-      it.skip('saves without error', function(done) {
-        Todo.create().save(done);
-      });
-
-      it('should be dirty when fresh', function() {
-        Todo.create().isDirty().should.equal(true);
-      });
-
-      it.skip('emits a generic change event when a property is set', function(done) {
-        var todo = Todo.create();
-        todo.on('change', function() {
-          todo.get('done').should.equal(true);
-          done();
-        });
-        todo.check();
-      });
-
-      it.skip('emits a specific change event when a property is set', function(done) {
-        var todo = Todo.create();
-        todo.on('change:done', function() {
-          todo.get('done').should.equal(true);
-          done();
-        });
-        todo.check();
-      });
-
       it('makes computed properties from model methods', function(done) {
         var todo = Todo.create();
         todo.get('computed');
@@ -84,6 +58,32 @@ describe('Model', function() {
         });
         todo.set('title', 'Foo');
       });
+    });
+
+    it.skip('saves without error', function(done) {
+      Todo.create().save(done);
+    });
+
+    it('should be dirty when fresh', function() {
+      Todo.create().isDirty().should.equal(true);
+    });
+
+    it.skip('emits a generic change event when a property is set', function(done) {
+      var todo = Todo.create();
+      todo.on('change', function() {
+        todo.get('done').should.equal(true);
+        done();
+      });
+      todo.check();
+    });
+
+    it.skip('emits a specific change event when a property is set', function(done) {
+      var todo = Todo.create();
+      todo.on('change:done', function() {
+        todo.get('done').should.equal(true);
+        done();
+      });
+      todo.check();
     });
   });
 });

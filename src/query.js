@@ -2,41 +2,51 @@ var Utils = require('./utils.js');
 var eventMethods = require('./events.js');
 
 
-var Query = function(subscriber, modelOrCollection, query) {
+var Query = function(subscriber, modelOrCollection, query, options) {
   query = query || {};
+  options = options || {};
 
   var getItems = function(onlyOne, cb) {
     if(modelOrCollection.klass == 'Model') {
       modelOrCollection.dataInterface.all({query: query}, function(err, items) {
-        if(onlyOne) {
-          cb(items[0]);
-        } else {
-          cb(items);
-        }
+        cb(filter(items), onlyOne);
       });
     } else {
-      cb(filter(modelOrCollection.values(), query, onlyOne));
+      cb(filter(modelOrCollection.values(), onlyOne));
     }
   };
 
-  var filter = function(items, query, onlyOne) {
-    return items;
+  var filter = function(items, onlyOne) {
+    return Utils.select(items, function(item) {
+      return true;
+    }, onlyOne ? 1 : options.limit);
   };
 
   var inst = Utils.merge(eventMethods, {
     klass: 'Query',
     listeners: [],
+    length: 0,
 
     all: function(cb) {
-      getItems(false, cb);
+      getItems(false, function(items) {
+        this.length = items.length;
+        cb(items);
+      });
     },
 
     first: function(cb) {
-      getItems(true, cb);
+      getItems(true, function(items) {
+        this.length = items.length;
+        cb(items);
+      });
     },
 
     filter: function(moreQuery) {
-      return Query(subscriber, modelOrCollection, Utils.deepMerge(query, moreQuery));
+      return Query(subscriber, modelOrCollection, Utils.deepMerge(query, moreQuery), options);
+    },
+
+    limit: function(limit) {
+      return Query(subscriber, modelOrCollection, query, Utils.merge(options, {limit: limit}));
     },
 
     clone: function() {
@@ -50,6 +60,7 @@ var Query = function(subscriber, modelOrCollection, query) {
     });
   } else {
     modelOrCollection.on('change:length', function() {
+      inst.emit('change', 'length');
       inst.emit('change');
     });
   }
