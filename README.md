@@ -23,12 +23,14 @@ Declarative, full-stack web application framework
 
 ## Todo
 
-  - [ ] Template imports
+  - [x] Template imports
   - [ ] Link bundle in header using async attr
   - [ ] Statement alternatives
   - [ ] Update local storage IDs
   - [ ] Local queries
   - [ ] Selectively update data structures using deep merge
+  - [ ] Extend Models
+  - [ ] ViewModel.listenTo()
   - [ ] History & Rollback
   - [ ] Access permissions
   - [ ] Remote blocks

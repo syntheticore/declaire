@@ -95,7 +95,7 @@ var mainModel = Model('_main', {
 }).create();
 
 var viewModels = {};
-var viewsFolder = __dirname + '/../../../views/';
+var viewsFolder = __dirname + '/../../../src/views/';
 
 // Build an evaluator for the main layout
 // and add the main model instance to its scope

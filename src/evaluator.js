@@ -166,7 +166,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             break;
           case 'view':
             var viewModel = viewModels[node.viewModel];
-            if(node.viewModel && !viewModel) throw 'View model not found: ' + node.viewModel;
+            if(node.viewModel && !viewModel) console.error('View model not found: ' + node.viewModel);
             // Evaluate constructor arguments
             var args = Utils.map(node.arguments, function(arg) {
               return evalExpr(scope, arg);
