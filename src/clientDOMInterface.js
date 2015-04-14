@@ -19,9 +19,10 @@ var DOMInterface = function() {
         // } else {
         //   elem.setAttribute(key, value);
         // }
-        elem[key] = value;
+        // elem[key] = value;
+        elem.attr(key, value);
       });
-      return $(elem);
+      return elem;
     }
   };
 };
