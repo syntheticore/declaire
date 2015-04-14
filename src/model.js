@@ -16,11 +16,11 @@ if(Utils.onServer()) {
     delete: function(key, value) {}
   };
 } else {
-  localStore = require('./localStore.js')();
+  localStore = require('./clientStore.js')();
 }
 
 
-var Instance = function(dataInterface, pubSub) {
+var Instance = function() {
   return Utils.merge(eventMethods, {
     klass: 'Instance',
     model: null,
@@ -129,19 +129,19 @@ var Instance = function(dataInterface, pubSub) {
       if(self.isDirty() || !self.id) {
         var url = self.id ? self.url() : self.model.url();
         if(self.id) {
-          dataInterface.update(self.id, self.data.local, function(err, updatedValues) {
+          self.model.dataInterface.update(self.id, self.data.local, function(err, updatedValues) {
             self.data.remote = Utils.merge(self.data.remote, updatedValues);
             finish();
           });
         } else {
-          dataInterface.create(self.data.local, function(err, data) {
+          //XXX offline case
+          self.model.dataInterface.create(self.data.local, function(err, data) {
             self.data.remote = data;
             self.id = data._id;
             self.connect();
             finish();
           });
         }
-        //XXX offline case
         var finish = function() {
           self.data.local = [];
           cb && cb();
@@ -155,7 +155,7 @@ var Instance = function(dataInterface, pubSub) {
     // but leave local modifications intact
     fetch: function(cb) {
       var self = this;
-      dataInterface.one(self.id, function(err, data) {
+      self.model.dataInterface.one(self.id, function(err, data) {
         if(err) {
           cb(null);
         } else {
@@ -176,7 +176,7 @@ var Instance = function(dataInterface, pubSub) {
     delete: function(cb) {
       var self = this;
       self.disconnect();
-      dataInterface.delete(self.id, function() {
+      self.model.dataInterface.delete(self.id, function() {
         cb && cb();
         self.emit('delete');
       });
@@ -205,7 +205,7 @@ var Instance = function(dataInterface, pubSub) {
     connect: function() {
       var self = this;
       if(self.connected || !self.id) return;
-      pubSub.subscribe('update', self.model.name, self.id, function(data) {
+      self.model.app.pubSub.subscribe('update', self.model.name, self.id, function(data) {
         console.log("Received push update");
         self.data.remote = Utils.merge(self.data.remote, data);
         for(var key in data) {
@@ -213,7 +213,7 @@ var Instance = function(dataInterface, pubSub) {
         }
         self.emit('change');
       });
-      pubSub.subscribe('delete', self.model.name, self.id, function() {
+      self.model.app.pubSub.subscribe('delete', self.model.name, self.id, function() {
         console.log("Received push delete");
         self.delete();
       });
@@ -223,7 +223,7 @@ var Instance = function(dataInterface, pubSub) {
 
     // Unsubscribe from updates
     disconnect: function() {
-      pubSub.unsubscribe(self.model.name, self.id);
+      self.model.app.pubSub.unsubscribe(self.model.name, self.id);
       this.connected = false;
       return this;
     }
@@ -249,13 +249,12 @@ var references = function(values) {
 var models = {};
 
 // Define a new data model under the given name
-var Model = function(dbCollection, reference, dataInterface, pubSub) {
+var Model = function(dbCollection, reference) {
   var ref = separateMethods(reference);
   var model = {
     klass: 'Model',
     name: dbCollection,
     defaults: ref.defaults,
-    dataInterface: dataInterface,
 
     // The server URL of this model's collection
     url: function() {
@@ -263,12 +262,12 @@ var Model = function(dbCollection, reference, dataInterface, pubSub) {
     },
 
     all: function() {
-      return Query(pubSub, this);
+      return Query(this);
     },
 
     // Create a fresh model instance
     create: function(values) {
-      var inst = Instance(dataInterface, pubSub);
+      var inst = Instance();
       inst.model = this;
       // Mix in methods from reference object
       for(var key in ref.methods) {

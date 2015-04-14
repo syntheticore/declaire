@@ -60,7 +60,11 @@ var Publisher = function(app, db) {
         if(err) console.log(err);
       });
       return this;
-    }
+    },
+
+    // Implement subscribe as a noop to make this 
+    // interchangeable with the subscriber in models
+    subscribe: function() {}
   };
 };
 

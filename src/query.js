@@ -2,7 +2,7 @@ var Utils = require('./utils.js');
 var eventMethods = require('./events.js');
 
 
-var Query = function(subscriber, modelOrCollection, query, options) {
+var Query = function(modelOrCollection, query, options) {
   query = query || {};
   options = options || {};
 
@@ -42,27 +42,31 @@ var Query = function(subscriber, modelOrCollection, query, options) {
     },
 
     filter: function(moreQuery) {
-      return Query(subscriber, modelOrCollection, Utils.deepMerge(query, moreQuery), options);
+      return Query(modelOrCollection, Utils.deepMerge(query, moreQuery), options);
     },
 
     limit: function(limit) {
-      return Query(subscriber, modelOrCollection, query, Utils.merge(options, {limit: limit}));
+      return Query(modelOrCollection, query, Utils.merge(options, {limit: limit}));
     },
 
     clone: function() {
-      return Query(subscriber, modelOrCollection, query);
+      return Query(modelOrCollection, query);
     }
   });
 
   if(modelOrCollection.klass == 'Model') {
-    subscriber && subscriber.subscribe('create update delete', modelOrCollection.name, function(data) {
-      inst.emit('change');
-    });
-  } else {
+    if(modelOrCollection.app.pubSub) {
+      modelOrCollection.app.pubSub.subscribe('create update delete', modelOrCollection.name, function(data) {
+        inst.emit('change');
+      });
+    }
+  } else if(modelOrCollection.klass == 'Collection') {
     modelOrCollection.on('change:length', function() {
       inst.emit('change', 'length');
       inst.emit('change');
     });
+  } else {
+    throw 'Queries work with models and collections only';
   }
 
   return inst;

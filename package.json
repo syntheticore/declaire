@@ -6,6 +6,7 @@
   "homepage": "https://github.com/syntheticore/declaire",
   "main": "declaire.js",
   "dependencies": {
+    "aliasify": "^1.7.2",
     "body-parser": "*",
     "browserify": "*",
     "compression": "*",

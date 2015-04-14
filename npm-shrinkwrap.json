@@ -2,6 +2,36 @@
   "name": "declaire",
   "version": "0.1.35",
   "dependencies": {
+    "aliasify": {
+      "version": "1.7.2",
+      "from": "aliasify@*",
+      "resolved": "https://registry.npmjs.org/aliasify/-/aliasify-1.7.2.tgz",
+      "dependencies": {
+        "browserify-transform-tools": {
+          "version": "1.3.3",
+          "from": "browserify-transform-tools@>=1.3.3 <1.4.0",
+          "resolved": "https://registry.npmjs.org/browserify-transform-tools/-/browserify-transform-tools-1.3.3.tgz",
+          "dependencies": {
+            "falafel": {
+              "version": "1.0.1",
+              "from": "falafel@>=1.0.1 <1.1.0",
+              "resolved": "https://registry.npmjs.org/falafel/-/falafel-1.0.1.tgz",
+              "dependencies": {
+                "acorn": {
+                  "version": "0.11.0",
+                  "from": "acorn@>=0.11.0 <0.12.0"
+                }
+              }
+            },
+            "through": {
+              "version": "2.3.7",
+              "from": "through@>=2.3.6 <2.4.0",
+              "resolved": "https://registry.npmjs.org/through/-/through-2.3.7.tgz"
+            }
+          }
+        }
+      }
+    },
     "body-parser": {
       "version": "1.12.0",
       "from": "body-parser@*",

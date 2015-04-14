@@ -8,12 +8,10 @@ var ClientDataInterface = function(name) {
     all: function(options, cb) {
       $.get(url)
       .done(function(data) {
-        // console.log(data);
         cb(null, data);
       })
-      .fail(function(err) {
-        console.log('fail');
-        cb(err, null);
+      .fail(function() {
+        cb('error', null);
       });
     },
 
@@ -22,8 +20,8 @@ var ClientDataInterface = function(name) {
       .done(function(data) {
         cb(null, data);
       })
-      .fail(function(err) {
-        cb(err, null);
+      .fail(function() {
+        cb('error', null);
       });
     },
 
@@ -32,8 +30,8 @@ var ClientDataInterface = function(name) {
       .done(function(data) {
         cb(null, data);
       })
-      .fail(function(err) {
-        cb(err, null);
+      .fail(function() {
+        cb('error', null);
       });
     },
 
@@ -42,14 +40,14 @@ var ClientDataInterface = function(name) {
       .done(function(data) {
         cb(null, data);
       })
-      .fail(function(err) {
-        cb(err, null);
+      .fail(function() {
+        cb('error', null);
       });
     },
 
     delete: function(id, cb) {
       $.ajax({url: url + '/' + id, type: 'DELETE'})
-      .always(function(err) {
+      .always(function() {
         cb && cb();
       });
     }
