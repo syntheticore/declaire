@@ -28,8 +28,17 @@ var REST = require('./REST.js');
 var ServerApplication = function(options) {
   // Create express app
   var expressApp = express();
+  
+  // Default options
+  options = Utils.merge({
+    mongoUrl: process.env.MONGOHQ_URL || process.env.MONGOLAB_URI || 'mongodb://127.0.0.1:27017/declaire',
+    viewsFolder: __dirname + '/../../../src/views/'
+  }, options);
+  if(options.mongoDevUrl && expressApp.get('env') == 'development') {
+    options.mongoUrl = options.mongoDevUrl;
+  }
+  
   // Register express middleware
-  // app.use(favicon(__dirname + '/../public/favicon.png'));
   expressApp.use(logger('combined'));
   expressApp.use(methodOverride());
   expressApp.use(session({ resave: true,
@@ -47,6 +56,7 @@ var ServerApplication = function(options) {
     }
   }));
   expressApp.use(express.static(__dirname + '/../../../public'));
+  try { expressApp.use(favicon(__dirname + '/../public/favicon.png')) } catch(e) {}
   expressApp.use(compression());
   expressApp.use(require('jumanji'));
 
@@ -54,17 +64,8 @@ var ServerApplication = function(options) {
     res.redirect('/pages/index');
   });
 
-  // Default options
-  options = Utils.merge({
-    mongoUrl: process.env.MONGOHQ_URL || process.env.MONGOLAB_URI || 'mongodb://127.0.0.1:27017/declaire',
-    viewsFolder: __dirname + '/../../../src/views/'
-  }, options);
-  if(options.mongoDevUrl && expressApp.get('env') == 'development') {
-    options.mongoUrl = options.mongoDevUrl;
-  }
-
   // Package and minify JavaScript
-  // Exchanges requires of this module with the client side implementation
+  // Exchanges require calls to this very module with the client side implementation
   var bundle;
   var prepareBundle = function(cb) {
     if(bundle) return cb(bundle);
@@ -76,7 +77,7 @@ var ServerApplication = function(options) {
     b.ignore('newrelic');
     b.ignore('express');
     b.ignore('connect');
-    // Exchange requires
+    // Exchange require calls
     b.transform(require('aliasify'), {
       aliases: {
         "declaire": "./node_modules/declaire/src/clientAPI.js"
@@ -88,7 +89,6 @@ var ServerApplication = function(options) {
     }
     b.bundle(function(err, buf) {
       if(err) throw err;
-      // fs.unlink(outputPath);
       bundle = buf;
       cb(bundle);
     });
@@ -96,7 +96,6 @@ var ServerApplication = function(options) {
 
   expressApp.get('/bundle.js', function(req, res) {
     prepareBundle(function(bundle) {
-      // b.bundle().pipe(res);
       res.send(bundle);
     });
   });
