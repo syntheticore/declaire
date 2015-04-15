@@ -14,6 +14,7 @@ var DOMInterface = function() {
       var elem = document.createElement(tag);
       if(id) elem.id = id;
       if(classes.length) elem.className = classes.join(' ');
+      elem = $(elem);
       Utils.each(attributes, function(value, key) {
         // if(['checked', 'selected', 'disabled', 'readonly', 'multiple', 'defer', 'declare', 'noresize'].indexOf(key) != -1) {
         // } else {
