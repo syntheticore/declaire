@@ -51,9 +51,12 @@ var Router = function() {
     hijackLocalLinks: function() {
       var self = this;
       $('a').click(function(e) {
-        e.preventDefault();
-        self.navigate($(this).attr('href'));
-        return false;
+        var href = $(this).attr('href');
+        if(href.slice(0, 1) == '/' && href.slice(1, 2) != '/') {
+          e.preventDefault();
+          self.navigate(href);
+          return false;
+        }
       });
     }
   };
