@@ -1,16 +1,17 @@
-var express = require('express');
 var path = require('path');
-var favicon = require('serve-favicon');
-var logger = require('morgan');
-var methodOverride = require('method-override');
+var mongo = require('mongodb');
+var express = require('express');
+var morgan = require('morgan');
+// var methodOverride = require('method-override');
 var session = require('express-session');
+var MongoStore = require('connect-mongo')(session);
 var bodyParser = require('body-parser');
 var multer = require('multer');
+var favicon = require('serve-favicon');
 var compression = require('compression')
 var errorHandler = require('errorhandler');
 var fs = require('fs');
 var stylus = require('stylus');
-var mongo = require('mongodb');
 var browserify = require('browserify');
 
 var Utils = require('./utils.js');
@@ -32,21 +33,35 @@ var ServerApplication = function(options) {
   // Default options
   options = Utils.merge({
     mongoUrl: process.env.MONGOHQ_URL || process.env.MONGOLAB_URI || 'mongodb://127.0.0.1:27017/declaire',
-    viewsFolder: __dirname + '/../../../src/views/'
+    viewsFolder: __dirname + '/../../../src/views/',
+    npmPublic: ['/public']
   }, options);
   if(options.mongoDevUrl && expressApp.get('env') == 'development') {
     options.mongoUrl = options.mongoDevUrl;
   }
   
-  // Register express middleware
-  expressApp.use(logger('combined'));
-  expressApp.use(methodOverride());
-  expressApp.use(session({ resave: true,
-                    saveUninitialized: true,
-                    secret: process.env.SESSION_SECRET || 'session123' }));
+  // Logging
+  expressApp.use(morgan('combined'));
+
+  // Fake http verbs for dumb clients
+  // expressApp.use(methodOverride());
+  
+  // Mongo based sessions
+  if(!process.env.SESSION_SECRET) console.warn("Warning: No SESSION_SECRET environment variable set!")
+  expressApp.use(session({
+    secret: process.env.SESSION_SECRET || 'devSecret',
+    store: new MongoStore({url: options.mongoUrl}),
+    saveUninitialized: true,
+    resave: true
+  }));
+  
+  // Parse form data
   expressApp.use(bodyParser.json());
   expressApp.use(bodyParser.urlencoded({ extended: true }));
+  // multipart/form-data
   expressApp.use(multer());
+  
+  // Compile Stylus stylesheets
   expressApp.use(stylus.middleware({
     src: __dirname + '/../../../',
     dest: __dirname + '/../../../public',
@@ -55,11 +70,23 @@ var ServerApplication = function(options) {
       return stylus(str).set('filename', path).set('compress', true).use(require('nib')());
     }
   }));
+  
+  // Serve public files
   expressApp.use(express.static(__dirname + '/../../../public'));
+  Utils.each(options.npmPublic, function(folder) {
+    expressApp.use('/' + folder, express.static(__dirname + '/../../../node_modules/' + folder));
+  });
+  
+  // Serve favicon
   try { expressApp.use(favicon(__dirname + '/../public/favicon.png')) } catch(e) {}
+  
+  // Gzip compression
   expressApp.use(compression());
+  
+  // Fix Safari caching bug
   expressApp.use(require('jumanji'));
 
+  //XXX Remove this
   expressApp.get('/', function(req, res) {
     res.redirect('/pages/index');
   });
