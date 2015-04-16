@@ -96,7 +96,7 @@ var ServerApplication = function(options) {
   var bundle;
   var prepareBundle = function(cb) {
     if(bundle) return cb(bundle);
-    console.log("Preparing bundle...");
+    process.stdout.write("Preparing Bundle...");
     // Use executed application as main script on the client as well
     var appPath = process.argv[1];
     var b = new browserify({debug: true});
@@ -122,6 +122,7 @@ var ServerApplication = function(options) {
   };
 
   expressApp.get('/bundle.js', function(req, res) {
+    res.setHeader('Content-Type', 'application/javascript');
     prepareBundle(function(bundle) {
       res.send(bundle);
     });
@@ -224,13 +225,15 @@ var ServerApplication = function(options) {
     init: function(cb) {
       var self = this;
       // Connect to database
+      process.stdout.write("Connecting to database...");
       mongo.MongoClient.connect(options.mongoUrl, function(err, dbs) {
         if(err) throw err;
+        console.log("done");
         self.db = dbs;
-        console.log("Connected to " + options.mongoUrl);
         // Mongo PubSub
+        process.stdout.write("Preparing PubSub...");
         self.pubSub = require('./serverPublisher.js')(expressApp, self.db).init(function() {
-          console.log("PubSub ready");
+          console.log("done");
           // start must be called by application code to listen for requests
           var start = function(cb) {
             var port = options.port || process.env.PORT || 3000;
@@ -241,7 +244,7 @@ var ServerApplication = function(options) {
           };
           // Make sure we have a cached bundle ready before listening for requests
           prepareBundle(function() {
-            console.log("Bundle ready");
+            console.log("done");
             cb(start, expressApp, self.db)
           });
         });

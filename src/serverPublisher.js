@@ -1,5 +1,5 @@
 // Publish data from any server instance to all connected clients
-var Publisher = function(app, db) {
+var Publisher = function(express, db) {
   var clients = [];
 
   // Create tailable cursor on db to get notified of added documents
@@ -31,7 +31,7 @@ var Publisher = function(app, db) {
 
   // Server-sent event stream
   var listen = function() {
-    app.get('/events', function (req, res) {
+    express.get('/events', function (req, res) {
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       // Save response stream for later

@@ -174,11 +174,10 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             if(viewModel) {
               unfinish(frag);
               // Instantiate view model
-              viewModel.create(args, function(view) {
+              viewModel.create(args, frag, function(view) {
                 // Add view model instance to scope
                 var newScope = scope.clone().addLayer(view);
-                //XXX Set view.$el
-                view.el = frag;
+                // view.el = frag;
                 view.scope = newScope;
                 recurse(frag, newScope);
                 finish(frag);

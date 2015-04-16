@@ -13,8 +13,9 @@ var ViewModel = function(name, reference, constructor) {
     name: name,
 
     // Return a fully resolved and constructed view model instance
-    create: function(args, cb) {
+    create: function(args, elem, cb) {
       var inst = model.create();
+      inst.el = elem;
       inst.resolve(function() {
         var promise = constructor && constructor.apply(inst, args);
         if(promise) {
