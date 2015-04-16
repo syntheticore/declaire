@@ -29,8 +29,10 @@ var ClientApplication = function() {
       var evaluator = Evaluator(body, viewModels, templates, DOMInterface());
       evaluator.baseScope.addLayer(mainModel);
       var frag = evaluator.render(function() {
-        $('body').replaceWith(frag);
-        cb();
+        $(document).ready(function() {
+          $('body').replaceWith(frag);
+          cb();
+        })
       });
     });
   };
