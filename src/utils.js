@@ -1,3 +1,4 @@
+// Check if we are executing on the server
 //XXX Would browserify minifier optimize this away if it wasn't a function?
 exports.onServer = function(cb) {
   var server = (typeof(window) == 'undefined');
@@ -5,12 +6,15 @@ exports.onServer = function(cb) {
   return server;
 };
 
+// Check if we are executing in the browser
 exports.onClient = function(cb) {
   var client = !exports.onServer();
   if(client && cb) cb(client);
   return client;
 };
 
+// Loop through objects and arrays
+// Return false from callback to stop iteration
 exports.each = function(items, cb) {
   for(var key in items) {
     var cancel = cb(items[key], key);
@@ -18,6 +22,8 @@ exports.each = function(items, cb) {
   }
 };
 
+// Return a copy the given array
+// with each item replaced according to <cb>
 exports.map = function(items, cb) {
   var out = Array.isArray(items) ? [] : {};
   exports.each(items, function(item, key) {
@@ -26,18 +32,21 @@ exports.map = function(items, cb) {
   return out;
 };
 
+// Call the given function <n> times
 exports.times = function(n, cb) {
   for(var i = 0; i < n; i++) {
     cb(i);
   }
 };
 
+// Interleave the items of two arrays
 exports.zip = function(items1, items2, cb) {
   exports.each(items1, function(item1, i) {
     cb(item1, items2[i]);
   });
 };
 
+// Select items fron an array or object that match the given condition
 exports.select = function(items, cb, n) {
   var ary = Array.isArray(items);
   var out = ary ? [] : {};
@@ -55,14 +64,17 @@ exports.select = function(items, cb, n) {
   return out;
 };
 
+// Check if all items match the given condition
 exports.all = function(items, cb) {
   return exports.select(items, cb).length == items.length;
 };
 
+// Check if <item> is a member of the array
 exports.contains = function(items, item) {
   return items.indexOf(item) != -1;
 };
 
+// Merge two array
 exports.union = function(items1, items2) {
   var out = [];
   exports.each(items1, function(item) {
@@ -90,8 +102,34 @@ exports.deepMerge = function(obj1, obj2) {
   return exports.merge(obj1, obj2);
 };
 
+// Execute function at a later time
 exports.defer = function(cb, millis) {
-  setTimeout(cb, millis || 0);
+  return setTimeout(cb, millis || 0);
+};
+
+// Return a wrapper function that calls <cb>,
+// but at most every <thresh> milliseconds
+exports.throttle = function(thresh, cb) {
+  thresh = thresh || 1000;
+  var lastT;
+  var handle;
+  return function() {
+    var t = new Date().getMilliseconds();
+    if(!lastT) {
+      cb();
+      lastT = t;
+    } else {
+      if(!handle) {
+        var delta = t - lastT;
+        var sleep = Math.max(0, thresh - delta);
+        handle = exports.defer(function() {
+          cb();
+          lastT = t;
+          handle = null;
+        }, sleep);
+      }
+    }
+  };
 };
 
 // Return all matches of the given regex
@@ -104,6 +142,7 @@ exports.scan = function(str, re) {
   return matches;
 };
 
+// Return a universally unique id
 exports.uuid = function() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
     var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
