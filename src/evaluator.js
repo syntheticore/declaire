@@ -239,8 +239,8 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             //XXX Remove handler when a parent gets updated
             elem.on(action, function(e) {
               e.preventDefault();
-              scope.resolvePath(method);
               //XXX Read text from inputs and supply as argument to method
+              return scope.resolvePath(method).value;
             });
           }
         // }
