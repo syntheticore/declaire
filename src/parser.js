@@ -180,6 +180,13 @@ var Parser = {
         arguments: args,
         children: []
       };
+    // content
+    } else if(m = line.match(/{{content}}/)) {
+      return {
+        type: 'Statement',
+        keyword: 'content',
+        children: []
+      };
     } else {
       throw('Unknown statement: ' + line);
     }

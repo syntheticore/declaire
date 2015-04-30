@@ -191,8 +191,16 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             var args = Utils.map(node.arguments, function(expr) {
               return evalExpr(scope, expr);
             });
+            var contentFrag = interface.createFragment();
+            Utils.each(node.children, function(child) {
+              contentFrag.append(self.evaluate(child, scope));
+            });
+            args._content = contentFrag;
             var newScope = Scope().addLayer(args);
             frag.append(self.evaluate(importedNode, newScope));
+            break;
+          case 'content':
+            frag.append(scope.get('_content'));
             break;
         }
       } else if(node.type == 'HTMLTag') {
