@@ -130,11 +130,20 @@ var Parser = {
         path2: m[2],
         children: []
       };
-    // if-greater
+    // if-equal
     } else if(m = line.match(/{{if-equal\s+(.+)\s+(.+)}}/)) {
       return {
         type: 'Statement',
         keyword: 'if-equal',
+        path1: m[1],
+        path2: m[2],
+        children: []
+      };
+    // if-not-equal
+    } else if(m = line.match(/{{if-not-equal\s+(.+)\s+(.+)}}/)) {
+      return {
+        type: 'Statement',
+        keyword: 'if-not-equal',
         path1: m[1],
         path2: m[2],
         children: []

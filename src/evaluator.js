@@ -134,6 +134,11 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
               return values[0] == values[1];
             });
             break;
+          case 'if-not-equal':
+            evaluateIf([node.path1, node.path2], function(values) {
+              return values[0] != values[1];
+            });
+            break;
           case 'for':
             var elem = interface.createDOMElement('span', null, ['placeholder-for']);
             frag.append(elem);
