@@ -247,15 +247,14 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         }
         // Register action handlers
         // if(_.keys(node.actions).length) {
-          for(var action in node.actions) {
-            var method = node.actions[action];
+          Utils.each(node.actions, function(method, action) {
             //XXX Remove handler when a parent gets updated
             elem.on(action, function(e) {
               e.preventDefault();
               //XXX Read text from inputs and supply as argument to method
               return scope.resolvePath(method, [e]).value;
             });
-          }
+          });
         // }
         frag.append(elem);
       } else if(node.type == 'Text') {
