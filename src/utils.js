@@ -69,6 +69,10 @@ exports.all = function(items, cb) {
   return exports.select(items, cb).length == items.length;
 };
 
+exports.last = function(items) {
+  return items[items.length - 1];
+};
+
 // Check if <item> is a member of the array
 exports.contains = function(items, item) {
   return items.indexOf(item) != -1;

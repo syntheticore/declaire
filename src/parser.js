@@ -1,4 +1,4 @@
-var Utils = require('./utils');
+var _ = require('./utils.js');
 
 
 var Parser = {
@@ -17,7 +17,7 @@ var Parser = {
     };
     var lastNode = top;
     var stack = [top];
-    Utils.each(lines, function(line) {
+    _.each(lines, function(line) {
       lineNum++;
       if(!line) return;
       // Remove indentation
@@ -40,7 +40,7 @@ var Parser = {
         if(lastNode.content) throw({message: 'Elements cannot have both text and children elements', lineNum: lineNum});
         stack.push(lastNode);
       } else if(indent < lastIndent) {
-        Utils.times(lastIndent - indent, function() {
+        _.times(lastIndent - indent, function() {
           stack.pop();
         });
       }
@@ -71,14 +71,17 @@ var Parser = {
 
   // Parse all major components from a tag, including inline content
   parseTag: function(line) {
-    var m = line.match(/([\w-]+)?(#([\w-]+))?((\.[\w-]+)*)(\((.*)\))?( (.*))?/);
-    var tag = m[1] || 'div';
-    var id = m[3];
-    var classes = m[4] ? m[4].slice(1).split('.') : [];
-    var inParens = m[7];
-    var content = m[9];
+    var self = this;
+    var m = line.match(/(.+>)*([\w-]+)?(#([\w-]+))?((\.[\w-]+)*)(\((.*)\))?( (.*))?/);
+    var multiTags = m[1];
+    var tag = m[2] || 'div';
+    var id = m[4];
+    var classes = m[5] ? m[5].slice(1).split('.') : [];
+    var inParens = m[8];
+    var content = m[10];
     var attributes = {};
     var actions = {};
+    // Parse attributes
     if(inParens) {
       var attrDefinitions;
       var actionDefinitions;
@@ -89,16 +92,17 @@ var Parser = {
       } else {
         attrDefinitions = inParens;
       }
-      Utils.each(Utils.scan(attrDefinitions, /([\w-]+?)=(['"])(.+?)\2\s?/g), function(m) { // '
+      _.each(_.scan(attrDefinitions, /([\w-]+?)=(['"])(.+?)\2\s?/g), function(m) { // '
         var key = m[1];
         var value = m[3];
         attributes[key] = value;
       });
-      Utils.each(Utils.scan(actionDefinitions, /{{(\w+)\s(\w+)\s(\w+)}}/g), function(m) {
+      _.each(_.scan(actionDefinitions, /{{(\w+)\s(\w+)\s(\w+)}}/g), function(m) {
         actions[m[2]] = m[3];
       });
     }
-    return {
+    // Make AST node
+    var tag = {
       type: 'HTMLTag',
       tag: tag,
       id: id,
@@ -108,6 +112,23 @@ var Parser = {
       actions: actions,
       children: []
     };
+    // Build a hierarchy from multi tags
+    if(multiTags) {
+      multiTags = multiTags.slice(0, -1);
+      var tags = _.map(multiTags.split('>'), function(t) {
+        return self.parseTag(t);
+      });
+      var top = tags.shift();
+      var prev = top;
+      _.each(tags, function(t) {
+        prev.children.push(t);
+        prev = t;
+      });
+      prev.children.push(tag);
+      return top;
+    } else {
+      return tag;
+    }
   },
 
   // Takes an statement line and creates the approriate node
@@ -160,7 +181,7 @@ var Parser = {
     // view
     } else if(m = line.match(/{{view\s+(\w+)?(\(.*\))?}}/)) {
       var parens = m[2];
-      var args = parens ? Utils.map(parens.slice(1, -1).split(','), function(argument) {
+      var args = parens ? _.map(parens.slice(1, -1).split(','), function(argument) {
         return argument.replace(/\s/g, '');
       }) : [];
       return {
@@ -175,7 +196,7 @@ var Parser = {
       var parens = m[2];
       var args = {};
       if(parens) {
-        Utils.each(parens.slice(1, -1).split(','), function(argument) {
+        _.each(parens.slice(1, -1).split(','), function(argument) {
           var pair = argument.replace(/\s/g, '').split(':');
           var vari = pair[0];
           var expr = pair[1];
