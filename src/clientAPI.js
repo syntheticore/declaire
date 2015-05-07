@@ -4,5 +4,6 @@ module.exports = {
   ViewModel: require('./viewModel.js'),
   Collection: require('./collection.js'),
   Query: require('./query.js'),
-  Utils: require('./utils.js')
+  Utils: require('./utils.js'),
+  UndoManager: require('./undoManager.js')
 };

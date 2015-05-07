@@ -39,6 +39,15 @@ exports.times = function(n, cb) {
   }
 };
 
+// Invoke the named method on each item
+exports.invoke = function(items, key) {
+  var out = [];
+  exports.each(items, function(item) {
+    out.push(item[key]());
+  });
+  return out;
+};
+
 // Interleave the items of two arrays
 exports.zip = function(items1, items2, cb) {
   exports.each(items1, function(item1, i) {
