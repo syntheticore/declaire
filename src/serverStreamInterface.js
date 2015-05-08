@@ -35,6 +35,10 @@ var StreamInterface = function() {
           this.tekst = text;
         },
 
+        html: function(text) {
+          this.tekst = text;
+        },
+
         // Called when an asynchronous operation on this element begins
         unfinish: function() {
           this.finished = false;

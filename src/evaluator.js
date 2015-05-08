@@ -230,10 +230,10 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         if(node.content) {
           if(hasMustaches(node.content)) {
             var resolved = resolveMustaches(node.content, scope);
-            elem.text(resolved.text);
+            elem.html(resolved.text);
             paths = Utils.union(paths, resolved.paths);
           } else {
-            elem.text(node.content);
+            elem.html(node.content);
           }
         } else {
           recurse(elem, scope);

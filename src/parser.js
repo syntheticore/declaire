@@ -72,7 +72,7 @@ var Parser = {
   // Parse all major components from a tag, including inline content
   parseTag: function(line) {
     var self = this;
-    var m = line.match(/(.+>)*([\w-]+)?(#([\w-]+))?((\.[\w-]+)*)(\((.*)\))?( (.*))?/);
+    var m = line.match(/([\w-#\.]+>)*([\w-]+)?(#([\w-]+))?((\.[\w-]+)*)(\((.*)\))?( (.*))?/);
     var multiTags = m[1];
     var tag = m[2] || 'div';
     var id = m[4];
