@@ -95,12 +95,12 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
 
     // Evaluate the given node in the context of the given scope
     // Returns a document fragment
-    evaluate: function(node, scope) {
+    evaluate: function(node, scope, preFormated) {
       var self = this;
       var frag = node.keyword == 'view' ? interface.createDOMElement('span', null, ['placeholder-view']) : interface.createFragment();
-      var recurse = function(frag, scope) {
+      var recurse = function(frag, scope, pre) {
         Utils.each(node.children, function(child) {
-          frag.append(self.evaluate(child, scope));
+          frag.append(self.evaluate(child, scope, pre || preFormated));
         });
       };
       if(node.type == 'Statement') {
@@ -236,7 +236,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             elem.html(node.content);
           }
         } else {
-          recurse(elem, scope);
+          recurse(elem, scope, (node.tag == 'script' || node.tag == 'pre'));
         }
         // If node had either dynamic content or dynamic attributes -> register for updates
         if(paths.length) {
@@ -258,7 +258,8 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         // }
         frag.append(elem);
       } else if(node.type == 'Text') {
-        frag.text(node.content);
+        var text = (preFormated ? interface.createTextNode(node.content) : interface.createDOMElement('span').html(node.content));
+        frag.append(text);
       } else if(node.type == 'TOP') {
         recurse(frag, scope);
       }

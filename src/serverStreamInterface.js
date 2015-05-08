@@ -19,7 +19,7 @@ var StreamInterface = function() {
       return {
         tag: tag,
         id: id,
-        classes: classes,
+        classes: classes || [],
         attributes: attributes,
         children: [],
         finished: true,
@@ -29,14 +29,17 @@ var StreamInterface = function() {
 
         append: function(elem) {
           this.children.push(elem);
+          return this;
         },
 
         text: function(text) {
           this.tekst = text;
+          return this;
         },
 
         html: function(text) {
           this.tekst = text;
+          return this;
         },
 
         // Called when an asynchronous operation on this element begins
@@ -81,7 +84,7 @@ var StreamInterface = function() {
                 html += ' ' + key + '="' + val + '"';
               };
               if(this.id) addAttr('id', this.id);
-              if(this.classes && this.classes.length) addAttr('class', this.classes.join(' '));
+              if(this.classes.length) addAttr('class', this.classes.join(' '));
               if(this.attributes) {
                 for(var attr in this.attributes) {
                   var val = this.attributes[attr];
@@ -121,6 +124,12 @@ var StreamInterface = function() {
           return {html: html, terminated: terminated};
         }
       };
+    },
+
+    createTextNode: function(text) {
+      var frag = this.createFragment();
+      frag.text(text);
+      return frag;
     }
   };
 };

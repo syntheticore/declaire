@@ -13,7 +13,7 @@ var DOMInterface = function() {
     createDOMElement: function(tag, id, classes, attributes) {
       var elem = document.createElement(tag);
       if(id) elem.id = id;
-      if(classes.length) elem.className = classes.join(' ');
+      if(classes && classes.length) elem.className = classes.join(' ');
       elem = $(elem);
       Utils.each(attributes, function(value, key) {
         // if(['checked', 'selected', 'disabled', 'readonly', 'multiple', 'defer', 'declare', 'noresize'].indexOf(key) != -1) {
@@ -24,6 +24,10 @@ var DOMInterface = function() {
         elem.attr(key, value);
       });
       return elem;
+    },
+
+    createTextNode: function(text) {
+      return document.createTextNode(text);
     }
   };
 };
