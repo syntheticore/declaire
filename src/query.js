@@ -1,4 +1,4 @@
-var Utils = require('./utils.js');
+var _ = require('./utils.js');
 var eventMethods = require('./events.js');
 
 
@@ -17,36 +17,53 @@ var Query = function(modelOrCollection, query, options) {
   };
 
   var filter = function(items, onlyOne) {
-    return Utils.select(items, function(item) {
+    return _.select(items, function(item) {
       return true;
     }, onlyOne ? 1 : options.limit);
   };
 
-  var inst = Utils.merge(eventMethods, {
+  var inst = _.merge(eventMethods, {
     klass: 'Query',
     listeners: [],
     length: 0,
+    allCache: null,
+    firstCache: null,
 
     all: function(cb) {
-      getItems(false, function(items) {
-        this.length = items.length;
-        cb(items);
-      });
+      var self = this;
+      if(self.allCache) {
+        cb(self.allCache);
+      } else {
+        getItems(false, function(items) {
+          self.length = items.length;
+          self.allCache = items;
+          self.firstCache = items[0];
+          cb(items);
+          inst.emit('change', 'length');
+          inst.emit('change');
+        });
+      }
     },
 
     first: function(cb) {
-      getItems(true, function(items) {
-        this.length = items.length;
-        cb(items);
-      });
+      var self = this;
+      if(self.firstCache) {
+        return self.firstCache;
+      } else {
+        getItems(true, function(items) {
+          self.length = items.length;
+          self.firstCache = items[0];
+          cb(items[0]);
+        });
+      }
     },
 
     filter: function(moreQuery) {
-      return Query(modelOrCollection, Utils.deepMerge(query, moreQuery), options);
+      return Query(modelOrCollection, _.deepMerge(query, moreQuery), options);
     },
 
     limit: function(limit) {
-      return Query(modelOrCollection, query, Utils.merge(options, {limit: limit}));
+      return Query(modelOrCollection, query, _.merge(options, {limit: limit}));
     },
 
     clone: function() {
@@ -57,11 +74,17 @@ var Query = function(modelOrCollection, query, options) {
   if(modelOrCollection.klass == 'Model') {
     if(modelOrCollection.app.pubSub) {
       modelOrCollection.app.pubSub.subscribe('create update delete', modelOrCollection.name, function(data) {
+        inst.allCache = null;
+        inst.firstCache = null;
+        //XXX should only trigger length on create and delete
+        inst.emit('change', 'length');
         inst.emit('change');
       });
     }
   } else if(modelOrCollection.klass == 'Collection') {
     modelOrCollection.on('change:length', function() {
+      inst.allCache = null;
+      inst.firstCache = null;
       inst.emit('change', 'length');
       inst.emit('change');
     });

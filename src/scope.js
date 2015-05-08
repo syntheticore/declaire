@@ -75,7 +75,7 @@ var Scope = function() {
     readAttribute: function(obj, seg, args) {
       // if(!obj) throw('Path not found: ' + seg);
       if(!obj) return null;
-      if(obj.model) {
+      if(obj.klass == 'Instance') {
         if(args) {
           return obj[seg].apply(obj, args);
         } else {

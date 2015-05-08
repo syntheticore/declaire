@@ -286,7 +286,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       Utils.each(elem.node.paths, function(path) {
         if(isPath(path)) {
           var reference = elem.scope.resolvePath(path).ref;
-          if(reference.obj && reference.obj.model) {
+          if(reference.obj && reference.obj.once) {
             var handler = function() {
               self.updateElement(elem);
             };
