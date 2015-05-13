@@ -32,6 +32,7 @@ Declarative, full-stack web application framework
   - [ ] Selectively update data structures using deep merge
   - [ ] Extend Models
   - [ ] ViewModel.listenTo()
+  - [ ] Render Cache
   - [x] History & Rollback
   - [ ] Access permissions
   - [ ] Remote blocks

@@ -38,17 +38,18 @@ var Query = function(modelOrCollection, query, options) {
           self.length = items.length;
           self.allCache = items;
           self.firstCache = items[0];
-          cb(items);
+          cb && cb(items);
           inst.emit('change', 'length');
           inst.emit('change');
         });
       }
+      return self;
     },
 
     first: function(cb) {
       var self = this;
       if(self.firstCache) {
-        return self.firstCache;
+        cb(self.firstCache);
       } else {
         getItems(true, function(items) {
           self.length = items.length;
@@ -56,6 +57,7 @@ var Query = function(modelOrCollection, query, options) {
           cb(items[0]);
         });
       }
+      return self;
     },
 
     filter: function(moreQuery) {
@@ -67,13 +69,15 @@ var Query = function(modelOrCollection, query, options) {
     },
 
     clone: function() {
-      return Query(modelOrCollection, query);
+      return Query(modelOrCollection, query, options);
     }
   });
 
   if(modelOrCollection.klass == 'Model') {
     if(modelOrCollection.app.pubSub) {
+      console.log("subscribing " + modelOrCollection.name);
       modelOrCollection.app.pubSub.subscribe('create update delete', modelOrCollection.name, function(data) {
+        console.log("Updating query due to pubsub");
         inst.allCache = null;
         inst.firstCache = null;
         //XXX should only trigger length on create and delete
@@ -97,4 +101,3 @@ var Query = function(modelOrCollection, query, options) {
 
 
 module.exports = Query;
-

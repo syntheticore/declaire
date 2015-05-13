@@ -252,7 +252,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             elem.on(action, function(e) {
               e.preventDefault();
               //XXX Read text from inputs and supply as argument to method
-              return scope.resolvePath(method, [e]).value;
+              return scope.resolvePath(method, [e, elem]).value;
             });
           });
         // }
