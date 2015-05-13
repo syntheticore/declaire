@@ -26,6 +26,7 @@ var StreamInterface = function() {
 
         // Don't register actions handlers on the server
         on: function() {},
+        change: function() {},
 
         append: function(elem) {
           this.children.push(elem);

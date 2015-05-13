@@ -1,14 +1,27 @@
 var $ = require('jquery');
-var Utils = require('./utils.js');
+var _ = require('./utils.js');
 
 
-var ClientDataInterface = function(name) {
-  var url = '/api/' + name;
+var ClientDataInterface = function(model) {
+  var url = model.url();
+  var cache = {};
+  // Fetch object from cache
+  // or create first local representation otherwise
+  var init = function(data) {
+    if(cache[data._id]) return cache[data._id];
+    var inst = model.create();
+    inst.id = data._id;
+    inst.data.remote = data;
+    cache[inst.id] = inst;
+    return inst;
+  };
   return {
     all: function(options, cb) {
       $.get(url)
       .done(function(data) {
-        cb(null, data);
+        cb(null, _.map(data, function(item) {
+          return init(item);
+        }));
       })
       .fail(function() {
         cb('error', null);
@@ -18,16 +31,17 @@ var ClientDataInterface = function(name) {
     one: function(id, cb) {
       $.get(url + '/' + id)
       .done(function(data) {
-        cb(null, data);
+        cb(null, init(data));
       })
       .fail(function() {
         cb('error', null);
       });
     },
 
-    create: function(values, cb) {
-      $.post(url, {data: JSON.stringify(values)})
+    create: function(inst, cb) {
+      $.post(url, {data: JSON.stringify(inst.serialize())})
       .done(function(data) {
+        cache[data._id] = inst;
         cb(null, data);
       })
       .fail(function() {

@@ -1,13 +1,13 @@
 var RSVP = require('rsvp');
 
 var Query = require('./query.js');
-var Utils = require('./utils.js');
+var _ = require('./utils.js');
 var eventMethods = require('./events.js');
 
 
 var localStore;
 // Use a dummy local store on the server, that never caches values
-if(Utils.onServer()) {
+if(_.onServer()) {
   localStore = {
     get: function(key) {
       return undefined;
@@ -21,11 +21,11 @@ if(Utils.onServer()) {
 
 
 var Instance = function() {
-  return Utils.merge(eventMethods, {
+  return _.merge(eventMethods, {
     klass: 'Instance',
     model: null,
     id: null,
-    localId: Utils.uuid(),
+    localId: _.uuid(),
     listeners: [],
     data: {
       local: {},
@@ -80,7 +80,7 @@ var Instance = function() {
         // Emit change events for computed properties as well
         //XXX Don't emit multiple times if CP depends on several values
         for(var k in this.computedProperties) {
-          if(Utils.contains(this.computedProperties[k], key)) {
+          if(_.contains(this.computedProperties[k], key)) {
             this.emit('change', k);
           }
         }
@@ -89,15 +89,10 @@ var Instance = function() {
       return this;
     },
 
-    // Returns a reference object, usable for storage in the db
-    reference: function() {
-      return this.id && {_ref: {id: this.id, collection: this.model.name}};
-    },
-
     // The current state of the object,
     // including local modifications
     properties: function() {
-      return Utils.merge(this.data.remote, this.data.local);
+      return _.merge(this.data.remote, this.data.local);
     },
 
     // Are local modifications present that need to be saved?
@@ -130,12 +125,12 @@ var Instance = function() {
         var url = self.id ? self.url() : self.model.url();
         if(self.id) {
           self.model.dataInterface.update(self.id, self.data.local, function(err, updatedValues) {
-            self.data.remote = Utils.merge(self.data.remote, updatedValues);
+            self.data.remote = _.merge(self.data.remote, updatedValues);
             finish();
           });
         } else {
           //XXX offline case
-          self.model.dataInterface.create(self.data.local, function(err, data) {
+          self.model.dataInterface.create(self, function(err, data) {
             self.data.remote = data;
             self.id = data._id;
             self.connect();
@@ -182,10 +177,21 @@ var Instance = function() {
       });
     },
 
+    // Returns a reference object, usable for storage in the db
+    reference: function() {
+      return this.id && {_ref: {id: this.id, collection: this.model.name}};
+    },
+
+    // Serialize object into a representation suitable for
+    // storage on the server by referencing other model instances by ID
+    serialize: function() {
+      return references(this.properties());
+    },
+
     // Load all referenced model instances
     resolve: function(cb) {
       var self = this;
-      var resolved = Utils.map(self.data.remote, function(item) {
+      var resolved = _.map(self.data.remote, function(item) {
         if(item._ref) {
           var model = models[item._ref.collection];
           return model.load(item._ref.id);
@@ -194,7 +200,7 @@ var Instance = function() {
         }
       });
       RSVP.hash(resolved).then(function(instances) {
-        Utils.each(instances, function(inst, key) {
+        _.each(instances, function(inst, key) {
           self.data.remote[key] = inst;
         });
         cb();
@@ -207,7 +213,7 @@ var Instance = function() {
       if(self.connected || !self.id) return;
       self.model.app.pubSub.subscribe('update', self.model.name, self.id, function(data) {
         console.log("Received push update");
-        self.data.remote = Utils.merge(self.data.remote, data);
+        self.data.remote = _.merge(self.data.remote, data);
         for(var key in data) {
           self.emit('change', key);
         }
@@ -285,16 +291,24 @@ var Model = function(dbCollection, reference) {
           // }
         });
         // inst.collections[key] = collection;
-        inst.set(key, collection);
+        // inst.set(key, collection);
+        inst.data.remote[key] = collection;
       }
+      // Copy default queries to instance
       for(var key in ref.queries) {
         var query = ref.queries[key].clone();
+        // Re-emit change events from query
         query.on('change', function() {
           inst.set(key, inst.get(key));
         });
-        inst.set(key, query);
+        // inst.set(key, query);
+        inst.data.remote[key] = query;
       }
-      inst.set(Utils.merge(this.defaults, values));
+      // Copy default values from model and arguments
+      // inst.set(_.merge(this.defaults, values));
+      _.each(_.merge(this.defaults, values), function(value, key) {
+        inst.data.remote[key] = value;
+      });
       return inst;
     },
 

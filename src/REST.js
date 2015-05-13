@@ -35,7 +35,7 @@ var REST = function(name, express, dataInterface) {
       // Create item
       express.post(baseUrl, function(req, res) {
         var data = JSON.parse(req.body.data);
-        dataInterface.create(data, function(err, item) {
+        dataInterface.create({serialize: function() { return data }}, function(err, item) {
           if(err) {
             res.send(404, err);
           } else {

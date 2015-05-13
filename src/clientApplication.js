@@ -67,7 +67,7 @@ var ClientApplication = function() {
       if(model.klass == 'ViewModel') {
         viewModels[model.name] = model;
       } else if(model.klass == 'Model') {
-        model.dataInterface = DataInterface(model.name);
+        model.dataInterface = DataInterface(model);
       }
       return model;
     },

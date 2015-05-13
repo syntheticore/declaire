@@ -214,11 +214,17 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         if(node.tag == 'script' && _.onClient()) return frag;
         var attributes = {};
         var paths = [];
+        var bindings = {};
         // Resolve dynamic attributes
         for(var key in node.attributes) {
           var value = node.attributes[key];
           if(value.indexOf('{') != -1) {
             var expr = value.slice(1, -1);
+            // Two way binding
+            if(_.last(expr) == '!') {
+              expr = expr.slice(0, -1);
+              bindings[key] = expr;
+            }
             attributes[key] = scope.resolvePath(expr).value;
             paths.push(expr);
           } else {
@@ -243,7 +249,23 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           node.paths = paths; //XXX Should it be elem.paths?
           self.register(elem);
         }
+        // Execute embeded statements
         self.execMicroStatements(node.statements, elem);
+        // Register bindings
+        elem.change(function() {
+          _.each(bindings, function(expr, attr) {
+            console.log("Pushing back " + expr + " to " + attr);
+            var ref = scope.resolvePath(expr).ref;
+            console.log(ref);
+            var value;
+            if(attr == 'checked') {
+              value = elem.is(':checked');
+            } else if(attr == 'value') {
+              value = elem.val();
+            }
+            ref.obj.set(ref.key, value).save();
+          });
+        });
         if(!node.content) {
           recurse(elem, scope, (node.tag == 'script' || node.tag == 'pre'));
         }

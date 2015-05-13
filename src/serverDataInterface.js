@@ -27,8 +27,8 @@ var ServerDataInterface = function(app, name) {
       });
     },
 
-    create: function(values, cb) {
-      var fields = Utils.merge(values, {createdAt: new Date(), updatedAt: new Date()});
+    create: function(inst, cb) {
+      var fields = Utils.merge(inst.serialize(), {createdAt: new Date(), updatedAt: new Date()});
       app.db.collection(name).insert(fields, function(err, items) {
         var item = items[0];
         if(!err) app.pubSub.publish({type: 'create', collection: name, id: item._id, data: item});
@@ -47,7 +47,7 @@ var ServerDataInterface = function(app, name) {
           cb(err);
         } else {
           app.pubSub.publish({type: 'update', collection: name, id: id, data: values});
-          cb(null, {updatedAt: values.updatedAt});
+          cb(null, values);
         }
       });
     },
