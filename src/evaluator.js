@@ -223,7 +223,13 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             // Two way binding
             if(_.last(expr) == '!') {
               expr = expr.slice(0, -1);
-              bindings[key] = expr;
+              // .. with auto save
+              var save = false;
+              if(_.last(expr) == '!') {
+                expr = expr.slice(0, -1);
+                save = true;
+              }
+              bindings[key] = {expr: expr, save: save};
             }
             attributes[key] = scope.resolvePath(expr).value;
             paths.push(expr);
@@ -253,17 +259,18 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         self.execMicroStatements(node.statements, elem);
         // Register bindings
         elem.change(function() {
-          _.each(bindings, function(expr, attr) {
-            console.log("Pushing back " + expr + " to " + attr);
-            var ref = scope.resolvePath(expr).ref;
-            console.log(ref);
+          _.each(bindings, function(binding, attr) {
+            var ref = scope.resolvePath(binding.expr).ref;
             var value;
             if(attr == 'checked') {
               value = elem.is(':checked');
             } else if(attr == 'value') {
               value = elem.val();
             }
-            ref.obj.set(ref.key, value).save();
+            ref.obj.set(ref.key, value);
+            if(binding.save) {
+              ref.obj.save();
+            }
           });
         });
         if(!node.content) {
