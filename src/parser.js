@@ -80,15 +80,15 @@ var Parser = {
     var inParens = m[8];
     var content = m[10];
     var attributes = {};
-    var actions = {};
+    var statements = [];
     // Parse attributes
     if(inParens) {
       var attrDefinitions;
-      var actionDefinitions;
       var i = inParens.indexOf('{{');
       if(i > -1) {
         attrDefinitions = inParens.slice(0, i);
-        actionDefinitions = inParens.slice(i, inParens.length);
+        var statementDefinitions = inParens.slice(i, inParens.length);
+        statements = self.parseMicroStatements(statementDefinitions);
       } else {
         attrDefinitions = inParens;
       }
@@ -97,9 +97,9 @@ var Parser = {
         var value = m[3];
         attributes[key] = value;
       });
-      _.each(_.scan(actionDefinitions, /{{(\w+)\s(\w+)\s(\w+)}}/g), function(m) {
-        actions[m[2]] = m[3];
-      });
+      // _.each(_.scan(statementDefinitions, /{{(\w+)\s+(\w+)\s+(\w+)}}/g), function(m) {
+      //   statements[m[2]] = m[3];
+      // });
     }
     // Make AST node
     var tag = {
@@ -109,7 +109,7 @@ var Parser = {
       classes: classes,
       attributes: attributes,
       content: content,
-      actions: actions,
+      statements: statements,
       children: []
     };
     // Build a hierarchy from multi tags
@@ -129,6 +129,23 @@ var Parser = {
     } else {
       return tag;
     }
+  },
+
+  parseMicroStatements: function(string) {
+    var statements = [];
+    _.each(_.scan(string, /{{(\w+)\s+(.*)}}/g), function(m) {
+      var statement = m[1];
+      var rest = m[2];
+      if(statement == 'as') {
+        statements.push({statement: 'as', varName: rest});
+      } else if(statement == 'action') {
+        var m = rest.match(/(\w+)\s+(\w+)/);
+        statements.push({statement: 'action', event: m[1], method: m[2]});
+      } else {
+        throw('Unknown statement: ' + statement);
+      }
+    });
+    return statements;
   },
 
   // Takes an statement line and creates the approriate node

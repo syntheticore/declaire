@@ -1,4 +1,4 @@
-var Utils = require('./utils.js');
+var _ = require('./utils.js');
 var Scope = require('./scope.js');
 
 
@@ -7,7 +7,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
   // Replace all mustaches in text with the value of their paths
   var resolveMustaches = function(text, scope) {
     var paths = [];
-    Utils.each(Utils.scan(text, /{(.*?)}/g).reverse(), function(m) {
+    _.each(_.scan(text, /{(.*?)}/g).reverse(), function(m) {
       var i = m.index;
       var l = m[0].length;
       var expr = m[1];
@@ -49,7 +49,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       return m[2];
     // Array
     } else if(m = expr.match(/\[(.*)\]/)) {
-      return Utils.map(m[1].split(','), function(item) {
+      return _.map(m[1].split(','), function(item) {
         return evalExpr(scope, item);
       });
     } else {
@@ -85,7 +85,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       renderCb = cb;
       var frag = this.evaluate(topNode, this.baseScope);
       if(!pending) {
-        Utils.defer(function() {
+        _.defer(function() {
           renderCb && renderCb();
           renderCb = null;
         });
@@ -99,7 +99,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       var self = this;
       var frag = node.keyword == 'view' ? interface.createDOMElement('span', null, ['placeholder-view']) : interface.createFragment();
       var recurse = function(frag, scope, pre) {
-        Utils.each(node.children, function(child) {
+        _.each(node.children, function(child) {
           frag.append(self.evaluate(child, scope, pre || preFormated));
         });
       };
@@ -107,7 +107,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         var evaluateIf = function(expressions, condition) {
           var elem = interface.createDOMElement('span', null, ['placeholder-if']);
           frag.append(elem);
-          var values = Utils.map(expressions, function(expr) {
+          var values = _.map(expressions, function(expr) {
             return evalExpr(scope, expr);
           });
           node.paths = expressions;
@@ -146,7 +146,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             elem.node = node;
             elem.scope = scope;
             var loop = function(items) {
-              Utils.each(items, function(item) {
+              _.each(items, function(item) {
                 var itemData = {};
                 itemData[node.itemPath] = item;
                 if(node.children.length) {
@@ -173,7 +173,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             var viewModel = viewModels[node.viewModel];
             if(node.viewModel && !viewModel) console.error('View model not found: ' + node.viewModel);
             // Evaluate constructor arguments
-            var args = Utils.map(node.arguments, function(arg) {
+            var args = _.map(node.arguments, function(arg) {
               return evalExpr(scope, arg);
             });
             if(viewModel) {
@@ -193,11 +193,11 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             break;
           case 'import':
             var importedNode = parseTrees[node.templateName];
-            var args = Utils.map(node.arguments, function(expr) {
+            var args = _.map(node.arguments, function(expr) {
               return evalExpr(scope, expr);
             });
             var contentFrag = interface.createFragment();
-            Utils.each(node.children, function(child) {
+            _.each(node.children, function(child) {
               contentFrag.append(self.evaluate(child, scope));
             });
             args._content = contentFrag;
@@ -211,7 +211,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       } else if(node.type == 'HTMLTag') {
         // Don't regenerate script tags as these
         // would be downloaded and reexecuted each time
-        if(node.tag == 'script' && Utils.onClient()) return frag;
+        if(node.tag == 'script' && _.onClient()) return frag;
         var attributes = {};
         var paths = [];
         // Resolve dynamic attributes
@@ -226,36 +226,27 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           }
         }
         var elem = interface.createDOMElement(node.tag, node.id, node.classes, attributes);
+        elem.node = node;
+        elem.scope = scope;
         // Nodes have either content or children
         if(node.content) {
           if(hasMustaches(node.content)) {
             var resolved = resolveMustaches(node.content, scope);
             elem.html(resolved.text);
-            paths = Utils.union(paths, resolved.paths);
+            paths = _.union(paths, resolved.paths);
           } else {
             elem.html(node.content);
           }
-        } else {
-          recurse(elem, scope, (node.tag == 'script' || node.tag == 'pre'));
         }
         // If node had either dynamic content or dynamic attributes -> register for updates
         if(paths.length) {
           node.paths = paths; //XXX Should it be elem.paths?
-          elem.node = node;
-          elem.scope = scope;
           self.register(elem);
         }
-        // Register action handlers
-        // if(_.keys(node.actions).length) {
-          Utils.each(node.actions, function(method, action) {
-            //XXX Remove handler when a parent gets updated
-            elem.on(action, function(e) {
-              e.preventDefault();
-              //XXX Read text from inputs and supply as argument to method
-              return scope.resolvePath(method, [e, elem]).value;
-            });
-          });
-        // }
+        self.execMicroStatements(node.statements, elem);
+        if(!node.content) {
+          recurse(elem, scope, (node.tag == 'script' || node.tag == 'pre'));
+        }
         frag.append(elem);
       } else if(node.type == 'Text') {
         var text = (preFormated ? interface.createTextNode(node.content) : interface.createDOMElement('span').html(node.content));
@@ -266,11 +257,29 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       return frag;
     },
 
+    execMicroStatements: function(statements, elem) {
+      _.each(statements, function(statement) {
+        // Register action handlers
+        if(statement.statement == 'action') {
+          //XXX Remove handler when a parent gets updated
+          elem.on(statement.event, function(e) {
+            e.preventDefault();
+            //XXX Pass arguments to method
+            return elem.scope.resolvePath(statement.method, [e, elem]).value;
+          });
+        } else if(statement.statement == 'as') {
+          var vars = {};
+          vars[statement.varName] = elem;
+          elem.scope.addLayer(vars);
+        }
+      });
+    },
+
     // Replace DOM from this node downward with an updated version
     updateElement: function(elem) {
       //XXX Unbind event handlers for all elements below this one first
-      Utils.each(elem.handlers, function(h) {
-        Utils.defer(function() {
+      _.each(elem.handlers, function(h) {
+        _.defer(function() {
           h.obj.off(h.handler);
         });
       });
@@ -281,10 +290,10 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     // should the data at one of its paths change
     register: function(elem) {
       var self = this;
-      if(Utils.onServer()) return;
+      if(_.onServer()) return;
       elem.handlers = [];
       // console.log(elem); //XXX this gets called way too often
-      Utils.each(elem.node.paths, function(path) {
+      _.each(elem.node.paths, function(path) {
         if(isPath(path)) {
           var reference = elem.scope.resolvePath(path).ref;
           if(reference.obj && reference.obj.once) {
