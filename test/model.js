@@ -64,8 +64,8 @@ describe('Model', function() {
       Todo.create().save(done);
     });
 
-    it('should be dirty when fresh', function() {
-      Todo.create().isDirty().should.equal(true);
+    it('should not be dirty when fresh', function() {
+      Todo.create().isDirty().should.equal(false);
     });
 
     it.skip('emits a generic change event when a property is set', function(done) {
