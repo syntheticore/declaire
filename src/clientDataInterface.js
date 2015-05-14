@@ -60,6 +60,7 @@ var ClientDataInterface = function(model) {
     },
 
     delete: function(id, cb) {
+      delete cache[id];
       $.ajax({url: url + '/' + id, type: 'DELETE'})
       .always(function() {
         cb && cb();

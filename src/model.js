@@ -167,12 +167,13 @@ var Instance = function() {
 
     // Delete object from all local models and collections it's referenced from
     // Also delete from the database, if model was persisted
-    // All references from remote models and collections will auto-dissolve on next read
+    //XXX All references from remote models and collections will auto-dissolve on next read
     delete: function(cb) {
       var self = this;
       self.disconnect();
+      self.deleted = true;
       self.model.dataInterface.delete(self.id, function() {
-        cb && cb();
+        cb && typeof(cb) == 'function' && cb();
         self.emit('delete');
       });
     },
@@ -211,6 +212,7 @@ var Instance = function() {
     connect: function() {
       var self = this;
       if(self.connected || !self.id) return;
+      // Merge push data into remote data bucket and emit change events
       self.model.app.pubSub.subscribe('update', self.model.name, self.id, function(data) {
         console.log("Received push update");
         self.data.remote = _.merge(self.data.remote, data);
@@ -219,9 +221,10 @@ var Instance = function() {
         }
         self.emit('change');
       });
+      // Delete object unless the delete push originated from ourselves
       self.model.app.pubSub.subscribe('delete', self.model.name, self.id, function() {
         console.log("Received push delete");
-        self.delete();
+        if(!self.deleted) self.delete();
       });
       self.connected = true;
       return self;
@@ -229,7 +232,7 @@ var Instance = function() {
 
     // Unsubscribe from updates
     disconnect: function() {
-      self.model.app.pubSub.unsubscribe(self.model.name, self.id);
+      this.model.app.pubSub.unsubscribe(this.model.name, this.id);
       this.connected = false;
       return this;
     }
