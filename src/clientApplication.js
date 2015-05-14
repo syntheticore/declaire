@@ -1,5 +1,5 @@
 var $ = require('jquery');
-var Utils = require('./utils.js');
+var _ = require('./utils.js');
 var Model = require('./model.js');
 var ViewModel = require('./viewModel.js');
 var Query = require('./query.js');
@@ -40,10 +40,10 @@ var ClientApplication = function() {
   // Process all database operations that happened while offline
   var flushPendingOperations = function() {
     var ops = localStore.pendingOperations();
-    Utils.each(ops.save, function(data, key) {
+    _.each(ops.save, function(data, key) {
       //XXX Load and update model
     });
-    Utils.each(ops.delete, function(data, key) {
+    _.each(ops.delete, function(data, key) {
       //XXX Load and delete model
     });
   };
@@ -56,6 +56,9 @@ var ClientApplication = function() {
       flushPendingOperations();
     }
   });
+
+  var attachHandlers = [];
+  var attached = false;
 
   return {
     // Allow subscribing to database updates
@@ -78,8 +81,8 @@ var ClientApplication = function() {
     },
 
     // Proxy view model constructor
-    ViewModel: function(name, reference, constructor) {
-      return this.use(ViewModel(name, reference, constructor));
+    ViewModel: function(name, reference, constructor, postCb) {
+      return this.use(ViewModel(name, reference, constructor, postCb));
     },
 
     // Proxy query constructor
@@ -102,11 +105,23 @@ var ClientApplication = function() {
             install(function() {
               // Make links use history api instead of default action
               router.hijackLocalLinks();
+              // Run attach handlers
+              _.each(attachHandlers, function(handler) {
+                handler();
+              });
               cbb && cbb();
             });
           }
         });
       });
+    },
+
+    onAttach: function(cb) {
+      if(attached) {
+        cb();
+      } else {
+        attachHandlers.push(cb);
+      }
     }
   };
 };

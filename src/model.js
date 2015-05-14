@@ -139,7 +139,7 @@ var Instance = function() {
         }
         var finish = function() {
           self.data.local = [];
-          cb && cb();
+          cb && typeof(cb) == 'function' && cb();
           self.emit('save');
         };
       }

@@ -6,7 +6,7 @@ var Model = require('./model.js');
 // template scopes with dynamic data
 // The constructor function may return a promise if it needs
 // to do aynchronous work to set up model instances
-var ViewModel = function(name, reference, constructor) {
+var ViewModel = function(name, reference, constructor, postCb) {
   var model = Model('_view', reference);
   return {
     klass: 'ViewModel',
@@ -14,16 +14,25 @@ var ViewModel = function(name, reference, constructor) {
 
     // Return a fully resolved and constructed view model instance
     create: function(args, elem, cb) {
+      var self = this;
       var inst = model.create();
       inst.el = elem;
       inst.resolve(function() {
+        var post = function() {
+          cb(inst);
+          if(postCb) {
+            self.app.onAttach(function() {
+              postCb.apply(inst);
+            });
+          }
+        };
         var promise = constructor && constructor.apply(inst, args);
         if(promise) {
           promise.then(function() {
-            cb(inst);
+            post();
           });
         } else {
-          cb(inst);  
+          post();
         }
       });
     }

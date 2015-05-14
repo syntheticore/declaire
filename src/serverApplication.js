@@ -212,8 +212,8 @@ var ServerApplication = function(options) {
     },
 
     // Proxy view model constructor
-    ViewModel: function(name, reference, constructor) {
-      return this.use(ViewModel(name, reference, constructor));
+    ViewModel: function(name, reference, constructor, postCb) {
+      return this.use(ViewModel(name, reference, constructor, postCb));
     },
 
     // Proxy query constructor
