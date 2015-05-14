@@ -187,12 +187,12 @@ var Parser = {
         children: []
       };
     // for
-    } else if(m = line.match(/{{for\s+(\w+)\s+in\s+(.+)}}/)) {
+    } else if(m = line.match(/{{for\s+((\w+)\s+in\s+)?(.+)}}/)) {
       return {
         type: 'Statement',
         keyword: 'for',
-        itemPath: m[1],
-        itemsPath: m[2],
+        itemPath: m[2],
+        itemsPath: m[3],
         children: []
       };
     // view

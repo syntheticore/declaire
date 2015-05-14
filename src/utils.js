@@ -1,7 +1,8 @@
 // Check if we are executing on the server
 //XXX Would browserify minifier optimize this away if it wasn't a function?
 exports.onServer = function(cb) {
-  var server = (typeof(window) == 'undefined');
+  // var server = (typeof(window) == 'undefined');
+  var server = !process.env.browser;
   if(server && cb) cb(server);
   return server;
 };

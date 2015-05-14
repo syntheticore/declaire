@@ -147,8 +147,15 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             elem.scope = scope;
             var loop = function(items) {
               _.each(items, function(item) {
-                var itemData = {};
-                itemData[node.itemPath] = item;
+                var itemData;
+                // Long form with variable name
+                if(node.itemPath) {
+                  itemData = {};
+                  itemData[node.itemPath] = item;
+                // Short form
+                } else {
+                  itemData = item;
+                }
                 if(node.children.length) {
                   var newScope = scope.clone().addLayer(itemData);
                   recurse(elem, newScope);
@@ -156,6 +163,8 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
               });
               self.register(elem);
             };
+            // Synchronous or asynchronous recurse
+            // depending on iterator type
             var items = evalExpr(scope, node.itemsPath);
             if(items.klass == 'Query') {
               unfinish(frag);
