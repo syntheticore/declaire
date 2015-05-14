@@ -1,4 +1,4 @@
-var Utils = require('./utils.js');
+var _ = require('./utils.js');
 var Model = require('./model.js');
 
 
@@ -20,9 +20,11 @@ var ViewModel = function(name, reference, constructor, postCb) {
       inst.resolve(function() {
         var post = function() {
           cb(inst);
-          if(postCb) {
-            self.app.onAttach(function() {
-              postCb.apply(inst);
+          if(postCb && _.onClient()) {
+            _.defer(function() {
+              self.app.onAttach(function() {
+                postCb.apply(inst);
+              });
             });
           }
         };

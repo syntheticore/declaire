@@ -106,6 +106,7 @@ var ClientApplication = function() {
               // Make links use history api instead of default action
               router.hijackLocalLinks();
               // Run attach handlers
+              attached = true;
               _.each(attachHandlers, function(handler) {
                 handler();
               });
