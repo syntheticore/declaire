@@ -3,6 +3,7 @@ var _ = require('./utils.js');
 
 // Breadth-first walk the tree in reverse order
 var inverseBreadth = function(node, cb) {
+  if(!node.children) return;
   for(var i = node.children.length - 1; i >= 0; i--) {
     cb(node.children[i]);
   };
@@ -13,6 +14,7 @@ var inverseBreadth = function(node, cb) {
 
 // Clean tree from alternatives
 var cleanTree = function(node) {
+  if(!node.children) return;
   for(var i = node.children.length - 1; i >= 0; i--) {
     var child = node.children[i];
     if(child.type == 'Alternative') {
