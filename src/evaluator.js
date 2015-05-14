@@ -216,6 +216,11 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           case 'content':
             frag.append(scope.get('_content'));
             break;
+          case 'client':
+            if(_.onClient()) {
+              recurse(frag, scope);
+            }
+            break;
         }
       } else if(node.type == 'HTMLTag') {
         // Don't regenerate script tags as these

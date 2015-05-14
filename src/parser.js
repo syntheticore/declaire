@@ -234,6 +234,13 @@ var Parser = {
         keyword: 'content',
         children: []
       };
+    // client
+    } else if(m = line.match(/{{client}}/)) {
+      return {
+        type: 'Statement',
+        keyword: 'client',
+        children: []
+      };
     } else {
       throw('Unknown statement: ' + line);
     }
