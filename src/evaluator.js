@@ -219,6 +219,10 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           case 'client':
             if(_.onClient()) {
               recurse(frag, scope);
+            } else if(node.alternatives) {
+              _.each(node.alternatives[0], function(child) {
+                frag.append(self.evaluate(child, scope));
+              });
             }
             break;
         }

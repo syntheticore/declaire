@@ -1,8 +1,31 @@
 var _ = require('./utils.js');
 
 
-var Parser = {
+// Breadth-first walk the tree in reverse order
+var inverseBreadth = function(node, cb) {
+  for(var i = node.children.length - 1; i >= 0; i--) {
+    cb(node.children[i]);
+  };
+  _.each(node.children, function(child) {
+    inverseBreadth(child, cb);
+  });
+};
 
+// Clean tree from alternatives
+var cleanTree = function(node) {
+  for(var i = node.children.length - 1; i >= 0; i--) {
+    var child = node.children[i];
+    if(child.type == 'Alternative') {
+      node.children.splice(i, 1);
+    } else {
+      cleanTree(child);
+    }
+  };
+  return node;
+};
+
+
+var Parser = {
   indentSpaces: 2,
 
   // Parse the given template source and spit out a traversable tree
@@ -49,7 +72,25 @@ var Parser = {
       lastIndent = indent;
       lastNode = node;
     });
-    return top;
+    // Squash alternatives into their respective statements
+    var previous;
+    var alternativeStack = [];
+    inverseBreadth(top, function(node) {
+      // Collect alternatives from bottom to top
+      if(node.type == 'Alternative') {
+        alternativeStack.push(node);
+      // Attach to next statement we encounter
+      } else {
+        if(alternativeStack.length) {
+          node.alternatives = _.map(alternativeStack.reverse(), function(alt) {
+            return alt.children;
+          });
+          alternativeStack = [];
+        }
+      }
+      previous = node;
+    });
+    return cleanTree(top);
   },
 
   // Convert line into tree node
@@ -151,49 +192,45 @@ var Parser = {
   // Takes an statement line and creates the approriate node
   parseStatement: function(line) {
     var m;
+    var out;
     // if
     if(m = line.match(/{{if\s+(.+)}}/)) {
-      return {
+      out = {
         type: 'Statement',
         keyword: 'if',
-        path: m[1],
-        children: []
+        path: m[1]
       };
     // if-greater
     } else if(m = line.match(/{{if-greater\s+(.+)\s+(.+)}}/)) {
-      return {
+      out = {
         type: 'Statement',
         keyword: 'if-greater',
         path1: m[1],
-        path2: m[2],
-        children: []
+        path2: m[2]
       };
     // if-equal
     } else if(m = line.match(/{{if-equal\s+(.+)\s+(.+)}}/)) {
-      return {
+      out = {
         type: 'Statement',
         keyword: 'if-equal',
         path1: m[1],
-        path2: m[2],
-        children: []
+        path2: m[2]
       };
     // if-not-equal
     } else if(m = line.match(/{{if-not-equal\s+(.+)\s+(.+)}}/)) {
-      return {
+      out = {
         type: 'Statement',
         keyword: 'if-not-equal',
         path1: m[1],
-        path2: m[2],
-        children: []
+        path2: m[2]
       };
     // for
     } else if(m = line.match(/{{for\s+((\w+)\s+in\s+)?(.+)}}/)) {
-      return {
+      out = {
         type: 'Statement',
         keyword: 'for',
         itemPath: m[2],
-        itemsPath: m[3],
-        children: []
+        itemsPath: m[3]
       };
     // view
     } else if(m = line.match(/{{view\s+(\w+)?(\(.*\))?}}/)) {
@@ -201,12 +238,11 @@ var Parser = {
       var args = parens ? _.map(parens.slice(1, -1).split(','), function(argument) {
         return argument.replace(/\s/g, '');
       }) : [];
-      return {
+      out = {
         type: 'Statement',
         keyword: 'view',
         viewModel: m[1],
-        arguments: args,
-        children: []
+        arguments: args
       };
     // import
     } else if(m = line.match(/{{import\s+(\w+)(\(.*\))?}}/)) {
@@ -220,32 +256,35 @@ var Parser = {
           args[vari] = expr;
         });
       }
-      return {
+      out = {
         type: 'Statement',
         keyword: 'import',
         templateName: m[1] + '.tmpl',
-        arguments: args,
-        children: []
+        arguments: args
       };
     // content
     } else if(m = line.match(/{{content}}/)) {
-      return {
+      out = {
         type: 'Statement',
-        keyword: 'content',
-        children: []
+        keyword: 'content'
       };
     // client
     } else if(m = line.match(/{{client}}/)) {
-      return {
+      out = {
         type: 'Statement',
-        keyword: 'client',
-        children: []
+        keyword: 'client'
+      };
+    // ->
+    } else if(m = line.match(/{{->}}/)) {
+      out = {
+        type: 'Alternative'
       };
     } else {
       throw('Unknown statement: ' + line);
     }
+    out.children = [];
+    return out;
   }
 };
-
 
 module.exports = Parser;
