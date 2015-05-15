@@ -118,6 +118,10 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           node.paths = expressions;
           if(condition(values)) {
             recurse(elem, scope);
+          } else if(node.alternatives) {
+            _.each(node.alternatives[0], function(child) {
+              elem.append(self.evaluate(child, scope));
+            });
           }
           elem.node = node;
           elem.scope = scope;
