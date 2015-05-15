@@ -29,6 +29,11 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     return obj.match && !!obj.match(/^[A-z][A-z0-9]+(\.[A-z][A-z0-9]+)*$/);
   };
 
+  // Convert camel cased model names to CSS notation
+  var cssize = function(camel) {
+    return camel;
+  };
+
   // Evaluate a template expression,
   // which can either be a JS literal or a path
   var evalExpr = function(scope, expr) {

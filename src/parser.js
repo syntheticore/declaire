@@ -71,8 +71,13 @@ var Parser = {
       }
       // Add the generated node to its parent
       stack[stack.length - 1].children.push(node);
+      // If we have a multiTags hierarchy -> use rightmost child as lastNode
+      var child = node;
+      while(child.children[0]) {
+        child = child.children[0];
+      };
       lastIndent = indent;
-      lastNode = node;
+      lastNode = child;
     });
     // Squash alternatives into their respective statements
     var previous;
@@ -115,13 +120,14 @@ var Parser = {
   // Parse all major components from a tag, including inline content
   parseTag: function(line) {
     var self = this;
-    var m = line.match(/([\w-#\.]+>)*([\w-]+)?(#([\w-]+))?((\.[\w-]+)*)(\((.*)\))?( (.*))?/);
+    var m = line.match(/(([\w-#\.]+>)*)([\w-]+)?(#([\w-]+))?((\.[\w-]+)*)(\((.*)\))?(\.)?( (.*))?/);
     var multiTags = m[1];
-    var tag = m[2] || 'div';
-    var id = m[4];
-    var classes = m[5] ? m[5].slice(1).split('.') : [];
-    var inParens = m[8];
-    var content = m[10];
+    var tag = m[3] || 'div';
+    var id = m[5];
+    var classes = m[6] ? m[6].slice(1).split('.') : [];
+    var inParens = m[9];
+    var dot = m[10];
+    var content = m[12];
     var attributes = {};
     var statements = [];
     // Parse attributes
@@ -153,6 +159,7 @@ var Parser = {
       attributes: attributes,
       content: content,
       statements: statements,
+      slurpy: !!dot,
       children: []
     };
     // Build a hierarchy from multi tags

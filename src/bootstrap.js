@@ -5,6 +5,7 @@ var _declaireLogHandlers = {};
   // Listen for events on html element and save these to the log
   var trackEvent = function(name) {
     var handler = function(e) {
+      //XXX add id to element
       _declaireLog.push(e);
     };
     var html = document.getElementsByTagName('html')[0];

@@ -114,7 +114,7 @@ var ClientApplication = function() {
         var installed = false;
         var router = Router();
         // Start routing
-        router.on('/pages/:page', function(page) {
+        router.on('/pages/:page', function(page) {
           mainModel.set('_page', page);
           // Install evaluator
           if(!installed) {
