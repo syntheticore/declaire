@@ -54,8 +54,6 @@ var Parser = {
       if(ci == 0) return;
       // Ignore empty lines
       if(!line.replace(/\s/g, '').length) return;
-      // Parse individual parts from line
-      var node = self.parseLine(line);
       // Push and pop the current parent from the stack
       // as dictated by indentation
       if(indent > lastIndent) {
@@ -69,11 +67,23 @@ var Parser = {
           stack.pop();
         });
       }
+      var parent = stack[stack.length - 1];
+      var node;
+      // Regard anything below a slurpy tag is text
+      if(parent.slurpy) {
+        node = {
+          type: 'Text',
+          content: line + '\n'
+        }
+      } else {
+        // Parse individual parts from line
+        node = self.parseLine(line);
+      }
       // Add the generated node to its parent
-      stack[stack.length - 1].children.push(node);
+      parent.children.push(node);
       // If we have a multiTags hierarchy -> use rightmost child as lastNode
       var child = node;
-      while(child.children[0]) {
+      while(child.children && child.children[0]) {
         child = child.children[0];
       };
       lastIndent = indent;
