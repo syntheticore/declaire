@@ -33,6 +33,7 @@ Declarative, full-stack web application framework
   - [ ] Extend Models
   - [ ] ViewModel.listenTo()
   - [ ] Render Cache
+  - [ ] Pipe external services through model to allow render caching and offline use
   - [x] History & Rollback
   - [ ] Access permissions
   - [ ] Remote blocks

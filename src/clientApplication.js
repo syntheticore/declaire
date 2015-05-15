@@ -57,6 +57,23 @@ var ClientApplication = function() {
     }
   });
 
+  // Stop collection user events
+  // and play captured events back
+  var replayEvents = function() {
+    var html = document.getElementsByTagName('html')[0];
+    _.each(_declaireLogHandlers, function(handler, name) {
+      html.removeEventListener(name, handler);
+    });
+    _.each(_declaireLog, function(e) {
+      if(e.type == 'keypress') {
+        var elem = $(e.target);
+        elem.val(elem.val() + String.fromCharCode(e.which));
+      } else if(e.type == 'click') {
+        $(e.target).trigger('click');
+      }
+    });
+  };
+
   var attachHandlers = [];
   var attached = false;
 
@@ -110,6 +127,8 @@ var ClientApplication = function() {
               _.each(attachHandlers, function(handler) {
                 handler();
               });
+              // Reproduce events captured during bootstrap phase
+              replayEvents();
               cbb && cbb();
             });
           }

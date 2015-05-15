@@ -14,7 +14,7 @@ var fs = require('fs');
 var stylus = require('stylus');
 var browserify = require('browserify');
 
-var Utils = require('./utils.js');
+var _ = require('./utils.js');
 var Parser = require('./parser.js');
 var Evaluator = require('./evaluator.js');
 var StreamInterface = require('./serverStreamInterface.js');
@@ -31,7 +31,7 @@ var ServerApplication = function(options) {
   var expressApp = express();
   
   // Default options
-  options = Utils.merge({
+  options = _.merge({
     mongoUrl: process.env.MONGOHQ_URL || process.env.MONGOLAB_URI || 'mongodb://127.0.0.1:27017/declaire',
     viewsFolder: __dirname + '/../../../src/views/',
     npmPublic: ['/public']
@@ -73,7 +73,7 @@ var ServerApplication = function(options) {
   
   // Serve public files
   expressApp.use(express.static(__dirname + '/../../../public'));
-  Utils.each(options.npmPublic, function(folder) {
+  _.each(options.npmPublic, function(folder) {
     expressApp.use('/' + folder, express.static(__dirname + '/../../../node_modules/' + folder));
   });
   
@@ -148,20 +148,47 @@ var ServerApplication = function(options) {
     evaluator.baseScope.addLayer(mainModel);
   };
 
+  // Inject bootstrapping script and bundle reference into head tag
+  var injectScripts = function(layout) {
+    var bootstrap = fs.readFileSync(__dirname + '/../../../node_modules/declaire/src/bootstrap.js', 'utf8');
+    _.each(layout.children, function(node) {
+      if(node.tag == 'head') {
+        // Inject bootstrapping script
+        node.children.push({
+          type: 'HTMLTag',
+          tag: 'script',
+          children: [{
+            type: 'Text',
+            content: bootstrap
+          }]
+        });
+        // Inject bundle
+        node.children.push({
+          type: 'HTMLTag',
+          tag: 'script',
+          attributes: {src: '/bundle.js', async: 'async'},
+          children: []
+        });
+        return false;
+      }
+    });
+  };
+
   // Load and parse all templates in the views folder
   var parseTrees;
   var parseTemplates = function() {
     parseTrees = {};
-    Utils.each(fs.readdirSync(options.viewsFolder), function(file) {
+    _.each(fs.readdirSync(options.viewsFolder), function(file) {
       if(path.extname(file) == '.tmpl'){
         console.log("Parsing " + file);
         var fn = options.viewsFolder + file;
-        Utils.improveExceptions(fn, function() {
+        _.improveExceptions(fn, function() {
           var node = Parser.parseTemplate(fs.readFileSync(fn, 'utf8'));
           parseTrees[file] = node;
         });
       }
     });
+    injectScripts(parseTrees['layout.tmpl']);
     setupEvaluator();
   };
   parseTemplates();
