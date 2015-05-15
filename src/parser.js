@@ -212,15 +212,8 @@ var Parser = {
   parseStatement: function(line) {
     var m;
     var out;
-    // if
-    if(m = line.match(/{{if\s+(.+)}}/)) {
-      out = {
-        type: 'Statement',
-        keyword: 'if',
-        path: m[1]
-      };
     // if-greater
-    } else if(m = line.match(/{{if-greater\s+(.+)\s+(.+)}}/)) {
+    if(m = line.match(/{{if\s+(.+)\s+>\s+(.+)\s*}}/)) {
       out = {
         type: 'Statement',
         keyword: 'if-greater',
@@ -228,7 +221,7 @@ var Parser = {
         path2: m[2]
       };
     // if-equal
-    } else if(m = line.match(/{{if-equal\s+(.+)\s+(.+)}}/)) {
+    } else if(m = line.match(/{{if\s+(.+)\s+==\s+(.+)\s*}}/)) {
       out = {
         type: 'Statement',
         keyword: 'if-equal',
@@ -236,12 +229,19 @@ var Parser = {
         path2: m[2]
       };
     // if-not-equal
-    } else if(m = line.match(/{{if-not-equal\s+(.+)\s+(.+)}}/)) {
+    } else if(m = line.match(/{{if\s+(.+)\s+!=\s+(.+)\s*}}/)) {
       out = {
         type: 'Statement',
         keyword: 'if-not-equal',
         path1: m[1],
         path2: m[2]
+      };
+    // if
+    } else if(m = line.match(/{{if\s+(.+)}}/)) {
+      out = {
+        type: 'Statement',
+        keyword: 'if',
+        path: m[1]
       };
     // for
     } else if(m = line.match(/{{for\s+((\w+)\s+in\s+)?(.+)}}/)) {
