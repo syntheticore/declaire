@@ -205,7 +205,9 @@ exports.improveExceptions = function(filename, cb) {
     try {
       return cb();
     } catch(e) {
-      throw('Error: ' + filename + ':' + e.lineNum + ': ' + e.message);
+      // throw('Error: ' + filename + ':' + e.lineNum + ': ' + e.message);
+      console.log("Error in " + exports.last(filename.split('/')) + ":" + e.lineNum + ": " + e.message);
+      throw e;
     }
   }
 };

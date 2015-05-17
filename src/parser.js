@@ -42,13 +42,22 @@ var Parser = {
     };
     var lastNode = top;
     var stack = [top];
+    var slurpyMode = false;
     _.each(lines, function(line) {
       lineNum++;
-      if(!line) return;
+      var indent = Math.max(0, line.search(/\S/)) / self.indentSpaces;
+      // Regard anything below a slurpy tag as text
+      if(slurpyMode && indent > lastIndent) {
+        var parent = lastNode;
+        parent.children.push({
+          type: 'Text',
+          content: line.slice(lastIndent * self.indentSpaces + self.indentSpaces) + '\n'
+        });
+        return;
+      }
+      slurpyMode = false;
       // Remove indentation
-      var indent = Math.max(0, line.search(/\S/));
-      line = line.slice(indent);
-      indent /= self.indentSpaces;
+      line = line.slice(indent * self.indentSpaces);
       // Ignore comments
       var ci = line.indexOf('//');
       if(ci == 0) return;
@@ -67,19 +76,9 @@ var Parser = {
           stack.pop();
         });
       }
-      var parent = stack[stack.length - 1];
-      var node;
-      // Regard anything below a slurpy tag is text
-      if(parent.slurpy) {
-        node = {
-          type: 'Text',
-          content: line + '\n'
-        }
-      } else {
-        // Parse individual parts from line
-        node = self.parseLine(line);
-      }
+      var node = self.parseLine(line);
       // Add the generated node to its parent
+      var parent = _.last(stack);
       parent.children.push(node);
       // If we have a multiTags hierarchy -> use rightmost child as lastNode
       var child = node;
@@ -88,6 +87,9 @@ var Parser = {
       };
       lastIndent = indent;
       lastNode = child;
+      if(node.slurpy) {
+        slurpyMode = true;
+      }
     });
     // Squash alternatives into their respective statements
     var previous;
@@ -107,6 +109,7 @@ var Parser = {
       }
       previous = node;
     });
+    // Remove alternatives
     return cleanTree(top);
   },
 
