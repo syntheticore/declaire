@@ -47,7 +47,7 @@ var Parser = {
       lineNum++;
       var indent = Math.max(0, line.search(/\S/)) / self.indentSpaces;
       // Regard anything below a slurpy tag as text
-      if(slurpyMode && indent > lastIndent) {
+      if(slurpyMode && (indent > lastIndent || !line.replace(/\s/g, '').length)) {
         var parent = lastNode;
         parent.children.push({
           type: 'Text',
