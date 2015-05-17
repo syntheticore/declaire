@@ -293,8 +293,15 @@ var Parser = {
         type: 'Statement',
         keyword: 'client'
       };
-    // ->
-    } else if(m = line.match(/{{->}}/)) {
+    // route
+    } else if(m = line.match(/{{route (.*)}}/)) {
+      out = {
+        type: 'Statement',
+        keyword: 'route',
+        path: m[1]
+      };
+    // =>
+    } else if(m = line.match(/{{=>}}/)) {
       out = {
         type: 'Alternative'
       };

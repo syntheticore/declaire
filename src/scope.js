@@ -1,4 +1,4 @@
-var Utils = require('./utils.js');
+var _ = require('./utils.js');
 
 
 // A hierarchical structure for the lookup of keys that act like
@@ -9,7 +9,7 @@ var Scope = function() {
   return {
     // Add layer on top
     addLayer: function(obj) {
-      layers.push(obj);
+      layers.push(obj || {});
       return this;
     },
 
@@ -26,6 +26,10 @@ var Scope = function() {
           return layer[key];
         }
       }
+    },
+
+    getTopLayer: function() {
+      return _.last(layers);
     },
 
     // Return the topmost layer that has the given key

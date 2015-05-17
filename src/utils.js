@@ -100,6 +100,17 @@ exports.union = function(items1, items2) {
   return out;
 };
 
+// Return the given object's values as an array
+exports.values = function(obj) {
+  var out = [];
+  for(var key in obj) {
+    if(obj.hasOwnProperty(key)) {
+      out.push(obj[key]);
+    }
+  }
+  return out;
+};
+
 // Return new object with the fields from both given objects
 exports.merge = function(obj1, obj2) {
   var obj = {};
@@ -144,6 +155,26 @@ exports.throttle = function(thresh, cb) {
       }
     }
   };
+};
+
+// Return a mapping from path params to url arguments
+exports.extractUrlParams = function(url, path) {
+  var pathSegments = path.slice(1).split('/');
+  var urlSegments = url.slice(1).split('/');
+  if(pathSegments.length != urlSegments.length) return false;
+  var match = true;
+  var params = {};
+  exports.zip(pathSegments, urlSegments, function(pathSeg, urlSeg) {
+    if(!match) return;
+    if(pathSeg[0] == ':') {
+      params[pathSeg.slice(1)] = urlSeg;
+    } else {
+      if(pathSeg != urlSeg) {
+        match = false;
+      }
+    }
+  });
+  return match && params;
 };
 
 // Return all matches of the given regex

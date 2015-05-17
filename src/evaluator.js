@@ -111,7 +111,6 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       if(node.type == 'Statement') {
         var evaluateIf = function(expressions, condition) {
           var elem = interface.createDOMElement('span', null, ['placeholder-if']);
-          frag.append(elem);
           var values = _.map(expressions, function(expr) {
             return evalExpr(scope, expr);
           });
@@ -125,6 +124,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           }
           elem.node = node;
           elem.scope = scope;
+          frag.append(elem);
           self.register(elem);
         };
         switch(node.keyword) {
@@ -150,7 +150,6 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             break;
           case 'for':
             var elem = interface.createDOMElement('span', null, ['placeholder-for']);
-            frag.append(elem);
             node.paths = [node.itemsPath];
             elem.node = node;
             elem.scope = scope;
@@ -186,6 +185,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             } else {
               loop(items);
             }
+            frag.append(elem);
             break;
           case 'view':
             var viewModel = viewModels[node.viewModel];
@@ -199,7 +199,8 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
               // Instantiate view model
               viewModel.create(args, frag, function(view) {
                 // Add view model instance to scope
-                var newScope = scope.clone().addLayer(view);
+                // Also add another, neutral layer to which subsequent vars can be added
+                var newScope = scope.clone().addLayer(view).addLayer();
                 // view.el = frag;
                 view.scope = newScope;
                 recurse(frag, newScope);
@@ -233,6 +234,20 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
                 frag.append(self.evaluate(child, scope));
               });
             }
+            break;
+          case 'route':
+            var vars = {};
+            var elem = interface.createDOMElement('span', null, ['placeholder-route']);
+            var params = _.extractUrlParams(scope.get('_page'), node.path);
+            if(params) {
+              var newScope = scope.clone().addLayer(params);
+              recurse(elem, newScope);
+            }
+            frag.append(elem);
+            node.paths = ['_page'];
+            elem.node = node;
+            elem.scope = scope;
+            self.register(elem);
             break;
         }
       } else if(node.type == 'HTMLTag') {
@@ -277,11 +292,6 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             elem.html(node.content);
           }
         }
-        // If node had either dynamic content or dynamic attributes -> register for updates
-        if(paths.length) {
-          node.paths = paths; //XXX Should it be elem.paths?
-          self.register(elem);
-        }
         // Execute embeded statements
         self.execMicroStatements(node.statements, elem);
         // Register bindings
@@ -304,6 +314,11 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           recurse(elem, scope, (node.tag == 'script' || node.tag == 'pre'));
         }
         frag.append(elem);
+        // If node had either dynamic content or dynamic attributes -> register for updates
+        if(paths.length) {
+          node.paths = paths; //XXX Should it be elem.paths?
+          self.register(elem);
+        }
       } else if(node.type == 'Text') {
         var text = (preFormated ? interface.createTextNode(node.content) : interface.createDOMElement('span').html(node.content));
         frag.append(text);
@@ -324,9 +339,10 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             return elem.scope.resolvePath(statement.method, [e, elem]).value;
           });
         } else if(statement.statement == 'as') {
-          var vars = {};
-          vars[statement.varName] = elem;
-          elem.scope.addLayer(vars);
+          // var vars = {};
+          // vars[statement.varName] = elem;
+          // elem.scope.addLayer(vars);
+          elem.scope.getTopLayer()[statement.varName] = elem;
         }
       });
     },

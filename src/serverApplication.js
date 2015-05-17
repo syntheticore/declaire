@@ -199,10 +199,10 @@ var ServerApplication = function(options) {
   });
 
   // Render layout for the requested page
-  expressApp.get('/pages/:page', function(req, res) {
+  expressApp.get('/pages/*', function(req, res) {
     res.setHeader('Content-Type', 'text/html');
     if(expressApp.get('env') == 'development') parseTemplates();
-    mainModel.set('_page', req.params.page);
+    mainModel.set('_page', req.url);
     // Stream chunks of rendered html
     evaluator.render().render(function(chunk) {
       console.log(chunk);
