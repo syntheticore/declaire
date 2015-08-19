@@ -18,9 +18,9 @@ var DOMInterface = function() {
       _.each(attributes, function(value, key) {
         // if(['checked', 'selected', 'disabled', 'readonly', 'multiple', 'defer', 'declare', 'noresize'].indexOf(key) != -1) {
         // } else {
-          // elem.setAttribute(key, value);
+          elem.setAttribute(key, value);
         // }
-        elem[key] = value;
+        // elem[key] = value;
         // elem.attr(key, value);
       });
       return elem;
