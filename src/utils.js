@@ -1,3 +1,5 @@
+// "use strict";
+
 // Check if we are executing on the server
 //XXX Would browserify minifier optimize this away if it wasn't a function?
 exports.onServer = function(cb) {

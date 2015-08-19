@@ -1,7 +1,9 @@
-var Utils = require('./utils.js');
+var _ = require('./utils.js');
 
 
 module.exports = {
+  listeners: [],
+
   // Register a handler to be called every time an event happens
   //XXX Support registering multiple events at once
   on: function(action, cb) {
@@ -11,7 +13,7 @@ module.exports = {
       key: res[1],
       cb: cb
     });
-    return this;
+    return cb;
   },
 
   // Remove a handler from all events it was registered for
@@ -30,9 +32,9 @@ module.exports = {
     var self = this;
     var handler = function() {
       cb();
-      Utils.defer(function() {
+      // _.defer(function() {
         self.off(handler);
-      });
+      // });
     };
     self.on(action, handler);
     return handler;
@@ -41,7 +43,7 @@ module.exports = {
   // Call all handlers that listen to this event
   emit: function(action, key) {
     var self = this;
-    Utils.defer(function() {
+    // _.defer(function() {
       // console.log('emit ' + action + key);
       for(var i in self.listeners) {
         var l = self.listeners[i];
@@ -57,7 +59,12 @@ module.exports = {
           }
         }
       }
-    });
+    // });
     return self;
+  },
+
+  discardEventHandlers: function() {
+    this.listeners = [];
+    return this;
   }
 };

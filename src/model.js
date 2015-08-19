@@ -5,19 +5,19 @@ var _ = require('./utils.js');
 var eventMethods = require('./events.js');
 
 
-var localStore;
-// Use a dummy local store on the server, that never caches values
-if(_.onServer()) {
-  localStore = {
-    get: function(key) {
-      return undefined;
-    },
-    save: function(key, value) {},
-    delete: function(key, value) {}
-  };
-} else {
-  localStore = require('./clientStore.js')();
-}
+// var localStore;
+// // Use a dummy local store on the server, that never caches values
+// if(_.onServer()) {
+//   localStore = {
+//     get: function(key) {
+//       return undefined;
+//     },
+//     save: function(key, value) {},
+//     delete: function(key, value) {}
+//   };
+// } else {
+//   localStore = require('./clientStore.js')();
+// }
 
 
 var Instance = function() {
@@ -26,7 +26,7 @@ var Instance = function() {
     model: null,
     id: null,
     localId: _.uuid(),
-    listeners: [],
+    // listeners: [],
     data: {
       local: {},
       remote: {}
@@ -89,8 +89,7 @@ var Instance = function() {
       return this;
     },
 
-    // The current state of the object,
-    // including local modifications
+    // The current state of the object, including local modifications
     properties: function() {
       return _.merge(this.data.remote, this.data.local);
     },
@@ -120,8 +119,9 @@ var Instance = function() {
         self.set(values);
       }
       // LocalStore.set(self.localId, self.data);
-      localStore.save(self.localId, self.data);
+      // localStore.save(self.localId, self.data);
       if(self.isDirty() || !self.id) {
+        // Persist local changes to server
         var url = self.id ? self.url() : self.model.url();
         if(self.id) {
           self.model.dataInterface.update(self.id, self.data.local, function(err, updatedValues) {
@@ -129,10 +129,11 @@ var Instance = function() {
             finish();
           });
         } else {
+          // Create fresh instance on the server
           //XXX offline case
           self.model.dataInterface.create(self, function(err, data) {
             self.data.remote = data;
-            self.id = data._id;
+            // self.id = data._id;
             self.connect();
             finish();
           });
@@ -157,11 +158,11 @@ var Instance = function() {
           //XXX Rebuild collections
           //XXX Trigger change events
           self.data.remote = data;
-          localStore.save(self.localId, self.data);
+          // localStore.save(self.localId, self.data);
           cb(self);
           self.emit('fetch');
         }
-      });
+      }, true);
       return self;
     },
 
@@ -173,14 +174,17 @@ var Instance = function() {
       self.disconnect();
       self.deleted = true;
       self.model.dataInterface.delete(self.id, function() {
+        // Check if cb really is a callback -> Allows for directly invoking delete as an action handler
         cb && typeof(cb) == 'function' && cb();
         self.emit('delete');
+        // Discard event handlers
+        self.discardEventHandlers();
       });
     },
 
     // Returns a reference object, usable for storage in the db
     reference: function() {
-      return this.id && {_ref: {id: this.id, collection: this.model.name}};
+      return {_ref: {id: this.id || this.localId, collection: this.model.name}};
     },
 
     // Serialize object into a representation suitable for
@@ -193,7 +197,7 @@ var Instance = function() {
     resolve: function(cb) {
       var self = this;
       var resolved = _.map(self.data.remote, function(item) {
-        if(item._ref) {
+        if(item && item._ref) {
           var model = models[item._ref.collection];
           return model.load(item._ref.id);
         } else {
@@ -211,15 +215,16 @@ var Instance = function() {
     // Subscribe to push updates from the server
     connect: function() {
       var self = this;
-      if(self.connected || !self.id) return;
+      if(self.connected || !self.id) throw("Trying to connect twice");
       // Merge push data into remote data bucket and emit change events
       self.model.app.pubSub.subscribe('update', self.model.name, self.id, function(data) {
         console.log("Received push update");
-        self.data.remote = _.merge(self.data.remote, data);
-        for(var key in data) {
+        self.data.remote = _.merge(self.data.remote, data.data);
+        for(var key in data.data) {
           self.emit('change', key);
         }
         self.emit('change');
+        self.emit('fetch');
       });
       // Delete object unless the delete push originated from ourselves
       self.model.app.pubSub.subscribe('delete', self.model.name, self.id, function() {
@@ -243,9 +248,9 @@ var references = function(values) {
   var out = {};
   for(var key in values) {
     var value = values[key];
-    if(value.klass == 'Instance') {
+    if(value && value.klass == 'Instance') {
       out[key] = value.reference();
-    } else if(value.klass == 'Collection') {
+    } else if(value && value.klass == 'Collection') {
       out[key] = value.serialize();
     } else {
       out[key] = value;
@@ -255,7 +260,7 @@ var references = function(values) {
 };
 
 
-var models = {};
+var models = {}; //XXX This is per package and should be per app
 
 // Define a new data model under the given name
 var Model = function(dbCollection, reference) {
@@ -287,12 +292,12 @@ var Model = function(dbCollection, reference) {
         var collection = ref.collections[key].clone();
         // Re-emit change events from collection, so that computed properties and views can update
         //XXX Templates should listen for the more fine-grained 'add' and 'remove' events
-        collection.on('change', function() {
-          inst.set(key, inst.get(key));
-          // if(dbCollection != '_view') {
-          //   inst.save();
-          // }
-        });
+        // collection.on('change', function() {
+        //   inst.set(key, inst.get(key));
+        //   // if(dbCollection != '_view') {
+        //   //   inst.save();
+        //   // }
+        // });
         // inst.collections[key] = collection;
         // inst.set(key, collection);
         inst.data.remote[key] = collection;
@@ -301,9 +306,9 @@ var Model = function(dbCollection, reference) {
       for(var key in ref.queries) {
         var query = ref.queries[key].clone();
         // Re-emit change events from query
-        query.on('change', function() {
-          inst.set(key, inst.get(key));
-        });
+        // query.on('change', function() {
+        //   inst.set(key, inst.get(key));
+        // });
         // inst.set(key, query);
         inst.data.remote[key] = query;
       }
@@ -319,33 +324,43 @@ var Model = function(dbCollection, reference) {
     // Local storage will be used immediately if available
     // Server data gets fetched afterwards
     load: function(id) {
+      var self = this;
       return new RSVP.Promise(function(resolve, reject) {
-        var obj = this.create();
-        obj.id = id;
-        var localData = localStore.get(id);
-        // Return immediately with local data if possible
-        if(localData) {
-          console.log("local data");
-          obj.data = localData;
-          resolve(obj);
-          // Fetch anyways to receive more recent data
-          obj.fetch(function(success) {
-            // Object has been deleted on server -> Terminate local instance as well
-            if(!success) {
-              console.log("retroactively deleting local model");
-              obj.delete();
-            }
-          });
-        } else {
-          console.log("remote data");
-          // Fetch data from remote server
-          obj.fetch(function(obj) {
-            resolve(obj);
-          });
-        }
-        // Also subscribe to updates
-        obj.connect();
+        self.dataInterface.one(id, function(err, inst) {
+          if(inst) {
+            resolve(inst);
+          } else {
+            reject();
+          }
+        });
       });
+      // return new RSVP.Promise(function(resolve, reject) {
+      //   var obj = this.create();
+      //   obj.id = id;
+      //   var localData = localStore.get(id);
+      //   // Return immediately with local data if possible
+      //   if(localData) {
+      //     console.log("local data");
+      //     obj.data = localData;
+      //     resolve(obj);
+      //     // Fetch anyways to receive more recent data
+      //     obj.fetch(function(success) {
+      //       // Object has been deleted on server -> Terminate local instance as well
+      //       if(!success) {
+      //         console.log("retroactively deleting local model");
+      //         obj.delete();
+      //       }
+      //     });
+      //   } else {
+      //     console.log("remote data");
+      //     // Fetch data from remote server
+      //     obj.fetch(function(obj) {
+      //       resolve(obj);
+      //     });
+      //   }
+      //   // Also subscribe to updates
+      //   obj.connect();
+      // });
     }
   };
   models[model.name] = model;

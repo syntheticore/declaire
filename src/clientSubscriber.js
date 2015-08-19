@@ -1,4 +1,4 @@
-var Utils = require('./utils.js');
+var _ = require('./utils.js');
 
 
 // Receive push updates from the server
@@ -12,11 +12,11 @@ var Subscriber = function() {
     // Call all matching subscribers
     var colKey = obj.type + obj.collection;
     var itemKey = colKey + obj.id;
-    Utils.each(subscribers[itemKey], function(handler) {
-      handler(obj.data);
+    _.each(subscribers[itemKey], function(handler) {
+      handler(obj);
     });
-    Utils.each(subscribers[colKey], function(handler) {
-      handler(obj.data);
+    _.each(subscribers[colKey], function(handler) {
+      handler(obj);
     });
   }, false);
 
@@ -31,7 +31,7 @@ var Subscriber = function() {
         id = idOrCb;
       }
       types = types.split(' ');
-      Utils.each(types, function(type) {
+      _.each(types, function(type) {
         var key;
         if(id) {
           key = type + collection + id;

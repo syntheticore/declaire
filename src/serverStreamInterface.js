@@ -1,5 +1,3 @@
-var Utils = require('./utils.js');
-
 
 // When passed to the template evaluator, its render method will create a virtual DOM
 // Call render on the virtual DOM again to serialize it to actual html
@@ -27,21 +25,26 @@ var StreamInterface = function() {
         // Don't register actions handlers on the server
         on: function() {},
         change: function() {},
+        addEventListener: function() {},
 
-        append: function(elem) {
+        appendChild: function(elem) {
           this.children.push(elem);
           return this;
         },
 
-        text: function(text) {
-          this.tekst = text;
-          return this;
+        append: function(elem) {
+          return this.appendChild(elem);
         },
 
-        html: function(text) {
-          this.tekst = text;
-          return this;
-        },
+        // text: function(text) {
+        //   this.tekst = text;
+        //   return this;
+        // },
+
+        // html: function(text) {
+        //   this.tekst = text;
+        //   return this;
+        // },
 
         // Called when an asynchronous operation on this element begins
         unfinish: function() {
@@ -95,8 +98,11 @@ var StreamInterface = function() {
               html += '>';
             }
             // Free text
-            if(this.tekst) {
-              html += this.tekst;
+            // if(this.tekst) {
+            //   html += this.tekst;
+            // }
+            if(this.innerHTML) {
+              html += this.innerHTML;
             }
             this.topSerialized = true;
           }
@@ -129,7 +135,8 @@ var StreamInterface = function() {
 
     createTextNode: function(text) {
       var frag = this.createFragment();
-      frag.text(text);
+      // frag.text(text);
+      frag.innerHTML = text;
       return frag;
     }
   };

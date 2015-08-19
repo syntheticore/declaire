@@ -1,4 +1,4 @@
-var Utils = require('./utils.js');
+var _ = require('./utils.js');
 
 
 var each = function(cb) {
@@ -27,8 +27,8 @@ var LocalStore = function() {
 
   // Save object data to local storage
   // Also leave a timestamp and purge if neccessary
-  var set = function(key, value, pendingType) {
-    var json = JSON.stringify(Utils.merge(value, {_lastRequested: new Date()}));
+  var set = function(key, obj, options) {
+    var json = JSON.stringify({data: obj, meta: _.merge(options, {_lastRequested: new Date()})});
     localStorage.setItem(key, json);
     purge();
   };
@@ -36,12 +36,10 @@ var LocalStore = function() {
   // Returns true if all values in query match the
   // corresponding values in obj
   //XXX Replicate MongoDB query syntax
-  var matches = function(obj, query) {
+  var matches = function(item, query) {
     // Allow the internal attributes in queries as well
-    var data = Utils.merge(Utils.merge(obj.remote, obj.local), 
-                           {_lastRequested: obj._lastRequested,
-                            _pending: obj._pending});
-    return Utils.all(query, function(value, key) {
+    var data = _.merge(item.data, item.meta);
+    return _.all(query, function(value, key) {
       return data[key] == value;
     });
   };
@@ -51,7 +49,7 @@ var LocalStore = function() {
     var out = {};
     each(function(item, key) {
       var item = get(key);
-      if(matches(item, query)) out[key] = item;
+      if(matches(item, query)) out[key] = item.data;
     });
     return out;
   };
@@ -79,28 +77,29 @@ var LocalStore = function() {
   return {
     // Returns the cleaned up object at the given key
     get: function(localId) {
-      var item = get(localId);
-      delete item._lastRequested;
-      delete item._pending;
-      return item;
+      // var item = get(localId);
+      // delete item._lastRequested;
+      // delete item._pending;
+      // return item;
+      return get(localId).data;
     },
     
-    // Persist object data to local storage und the given key
+    // Persist object data to local storage under the given key
     // Returns a function to be called once the actual transaction with the database succeeds
-    save: function(localId, data) {
-      set(localId, Utils.merge(data, {_pending: 'save'}));
-      return function() {
-        set(localId, Utils.merge(data, {_pending: false}));
-      };
+    set: function(inst, options) {
+      set(inst.id || inst.localId, inst.serialize(), options);
+      // return function() {
+      //   set(localId, _.merge(data, {_pending: false}));
+      // };
     },
 
     // Delete data at key from local storage
     // Returns a function to be called once the actual transaction with the database succeeds
     delete: function(localId) {
-      set(localId, {_pending: 'delete'});
-      return function() {
-        delete localStorage[localId];
-      };
+      // set(localId, {}, {_pending: 'delete'});
+      // return function() {
+      delete localStorage[localId];
+      // };
     },
 
     // Retrieve all operations that didn't make it to the database yet

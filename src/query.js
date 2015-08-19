@@ -24,7 +24,7 @@ var Query = function(modelOrCollection, query, options) {
 
   var inst = _.merge(eventMethods, {
     klass: 'Query',
-    listeners: [],
+    // listeners: [],
     length: 0,
     allCache: null,
     firstCache: null,
@@ -68,19 +68,24 @@ var Query = function(modelOrCollection, query, options) {
       return Query(modelOrCollection, query, _.merge(options, {limit: limit}));
     },
 
+    sortBy: function(fieldOrFunc) {
+      return this;
+    },
+
     clone: function() {
       return Query(modelOrCollection, query, options);
     }
   });
 
   if(modelOrCollection.klass == 'Model') {
-    if(modelOrCollection.app.pubSub) {
+    // if(modelOrCollection.app.pubSub) {
+    if(_.onClient()) {
       console.log("subscribing " + modelOrCollection.name);
       modelOrCollection.app.pubSub.subscribe('create update delete', modelOrCollection.name, function(data) {
         console.log("Updating query due to pubsub");
+        // console.log(data);
         inst.allCache = null;
         inst.firstCache = null;
-        //XXX should only trigger length on create and delete
         inst.emit('change', 'length');
         inst.emit('change');
       });

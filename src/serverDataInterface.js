@@ -1,11 +1,11 @@
 var mongo = require('mongodb');
-var Utils = require('./utils.js');
+var _ = require('./utils.js');
 
 
 var ServerDataInterface = function(app, name) {
   return {
     all: function(options, cb) {
-      options = Utils.merge({
+      options = _.merge({
         query: {},
         from: 0,
         limit: 0
@@ -28,7 +28,7 @@ var ServerDataInterface = function(app, name) {
     },
 
     create: function(inst, cb) {
-      var fields = Utils.merge(inst.serialize(), {createdAt: new Date(), updatedAt: new Date()});
+      var fields = _.merge(inst.serialize(), {createdAt: new Date(), updatedAt: new Date()});
       app.db.collection(name).insert(fields, function(err, items) {
         var item = items[0];
         if(!err) app.pubSub.publish({type: 'create', collection: name, id: item._id, data: item});
@@ -38,7 +38,7 @@ var ServerDataInterface = function(app, name) {
     },
 
     update: function(id, values, cb) {
-      values = Utils.merge({}, values);
+      values = _.merge({}, values);
       delete values._id;
       delete values.createdAt;
       values.updatedAt = new Date();

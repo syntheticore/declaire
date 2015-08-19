@@ -1,5 +1,5 @@
 var $ = require('jquery');
-var Utils = require('./utils.js');
+var _ = require('./utils.js');
 
 
 // When passed to the template evaluator,
@@ -15,13 +15,13 @@ var DOMInterface = function() {
       if(id) elem.id = id;
       if(classes && classes.length) elem.className = classes.join(' ');
       elem = $(elem);
-      Utils.each(attributes, function(value, key) {
+      _.each(attributes, function(value, key) {
         // if(['checked', 'selected', 'disabled', 'readonly', 'multiple', 'defer', 'declare', 'noresize'].indexOf(key) != -1) {
         // } else {
-        //   elem.setAttribute(key, value);
+          // elem.setAttribute(key, value);
         // }
-        // elem[key] = value;
-        elem.attr(key, value);
+        elem[key] = value;
+        // elem.attr(key, value);
       });
       return elem;
     },

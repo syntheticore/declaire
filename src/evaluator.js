@@ -63,6 +63,15 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     }
   };
 
+  var walkTheDOM = function(node, cb) {
+    cb(node);
+    node = node.firstChild;
+    while(node) {
+      walkTheDOM(node, cb);
+      node = node.nextSibling;
+    }
+  };
+
   var renderCb;
   var pending = 0;
 
@@ -102,7 +111,8 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     // Returns a document fragment
     evaluate: function(node, scope, preFormated) {
       var self = this;
-      var frag = node.keyword == 'view' ? interface.createDOMElement('span', null, ['placeholder-view']) : interface.createFragment();
+      // var frag = node.keyword == 'view' ? interface.createDOMElement('span', null, ['placeholder-view']) : interface.createFragment();
+      var frag = interface.createFragment();
       var recurse = function(frag, scope, pre) {
         _.each(node.children, function(child) {
           frag.append(self.evaluate(child, scope, pre || preFormated));
@@ -119,7 +129,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             recurse(elem, scope);
           } else if(node.alternatives) {
             _.each(node.alternatives[0], function(child) {
-              elem.append(self.evaluate(child, scope));
+              elem.appendChild(self.evaluate(child, scope));
             });
           }
           elem.node = node;
@@ -174,6 +184,8 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             // Synchronous or asynchronous recurse
             // depending on iterator type
             var items = evalExpr(scope, node.itemsPath);
+            elem.iterator = items;
+            //XXX Update iterator
             if(items.klass == 'Query') {
               unfinish(frag);
               items.all(function(items) {
@@ -188,6 +200,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             frag.append(elem);
             break;
           case 'view':
+            var elem = interface.createDOMElement('span', null, ['placeholder-view'])
             var viewModel = viewModels[node.viewModel];
             if(node.viewModel && !viewModel) console.error('View model not found: ' + node.viewModel);
             // Evaluate constructor arguments
@@ -197,18 +210,21 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             if(viewModel) {
               unfinish(frag);
               // Instantiate view model
-              viewModel.create(args, frag, function(view) {
+              viewModel.create(args, elem, function(view) {
                 // Add view model instance to scope
                 // Also add another, neutral layer to which subsequent vars can be added
                 var newScope = scope.clone().addLayer(view).addLayer();
                 // view.el = frag;
                 view.scope = newScope;
                 recurse(frag, newScope);
+                elem.view = view;
                 finish(frag);
               });
             } else {
+              // Allow view statement without view model as a way to create a new scope
               recurse(frag, scope.clone());
             }
+            frag.append(elem);
             break;
           case 'import':
             var importedNode = parseTrees[node.templateName];
@@ -238,11 +254,12 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           case 'route':
             var vars = {};
             var elem = interface.createDOMElement('span', null, ['placeholder-route']);
-            var params = _.extractUrlParams(scope.get('_page'), node.path);
+            var params = _.extractUrlParams(scope.resolvePath('_page').value, node.path);
             if(params) {
               var newScope = scope.clone().addLayer(params);
               recurse(elem, newScope);
             }
+            // frag.append(elem);
             frag.append(elem);
             node.paths = ['_page'];
             elem.node = node;
@@ -286,30 +303,34 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         if(node.content) {
           if(hasMustaches(node.content)) {
             var resolved = resolveMustaches(node.content, scope);
-            elem.html(resolved.text);
+            // elem.html(resolved.text);
+            elem.innerHTML = resolved.text;
             paths = _.union(paths, resolved.paths);
           } else {
-            elem.html(node.content);
+            // elem.html(node.content);
+            elem.innerHTML = node.content;
           }
         }
         // Execute embeded statements
         self.execMicroStatements(node.statements, elem);
-        // Register bindings
-        elem.change(function() {
-          _.each(bindings, function(binding, attr) {
-            var ref = scope.resolvePath(binding.expr).ref;
-            var value;
-            if(attr == 'checked') {
-              value = elem.is(':checked');
-            } else if(attr == 'value') {
-              value = elem.val();
-            }
-            ref.obj.set(ref.key, value);
-            if(binding.save) {
-              ref.obj.save();
-            }
+        // Register two-way bindings
+        if(Object.keys(bindings).length) {
+          elem.addEventListener('change', function() {
+            _.each(bindings, function(binding, attr) {
+              var ref = scope.resolvePath(binding.expr).ref;
+              var value;
+              if(attr == 'checked') {
+                value = elem.is(':checked');
+              } else if(attr == 'value') {
+                value = elem.val();
+              }
+              ref.obj.set(ref.key, value);
+              if(binding.save) {
+                ref.obj.save();
+              }
+            });
           });
-        });
+        }
         if(!node.content) {
           recurse(elem, scope, (node.tag == 'script' || node.tag == 'pre'));
         }
@@ -320,7 +341,13 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           self.register(elem);
         }
       } else if(node.type == 'Text') {
-        var text = (preFormated ? interface.createTextNode(node.content) : interface.createDOMElement('span').html(node.content));
+        var text;
+        if(preFormated) {
+          text = interface.createTextNode(node.content);
+        } else {
+          text = interface.createDOMElement('span');
+          text.innerHTML = node.content;
+        }
         frag.append(text);
       } else if(node.type == 'TOP') {
         recurse(frag, scope);
@@ -333,7 +360,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         // Register action handlers
         if(statement.statement == 'action') {
           //XXX Remove handler when a parent gets updated
-          elem.on(statement.event, function(e) {
+          elem.addEventListener(statement.event, function(e) {
             e.preventDefault();
             //XXX Pass arguments to method
             return elem.scope.resolvePath(statement.method, [e, elem]).value;
@@ -349,13 +376,24 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
 
     // Replace DOM from this node downward with an updated version
     updateElement: function(elem) {
-      //XXX Unbind event handlers for all elements below this one first
-      _.each(elem.handlers, function(h) {
-        _.defer(function() {
-          h.obj.off(h.handler);
+      // Unbind event handlers and discard views for all elements below this one first
+      walkTheDOM(elem, function(child) {
+        // Unbind action handlers
+        // $(child).off();
+        // Unbind model events
+        _.each(child.handlers, function(h) {
+          // _.defer(function() {
+            h.obj.off(h.handler);
+          // });
         });
+        delete child.handlers;
+        // Allow view models to dispose of manually allocated resources
+        if(child.view) child.view.emit('remove');
+        // if(child.iterator) iterator.
       });
-      elem.replaceWith(this.evaluate(elem.node, elem.scope));
+      // $(elem).replaceWith(this.evaluate(elem.node, elem.scope));
+      console.log("replacing");
+      elem.parentNode.replaceChild(this.evaluate(elem.node, elem.scope), elem);
     },
 
     // Register the given element for updates,

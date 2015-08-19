@@ -57,8 +57,8 @@ var ClientApplication = function() {
     }
   });
 
-  // Stop collection user events
-  // and play captured events back
+  // Stop collecting user events
+  // and play back captured events
   var replayEvents = function() {
     var html = document.getElementsByTagName('html')[0];
     _.each(_declaireLogHandlers, function(handler, name) {

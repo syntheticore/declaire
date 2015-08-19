@@ -1,23 +1,29 @@
-var Utils = require('./utils.js');
+var _ = require('./utils.js');
 var eventMethods = require('./events.js');
 
 
 var Collection = function(array) {
-  var items = array || [];
+  var items = [];
 
-  return Utils.merge(eventMethods, {
+  var col = _.merge(eventMethods, {
     klass: 'Collection',
-    listeners: [],
+    // listeners: [],
 
     add: function(item) {
+      var self = this;
       var itms = Array.isArray(item) ? item : [item];
-      Utils.each(itms, function(item) {
+      _.each(itms, function(item) {
         items.push(item);
+        if(item && item.klass == 'Instance') {
+          item.once('delete', function() {
+            self.remove(item);
+          });
+        };
       });
-      this.emit('add');
-      this.emit('change', 'length');
-      this.emit('change');
-      return this;
+      self.emit('add');
+      self.emit('change', 'length');
+      self.emit('change');
+      return self;
     },
 
     remove: function(item) {
@@ -84,6 +90,9 @@ var Collection = function(array) {
       return Query(this, query);
     }
   });
+
+  col.add(array);
+  return col;
 };
 
 

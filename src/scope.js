@@ -13,20 +13,20 @@ var Scope = function() {
       return this;
     },
 
-    // Return value from the topmost layer that has the given key
-    get: function(key) { //XXX can be replaced by resolvePath
-      for(var i = layers.length - 1; i >= 0; i--) {
-        var layer = layers[i];
-        if(layer.model) {
-          var val = layer.get(key);
-          if(val !== undefined) {
-            return val;
-          }
-        } else if(layer[key] !== undefined) {
-          return layer[key];
-        }
-      }
-    },
+    // // Return value from the topmost layer that has the given key
+    // get: function(key) { //XXX can be replaced by resolvePath
+    //   for(var i = layers.length - 1; i >= 0; i--) {
+    //     var layer = layers[i];
+    //     if(layer.model) {
+    //       var val = layer.get(key);
+    //       if(val !== undefined) {
+    //         return val;
+    //       }
+    //     } else if(layer[key] !== undefined) {
+    //       return layer[key];
+    //     }
+    //   }
+    // },
 
     getTopLayer: function() {
       return _.last(layers);
