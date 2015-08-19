@@ -75,6 +75,10 @@ var LocalStore = function() {
   };
 
   return {
+    query: function(q) {
+      return _.values(query(q));
+    },
+    
     // Returns the cleaned up object at the given key
     get: function(localId) {
       // var item = get(localId);

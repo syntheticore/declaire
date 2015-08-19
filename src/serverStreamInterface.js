@@ -32,9 +32,9 @@ var StreamInterface = function() {
           return this;
         },
 
-        append: function(elem) {
-          return this.appendChild(elem);
-        },
+        // append: function(elem) {
+        //   return this.appendChild(elem);
+        // },
 
         // text: function(text) {
         //   this.tekst = text;

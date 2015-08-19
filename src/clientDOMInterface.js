@@ -7,14 +7,14 @@ var _ = require('./utils.js');
 var DOMInterface = function() {
   return {
     createFragment: function() {
-      return $(document.createDocumentFragment());
+      return document.createDocumentFragment();
     },
 
     createDOMElement: function(tag, id, classes, attributes) {
       var elem = document.createElement(tag);
       if(id) elem.id = id;
       if(classes && classes.length) elem.className = classes.join(' ');
-      elem = $(elem);
+      // elem = $(elem);
       _.each(attributes, function(value, key) {
         // if(['checked', 'selected', 'disabled', 'readonly', 'multiple', 'defer', 'declare', 'noresize'].indexOf(key) != -1) {
         // } else {

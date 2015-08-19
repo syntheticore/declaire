@@ -115,7 +115,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       var frag = interface.createFragment();
       var recurse = function(frag, scope, pre) {
         _.each(node.children, function(child) {
-          frag.append(self.evaluate(child, scope, pre || preFormated));
+          frag.appendChild(self.evaluate(child, scope, pre || preFormated));
         });
       };
       if(node.type == 'Statement') {
@@ -134,7 +134,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           }
           elem.node = node;
           elem.scope = scope;
-          frag.append(elem);
+          frag.appendChild(elem);
           self.register(elem);
         };
         switch(node.keyword) {
@@ -197,7 +197,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             } else {
               loop(items);
             }
-            frag.append(elem);
+            frag.appendChild(elem);
             break;
           case 'view':
             var elem = interface.createDOMElement('span', null, ['placeholder-view'])
@@ -216,15 +216,15 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
                 var newScope = scope.clone().addLayer(view).addLayer();
                 // view.el = frag;
                 view.scope = newScope;
-                recurse(frag, newScope);
                 elem.view = view;
+                recurse(elem, newScope);
                 finish(frag);
               });
             } else {
               // Allow view statement without view model as a way to create a new scope
-              recurse(frag, scope.clone());
+              recurse(elem, scope.clone().addLayer());
             }
-            frag.append(elem);
+            frag.appendChild(elem);
             break;
           case 'import':
             var importedNode = parseTrees[node.templateName];
@@ -233,21 +233,21 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             });
             var contentFrag = interface.createFragment();
             _.each(node.children, function(child) {
-              contentFrag.append(self.evaluate(child, scope));
+              contentFrag.appendChild(self.evaluate(child, scope));
             });
             args._content = contentFrag;
             var newScope = Scope().addLayer(args);
-            frag.append(self.evaluate(importedNode, newScope));
+            frag.appendChild(self.evaluate(importedNode, newScope));
             break;
           case 'content':
-            frag.append(scope.get('_content'));
+            frag.appendChild(scope.get('_content'));
             break;
           case 'client':
             if(_.onClient()) {
               recurse(frag, scope);
             } else if(node.alternatives) {
               _.each(node.alternatives[0], function(child) {
-                frag.append(self.evaluate(child, scope));
+                frag.appendChild(self.evaluate(child, scope));
               });
             }
             break;
@@ -260,7 +260,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
               recurse(elem, newScope);
             }
             // frag.append(elem);
-            frag.append(elem);
+            frag.appendChild(elem);
             node.paths = ['_page'];
             elem.node = node;
             elem.scope = scope;
@@ -334,7 +334,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         if(!node.content) {
           recurse(elem, scope, (node.tag == 'script' || node.tag == 'pre'));
         }
-        frag.append(elem);
+        frag.appendChild(elem);
         // If node had either dynamic content or dynamic attributes -> register for updates
         if(paths.length) {
           node.paths = paths; //XXX Should it be elem.paths?
@@ -348,7 +348,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           text = interface.createDOMElement('span');
           text.innerHTML = node.content;
         }
-        frag.append(text);
+        frag.appendChild(text);
       } else if(node.type == 'TOP') {
         recurse(frag, scope);
       }
@@ -392,7 +392,6 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         // if(child.iterator) iterator.
       });
       // $(elem).replaceWith(this.evaluate(elem.node, elem.scope));
-      console.log("replacing");
       elem.parentNode.replaceChild(this.evaluate(elem.node, elem.scope), elem);
     },
 

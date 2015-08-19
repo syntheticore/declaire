@@ -38,9 +38,9 @@ var Query = function(modelOrCollection, query, options) {
           self.length = items.length;
           self.allCache = items;
           self.firstCache = items[0];
-          cb && cb(items);
-          inst.emit('change', 'length');
-          inst.emit('change');
+          cb(items);
+          // inst.emit('change', 'length');
+          // inst.emit('change');
         });
       }
       return self;
