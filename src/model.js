@@ -139,7 +139,7 @@ var Instance = function() {
           });
         }
         var finish = function() {
-          self.data.local = [];
+          self.data.local = {};
           cb && typeof(cb) == 'function' && cb();
           self.emit('save');
         };
@@ -219,6 +219,7 @@ var Instance = function() {
       // Merge push data into remote data bucket and emit change events
       self.model.app.pubSub.subscribe('update', self.model.name, self.id, function(data) {
         console.log("Received push update");
+        console.log(data.data);
         self.data.remote = _.merge(self.data.remote, data.data);
         for(var key in data.data) {
           self.emit('change', key);
