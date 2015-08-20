@@ -17,7 +17,7 @@ var Router = function() {
 
     hijackLocalLinks: function() {
       var self = this;
-      $('a').click(function(e) {
+      $('body').on('click', 'a', function(e) {
         var href = $(this).attr('href');
         if(href.slice(0, 1) == '/' && href.slice(1, 2) != '/') {
           e.preventDefault();
@@ -39,7 +39,7 @@ var Router = function() {
     });
   };
 
-  _.defer(window.onpopstate);
+  // _.defer(window.onpopstate);
 
   return self;
 };

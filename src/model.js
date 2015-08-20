@@ -21,7 +21,7 @@ var eventMethods = require('./events.js');
 
 
 var Instance = function() {
-  return _.merge(eventMethods, {
+  return _.merge(eventMethods(), {
     klass: 'Instance',
     model: null,
     id: null,

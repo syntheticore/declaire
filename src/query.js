@@ -22,7 +22,7 @@ var Query = function(modelOrCollection, query, options) {
     }, onlyOne ? 1 : options.limit);
   };
 
-  var inst = _.merge(eventMethods, {
+  var inst = _.merge(eventMethods(), {
     klass: 'Query',
     // listeners: [],
     length: 0,

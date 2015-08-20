@@ -5,7 +5,7 @@ var eventMethods = require('./events.js');
 var Collection = function(array) {
   var items = [];
 
-  var col = _.merge(eventMethods, {
+  var col = _.merge(eventMethods(), {
     klass: 'Collection',
     // listeners: [],
 
@@ -91,7 +91,7 @@ var Collection = function(array) {
     }
   });
 
-  col.add(array);
+  if(array) col.add(array);
   return col;
 };
 

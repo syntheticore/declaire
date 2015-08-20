@@ -90,7 +90,7 @@ exports.contains = function(items, item) {
   return items.indexOf(item) != -1;
 };
 
-// Merge two array
+// Merge two arrays
 exports.union = function(items1, items2) {
   var out = [];
   exports.each(items1, function(item) {
@@ -100,6 +100,10 @@ exports.union = function(items1, items2) {
     out.push(item);
   });
   return out;
+};
+
+exports.clone = function(items) {
+  return exports.union(items, []);
 };
 
 // Return the given object's values as an array

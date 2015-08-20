@@ -61,6 +61,7 @@ var ClientApplication = function() {
   // Stop collecting user events
   // and play back captured events
   var replayEvents = function() {
+    return;
     var html = document.getElementsByTagName('html')[0];
     _.each(_declaireLogHandlers, function(handler, name) {
       html.removeEventListener(name, handler);
@@ -75,8 +76,8 @@ var ClientApplication = function() {
     });
   };
 
-  var attachHandlers = [];
-  var attached = false;
+  // var attachHandlers = [];
+  // var attached = false;
 
   return {
     // Allow subscribing to database updates
@@ -112,38 +113,38 @@ var ClientApplication = function() {
     init: function(cb) {
       // No init phase on client -> execute callback directly
       cb(function(cbb) {
-        var installed = false;
         var router = Router();
-        // Start routing
-        router.on('*', function() {
-          mainModel.set('_page', document.location.pathname);
-          // Install evaluator
-          if(!installed) {
-            installed = true;
-            install(function() {
-              // Make links use history api instead of default action
-              router.hijackLocalLinks();
-              // Run attach handlers
-              attached = true;
-              _.each(attachHandlers, function(handler) {
-                handler();
-              });
-              // Reproduce events captured during bootstrap phase
-              replayEvents();
-              cbb && cbb();
-            });
-          }
+        mainModel.set('_page', document.location.pathname);
+        // Replace page with client generated version
+        install(function() {
+          // Make links use history api instead of default action
+          router.hijackLocalLinks();
+          console.log("Anchors have been hijacked");
+          // Reproduce events captured during bootstrap phase
+          replayEvents();
+          // // Run attach handlers
+          // attached = true;
+          // _.each(attachHandlers, function(handler) {
+          //   console.log("attachHandler");
+          //   handler();
+          // });
+          // Start routing
+          router.on('*', function() {
+            console.log("router " + document.location.pathname);
+            mainModel.set('_page', document.location.pathname);
+          });
+          cbb && cbb();
         });
       });
     },
 
-    onAttach: function(cb) {
-      if(attached) {
-        cb();
-      } else {
-        attachHandlers.push(cb);
-      }
-    }
+    // onAttach: function(cb) {
+    //   if(attached) {
+    //     cb();
+    //   } else {
+    //     attachHandlers.push(cb);
+    //   }
+    // }
   };
 };
 

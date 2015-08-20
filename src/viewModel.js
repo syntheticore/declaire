@@ -22,9 +22,9 @@ var ViewModel = function(name, reference, constructor, postCb) {
           cb(inst);
           if(postCb && _.onClient()) {
             _.defer(function() {
-              self.app.onAttach(function() {
+              // self.app.onAttach(function() {
                 postCb.apply(inst);
-              });
+              // });
             });
           }
         };

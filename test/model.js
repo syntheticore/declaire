@@ -68,22 +68,22 @@ describe('Model', function() {
       Todo.create().isDirty().should.equal(false);
     });
 
-    it.skip('emits a generic change event when a property is set', function(done) {
+    it('emits a generic change event when a property is set', function(done) {
       var todo = Todo.create();
       todo.on('change', function() {
         todo.get('done').should.equal(true);
         done();
       });
-      todo.check();
+      todo.set('done', true);
     });
 
-    it.skip('emits a specific change event when a property is set', function(done) {
+    it('emits a specific change event when a property is set', function(done) {
       var todo = Todo.create();
       todo.on('change:done', function() {
         todo.get('done').should.equal(true);
         done();
       });
-      todo.check();
+      todo.set('done', true);
     });
   });
 });

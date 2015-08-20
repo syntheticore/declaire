@@ -401,7 +401,6 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       var self = this;
       if(_.onServer()) return;
       elem.handlers = [];
-      // console.log(elem); //XXX this gets called way too often
       _.each(elem.node.paths, function(path) {
         if(isPath(path)) {
           var reference = elem.scope.resolvePath(path).ref;
