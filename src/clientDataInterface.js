@@ -114,12 +114,15 @@ var ClientDataInterface = function(model) {
     },
 
     delete: function(id, cb) {
-      localStore.set(cache[id], {_pending: 'delete'});
-      delete cache[id];
-      $.ajax({url: url + '/' + id, type: 'DELETE'})
-      .done(function() {
-        localStore.delete(id);
-      });
+      var inst = cache[id];
+      if(inst) {
+        localStore.set(inst, {_pending: 'delete'});
+        delete cache[id];
+        $.ajax({url: url + '/' + id, type: 'DELETE'})
+        .done(function() {
+          localStore.delete(id);
+        });
+      }
       cb && cb();
     }
   };

@@ -32,15 +32,15 @@ var Query = function(modelOrCollection, query, options) {
     all: function(cb) {
       var self = this;
       if(self.allCache) {
-        cb(self.allCache);
+        cb && cb(self.allCache);
       } else {
         getItems(false, function(items) {
           self.length = items.length;
           self.allCache = items;
           self.firstCache = items[0];
-          cb(items);
-          // inst.emit('change', 'length');
-          // inst.emit('change');
+          cb && cb(items);
+          inst.emit('change', 'length');
+          inst.emit('change');
         });
       }
       return self;
@@ -52,7 +52,7 @@ var Query = function(modelOrCollection, query, options) {
         cb(self.firstCache);
       } else {
         getItems(true, function(items) {
-          self.length = items.length;
+          // self.length = items.length;
           self.firstCache = items[0];
           cb(items[0]);
         });

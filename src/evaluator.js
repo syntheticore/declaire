@@ -192,6 +192,13 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
                 loop(items);
                 finish(frag);
               });
+              // Update list when query changes
+              if(_.onClient()) {
+                items.once('change', function() {
+                  // Update whole list for now
+                  self.updateElement(elem);
+                });
+              }
             } else if(items.klass == 'Collection') {
               loop(items.values());
             } else {
@@ -381,13 +388,13 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       walkTheDOM(elem, function(child) {
         // Unbind action handlers
         // $(child).off();
-        // Unbind model events
-        _.each(child.handlers, function(h) {
-          // _.defer(function() {
-            h.obj.off(h.handler);
-          // });
-        });
-        delete child.handlers;
+        // // Unbind model events
+        // _.each(child.handlers, function(h) {
+        //   // _.defer(function() {
+        //     h.obj.off(h.handler);
+        //   // });
+        // });
+        // delete child.handlers;
         // Allow view models to dispose of manually allocated resources
         if(child.view) child.view.emit('remove');
         // if(child.iterator) iterator.
@@ -401,7 +408,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     register: function(elem) {
       var self = this;
       if(_.onServer()) return;
-      elem.handlers = [];
+      // elem.handlers = [];
       _.each(elem.node.paths, function(path) {
         if(isPath(path)) {
           var reference = elem.scope.resolvePath(path).ref;
@@ -410,7 +417,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
               self.updateElement(elem);
             };
             var realHandler = reference.obj.once('change:' + reference.key, handler);
-            elem.handlers.push({handler: realHandler, obj: reference.obj});
+            // elem.handlers.push({handler: realHandler, obj: reference.obj});
           }
         }
       });
