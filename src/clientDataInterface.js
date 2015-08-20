@@ -114,8 +114,8 @@ var ClientDataInterface = function(model) {
     },
 
     delete: function(id, cb) {
-      delete cache[id];
       localStore.set(cache[id], {_pending: 'delete'});
+      delete cache[id];
       $.ajax({url: url + '/' + id, type: 'DELETE'})
       .done(function() {
         localStore.delete(id);

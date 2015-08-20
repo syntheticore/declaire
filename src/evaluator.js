@@ -290,7 +290,8 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
               }
               bindings[key] = {expr: expr, save: save};
             }
-            attributes[key] = scope.resolvePath(expr).value;
+            var v = scope.resolvePath(expr).value;
+            if(v) attributes[key] = v;
             paths.push(expr);
           } else {
             attributes[key] = value;
@@ -320,9 +321,9 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
               var ref = scope.resolvePath(binding.expr).ref;
               var value;
               if(attr == 'checked') {
-                value = elem.is(':checked');
+                value = !!elem.checked;
               } else if(attr == 'value') {
-                value = elem.val();
+                value = elem.value
               }
               ref.obj.set(ref.key, value);
               if(binding.save) {
