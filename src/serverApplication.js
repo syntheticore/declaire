@@ -145,7 +145,8 @@ var ServerApplication = function(options) {
   var setupEvaluator = function() {
     var topNode = parseTrees['layout.tmpl'];
     evaluator = Evaluator(topNode, viewModels, parseTrees, StreamInterface());
-    evaluator.baseScope.addLayer(mainModel);
+    // Also add another, neutral layer to which subsequent vars can be added
+    evaluator.baseScope.addLayer(mainModel).addLayer();
   };
 
   // Inject bootstrapping script and bundle reference into head tag

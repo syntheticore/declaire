@@ -175,30 +175,29 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
                   itemData = item;
                 }
                 if(node.children.length) {
-                  var newScope = scope.clone().addLayer(itemData);
+                  var newScope = scope.clone().addLayer(itemData).addLayer();
                   recurse(elem, newScope);
                 }
               });
               self.register(elem);
             };
-            // Synchronous or asynchronous recurse
-            // depending on iterator type
+            // Synchronous or asynchronous recurse, depending on iterator type
             var items = evalExpr(scope, node.itemsPath);
-            elem.iterator = items;
-            //XXX Update iterator
             if(items.klass == 'Query') {
               unfinish(frag);
-              items.all(function(items) {
-                loop(items);
+              elem.iterator = items;
+              items.resolve(function(realItems) {
+                loop(realItems);
+                // Update list when query changes
+                if(_.onClient()) {
+                  elem.listHandler = items.on('change', function() {
+                    items.resolve(function(newItems) {
+                      self.updateList(elem, realItems, newItems);
+                    });
+                  });
+                }
                 finish(frag);
               });
-              // Update list when query changes
-              if(_.onClient()) {
-                items.once('change', function() {
-                  // Update whole list for now
-                  self.updateElement(elem);
-                });
-              }
             } else if(items.klass == 'Collection') {
               loop(items.values());
             } else {
@@ -221,7 +220,6 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
                 // Add view model instance to scope
                 // Also add another, neutral layer to which subsequent vars can be added
                 var newScope = scope.clone().addLayer(view).addLayer();
-                // view.el = frag;
                 view.scope = newScope;
                 elem.view = view;
                 recurse(elem, newScope);
@@ -367,43 +365,15 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       _.each(statements, function(statement) {
         // Register action handlers
         if(statement.statement == 'action') {
-          //XXX Remove handler when a parent gets updated
           elem.addEventListener(statement.event, function(e) {
             e.preventDefault();
             //XXX Pass arguments to method
             return elem.scope.resolvePath(statement.method, [e, elem]).value;
           });
         } else if(statement.statement == 'as') {
-          // var vars = {};
-          // vars[statement.varName] = elem;
-          // elem.scope.addLayer(vars);
           elem.scope.getTopLayer()[statement.varName] = elem;
         }
       });
-    },
-
-    // Replace DOM from this node downward with an updated version
-    updateElement: function(elem) {
-      // Unbind event handlers and discard views for all elements below this one first
-      walkTheDOM(elem, function(child) {
-        // Unbind action handlers
-        // $(child).off();
-        // // Unbind model events
-        // _.each(child.handlers, function(h) {
-        //   // _.defer(function() {
-        //     h.obj.off(h.handler);
-        //   // });
-        // });
-        // delete child.handlers;
-        // Allow view models to dispose of manually allocated resources
-        if(child.view) {
-          child.view.emit('remove');
-          delete child.view;
-        }
-        // if(child.iterator) iterator.
-      });
-      // $(elem).replaceWith(this.evaluate(elem.node, elem.scope));
-      if(elem.parentNode) elem.parentNode.replaceChild(this.evaluate(elem.node, elem.scope), elem);
     },
 
     // Register the given element for updates,
@@ -411,7 +381,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     register: function(elem) {
       var self = this;
       if(_.onServer()) return;
-      // elem.handlers = [];
+      elem.handlers = [];
       _.each(elem.node.paths, function(path) {
         if(isPath(path)) {
           var reference = elem.scope.resolvePath(path).ref;
@@ -420,10 +390,48 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
               self.updateElement(elem);
             };
             var realHandler = reference.obj.once('change:' + reference.key, handler);
-            // elem.handlers.push({handler: realHandler, obj: reference.obj});
+            elem.handlers.push({handler: realHandler, obj: reference.obj});
           }
         }
       });
+    },
+
+    // Unbind event handlers and discard views for all elements below this one
+    unregister: function(elem) {
+      walkTheDOM(elem, function(child) {
+        // Unbind action handlers
+        // $(child).off();
+        // Unbind model events
+        _.each(child.handlers, function(h) {
+          h.obj.off(h.handler);
+        });
+        delete child.handlers;
+        // Allow view models to dispose of manually allocated resources
+        if(child.view) {
+          child.view.emit('remove');
+          delete child.view;
+        }
+        // Remove list handler too when removing whole list
+        if(child.iterator) {
+          console.log(child.iterator);
+          child.iterator.off(child.listHandler);
+          delete child.iterator;
+          delete child.listHandler;
+        }
+      });
+    },
+
+    // Replace DOM from this node downward with an updated version
+    updateElement: function(elem) {
+      this.unregister(elem);
+      // Replace element with a freshly rendered version
+      if(elem.parentNode) {
+        elem.parentNode.replaceChild(this.evaluate(elem.node, elem.scope), elem);
+      }
+    },
+
+    updateList: function(elem, oldItems, newItems) {
+      // this.updateElement(elem);
     }
   };
 };

@@ -27,7 +27,9 @@ var ClientApplication = function() {
       var topNode = templates['layout.tmpl'];
       var body = topNode.children[1];
       var evaluator = Evaluator(body, viewModels, templates, DOMInterface());
-      evaluator.baseScope.addLayer(mainModel);
+      // Add main model to baseScope
+      // Also add another, neutral layer to which subsequent vars can be added
+      evaluator.baseScope.addLayer(mainModel).addLayer();
       var frag = evaluator.render(function() {
         $(document).ready(function() {
           // $('body').replaceWith($(frag));

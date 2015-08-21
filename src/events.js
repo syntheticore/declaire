@@ -33,10 +33,8 @@ module.exports = function() {
     once: function(action, cb) {
       var self = this;
       var handler = function() {
+        self.off(handler);
         cb();
-        // _.defer(function() {
-          self.off(handler);
-        // });
       };
       self.on(action, handler);
       return handler;

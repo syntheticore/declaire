@@ -29,7 +29,7 @@ var Query = function(modelOrCollection, query, options) {
     allCache: null,
     firstCache: null,
 
-    all: function(cb) {
+    resolve: function(cb) {
       var self = this;
       if(self.allCache) {
         cb && cb(self.allCache);
@@ -86,7 +86,7 @@ var Query = function(modelOrCollection, query, options) {
         // console.log(data);
         inst.allCache = null;
         inst.firstCache = null;
-        inst.all();
+        inst.resolve();
       });
     }
   } else if(modelOrCollection.klass == 'Collection') {
