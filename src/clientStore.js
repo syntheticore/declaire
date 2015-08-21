@@ -2,6 +2,7 @@ var _ = require('./utils.js');
 
 
 var LocalStore = function(modelName) {
+  // Iterate all items in local storage belonging to our model
   var all = function(cb) {
     for(var i = 0; i < localStorage.length; i++) {
       var key = localStorage.key(i);
@@ -13,6 +14,7 @@ var LocalStore = function(modelName) {
     }
   };
 
+  // Retrieve all keys belonging to our model
   var allKeys = function() {
     var keys = [];
     all(function(value, key) {

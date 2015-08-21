@@ -8,6 +8,7 @@ var ClientDataInterface = function(model) {
   var localStore = ClientStore(model.name);
   var url = model.url();
   var cache = {};
+  
   // Fetch object from cache
   // or create first local representation otherwise
   var init = function(data) {
@@ -23,6 +24,7 @@ var ClientDataInterface = function(model) {
     inst.connect();
     return inst;
   };
+
   return {
     all: function(options, cb) {
       // Build incomplete results from local storage

@@ -15,7 +15,20 @@ var ViewModel = function(name, reference, constructor) {
     // Return a fully resolved and constructed view model instance
     create: function(args, elem, cb) {
       var inst = model.create();
+      // DOM element this instance was rendered to
       inst.el = elem;
+      // Allow for automatic removal of event handlers
+      inst.listenToHandlers = [];
+      inst.listenTo = function(obj, eventName, cb) {
+        obj.on(eventName, cb);
+        inst.listenToHandlers.push({obj: obj, cb: cb});
+      };
+      inst.on('remove', function() {
+        _.each(inst.listenToHandlers, function(handler) {
+          handler.obj.off(handler.cb);
+        });
+      });
+      // Resolve instance on level deep
       inst.resolve(function() {
         var post = function() {
           cb(inst);
@@ -28,6 +41,7 @@ var ViewModel = function(name, reference, constructor) {
             });
           }
         };
+        // Completely execute asynchronous or synchronous constructor before calling back
         var promise = constructor && constructor.apply(inst, args);
         if(promise) {
           promise.then(function() {
