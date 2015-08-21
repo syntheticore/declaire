@@ -7,6 +7,7 @@ var LocalStore = function(modelName) {
       var key = localStorage.key(i);
       if(key.indexOf(modelName) != -1) {
         var value = localStorage.getItem(key);
+        key = key.split(':')[1];
         cb(value, key);
       }
     }
