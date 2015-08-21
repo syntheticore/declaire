@@ -2,14 +2,22 @@ var _ = require('./utils.js');
 var eventMethods = require('./events.js');
 
 
+// Lazy filter over a collection or database collection
+// The filter remains active and will emit change events when its results set changes
 var Query = function(modelOrCollection, query, options) {
   query = query || {};
   options = options || {};
 
+  var allCache;
+  var firstCache;
+
   var getItems = function(onlyOne, cb) {
     if(modelOrCollection.klass == 'Model') {
       modelOrCollection.dataInterface.all({query: query}, function(err, items) {
-        cb(filter(items), onlyOne);
+        inst.length = items.length;
+        allCache = items;
+        firstCache = items[0];
+        cb && cb(filter(items), onlyOne);
       });
     } else {
       cb(filter(modelOrCollection.values(), onlyOne));
@@ -24,23 +32,15 @@ var Query = function(modelOrCollection, query, options) {
 
   var inst = _.merge(eventMethods(), {
     klass: 'Query',
-    // listeners: [],
     length: 0,
-    allCache: null,
-    firstCache: null,
 
     resolve: function(cb) {
       var self = this;
-      if(self.allCache) {
-        cb && cb(self.allCache);
+      if(allCache) {
+        cb && cb(allCache);
       } else {
         getItems(false, function(items) {
-          self.length = items.length;
-          self.allCache = items;
-          self.firstCache = items[0];
           cb && cb(items);
-          inst.emit('change', 'length');
-          inst.emit('change');
         });
       }
       return self;
@@ -48,12 +48,10 @@ var Query = function(modelOrCollection, query, options) {
 
     first: function(cb) {
       var self = this;
-      if(self.firstCache) {
-        cb(self.firstCache);
+      if(firstCache) {
+        cb(firstCache);
       } else {
         getItems(true, function(items) {
-          // self.length = items.length;
-          self.firstCache = items[0];
           cb(items[0]);
         });
       }
@@ -74,31 +72,62 @@ var Query = function(modelOrCollection, query, options) {
 
     clone: function() {
       return Query(modelOrCollection, query, options);
+    },
+
+    // Dynamically subscribe and unsubscribe when listeners are added and removed
+    listenerAdded: function() {
+      if(!subscribed) {
+        subscribe();
+      }
+    },
+
+    listenerRemoved: function() {
+      var self = this;
+      if(subscribed && self.listeners.length == 0) {
+        // Defer unsubscribtion to allow immediately readding
+        // handlers afer dropping to zero
+        _.defer(function() {
+          if(subscribed && self.listeners.length == 0) {
+            unsubscribe();
+            allCache = null;
+            firstCache = null;
+          }
+        }, 1000);
+      }
     }
   });
 
-  if(modelOrCollection.klass == 'Model') {
-    // if(modelOrCollection.app.pubSub) {
-    if(_.onClient()) {
-      console.log("subscribing " + modelOrCollection.name);
-      modelOrCollection.app.pubSub.subscribe('create update delete', modelOrCollection.name, function(data) {
-        console.log("Updating query due to pubsub");
-        // console.log(data);
-        inst.allCache = null;
-        inst.firstCache = null;
-        inst.resolve();
+  var subscribed = false;
+
+  var subscribe = function() {
+    if(modelOrCollection.klass == 'Model') {
+      if(_.onClient()) {
+        console.log("subscribe " + modelOrCollection.name);
+        modelOrCollection.app.pubSub.subscribe('create update delete', modelOrCollection.name, function(data) {
+          console.log("Updating query due to pubsub");
+          inst.getItems();
+          inst.emit('change', 'length');
+          inst.emit('change');
+        });
+        subscribed = true;
+      }
+    } else if(modelOrCollection.klass == 'Collection') {
+      modelOrCollection.on('change:length', function() {
+        allCache = null;
+        firstCache = null;
+        inst.emit('change', 'length');
+        inst.emit('change');
       });
+      subscribed = true;
+    } else {
+      throw 'Queries work with models and collections only';
     }
-  } else if(modelOrCollection.klass == 'Collection') {
-    modelOrCollection.on('change:length', function() {
-      inst.allCache = null;
-      inst.firstCache = null;
-      inst.emit('change', 'length');
-      inst.emit('change');
-    });
-  } else {
-    throw 'Queries work with models and collections only';
-  }
+  };
+
+  var unsubscribe = function() {
+    console.log("unsubscribe");
+    subscribed = false;
+  };
 
   return inst;
 };

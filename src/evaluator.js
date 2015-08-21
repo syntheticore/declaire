@@ -411,9 +411,8 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           child.view.emit('remove');
           delete child.view;
         }
-        // Remove list handler too when removing whole list
+        // Remove list handler
         if(child.iterator) {
-          console.log(child.iterator);
           child.iterator.off(child.listHandler);
           delete child.iterator;
           delete child.listHandler;
@@ -432,6 +431,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
 
     updateList: function(elem, oldItems, newItems) {
       // this.updateElement(elem);
+
     }
   };
 };

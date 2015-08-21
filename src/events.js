@@ -15,6 +15,7 @@ module.exports = function() {
         cb: cb
       };
       this.listeners.push(l);
+      this.listenerAdded();
       return cb;
     },
 
@@ -26,6 +27,7 @@ module.exports = function() {
           this.listeners.splice(i, 1);
         }
       }
+      this.listenerRemoved();
       return this;
     },
 
@@ -66,6 +68,10 @@ module.exports = function() {
     discardEventHandlers: function() {
       this.listeners = [];
       return this;
-    }
+    },
+
+    // Allow for overriding hooks
+    listenerAdded: function() {},
+    listenerRemoved: function() {}
   };
 };
