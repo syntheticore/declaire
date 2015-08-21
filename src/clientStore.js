@@ -1,27 +1,28 @@
 var _ = require('./utils.js');
 
 
-var each = function(cb) {
-  for(var i = 0; i < localStorage.length; i++) {
-    var key = localStorage.key(i);
-    var value = localStorage.getItem(key);
-    cb(value, key);
-  }
-};
+var LocalStore = function(modelName) {
+  var all = function(cb) {
+    for(var i = 0; i < localStorage.length; i++) {
+      var key = localStorage.key(i);
+      if(key.indexOf(modelName) != -1) {
+        var value = localStorage.getItem(key);
+        cb(value, key);
+      }
+    }
+  };
 
-var allKeys = function() {
-  var keys = [];
-  each(function(value, key) {
-    keys.push(key);
-  });
-  return keys;
-};
+  var allKeys = function() {
+    var keys = [];
+    all(function(value, key) {
+      keys.push(key);
+    });
+    return keys;
+  };
 
-
-var LocalStore = function() {
   // Retrieve object data from local storage
   var get = function(key) {
-    var item = JSON.parse(localStorage.getItem(key));
+    var item = JSON.parse(localStorage.getItem(modelName + ':' + key));
     return item;
   };
 
@@ -29,9 +30,13 @@ var LocalStore = function() {
   // Also leave a timestamp and purge if neccessary
   var set = function(key, obj, options) {
     var json = JSON.stringify({data: obj, meta: _.merge(options, {_lastRequested: new Date()})});
-    localStorage.setItem(key, json);
+    localStorage.setItem(modelName + ':' + key, json);
     purge();
   };
+
+  var del = function(key) {
+    localStorage.removeItem(modelName + ':' + key);
+  }
 
   // Returns true if all values in query match the
   // corresponding values in obj
@@ -47,7 +52,7 @@ var LocalStore = function() {
   // Return all objects in local storage that match the given query
   var query = function(query) {
     var out = {};
-    each(function(item, key) {
+    all(function(item, key) {
       var item = get(key);
       if(matches(item, query)) out[key] = item.data;
     });
@@ -67,43 +72,33 @@ var LocalStore = function() {
       });
       // Shave the given percentage off the bottom
       var startIndex = Math.round(maxItems * (deletePercentage / 100));
-      for (var i = keys.length - 1; i >= startIndex; i--) {
+      for(var i = keys.length - 1; i >= startIndex; i--) {
         var key = keys[i];
-        delete localStorage[key];
+        del(key);
       };
     }
   };
 
   return {
-    query: function(q) {
-      return _.values(query(q));
-    },
-    
     // Returns the cleaned up object at the given key
     get: function(localId) {
-      // var item = get(localId);
-      // delete item._lastRequested;
-      // delete item._pending;
-      // return item;
       return get(localId).data;
     },
     
     // Persist object data to local storage under the given key
-    // Returns a function to be called once the actual transaction with the database succeeds
     set: function(inst, options) {
       set(inst.id || inst.localId, inst.serialize(), options);
-      // return function() {
-      //   set(localId, _.merge(data, {_pending: false}));
-      // };
+      return this;
     },
 
     // Delete data at key from local storage
-    // Returns a function to be called once the actual transaction with the database succeeds
     delete: function(localId) {
-      // set(localId, {}, {_pending: 'delete'});
-      // return function() {
-      delete localStorage[localId];
-      // };
+      del(localId);
+      return this;
+    },
+
+    query: function(q) {
+      return _.values(query(q));
     },
 
     // Retrieve all operations that didn't make it to the database yet

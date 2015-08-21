@@ -102,8 +102,14 @@ exports.union = function(items1, items2) {
   return out;
 };
 
+// Shallow copy the given array
 exports.clone = function(items) {
   return exports.union(items, []);
+};
+
+// Return the given object's keys
+exports.keys = function(obj) {
+  return Object.keys(obj);
 };
 
 // Return the given object's values as an array

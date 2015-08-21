@@ -1,10 +1,11 @@
 var $ = require('jquery');
 var _ = require('./utils.js');
+var ClientStore = require('./clientStore.js');
 
-var localStore = require('./clientStore.js')();
 
 
 var ClientDataInterface = function(model) {
+  var localStore = ClientStore(model.name);
   var url = model.url();
   var cache = {};
   // Fetch object from cache
