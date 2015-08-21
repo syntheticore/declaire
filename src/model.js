@@ -67,6 +67,7 @@ var Instance = function() {
     // Register a local change
     set: function(valuesOrKey, value) {
       var values;
+      // Allow for setting single values or whole hashes
       if(value === undefined) {
         values = valuesOrKey;
       } else {
@@ -74,17 +75,19 @@ var Instance = function() {
         values[valuesOrKey] = value;
       }
       for(var key in values) {
+        // Save given value locally
         this.data.local[key] = values[key];
         //XXX Catch attempt to set a computed property or collection
+        // Emit specific change event
         this.emit('change', key);
         // Emit change events for computed properties as well
-        //XXX Don't emit multiple times if CP depends on several values
         for(var k in this.computedProperties) {
           if(_.contains(this.computedProperties[k], key)) {
             this.emit('change', k);
           }
         }
       }
+      // Emit generic change event
       this.emit('change');
       return this;
     },

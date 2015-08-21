@@ -396,11 +396,14 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         // });
         // delete child.handlers;
         // Allow view models to dispose of manually allocated resources
-        if(child.view) child.view.emit('remove');
+        if(child.view) {
+          child.view.emit('remove');
+          delete child.view;
+        }
         // if(child.iterator) iterator.
       });
       // $(elem).replaceWith(this.evaluate(elem.node, elem.scope));
-      elem.parentNode.replaceChild(this.evaluate(elem.node, elem.scope), elem);
+      if(elem.parentNode) elem.parentNode.replaceChild(this.evaluate(elem.node, elem.scope), elem);
     },
 
     // Register the given element for updates,

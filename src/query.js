@@ -86,8 +86,7 @@ var Query = function(modelOrCollection, query, options) {
         // console.log(data);
         inst.allCache = null;
         inst.firstCache = null;
-        inst.emit('change', 'length');
-        inst.emit('change');
+        inst.all();
       });
     }
   } else if(modelOrCollection.klass == 'Collection') {

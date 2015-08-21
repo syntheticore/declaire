@@ -48,7 +48,11 @@ var LocalStore = function(modelName) {
     // Allow the internal attributes in queries as well
     var data = _.merge(item.data, item.meta);
     return _.all(query, function(value, key) {
-      return data[key] == value;
+      if(value.$contains) {
+        return data[key].indexOf(value.$contains) != -1;
+      } else {
+        return data[key] == value;
+      }
     });
   };
 
