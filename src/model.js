@@ -372,8 +372,9 @@ var Model = function(dbCollection, reference) {
 };
 
 
-// Log all getters called while generating a computed property
-var propertiesUsed = [];
+// Log all getters called while generating
+// a computed property in a global array
+propertiesUsed = [];
 var findDependencies = function(cb) {
   propertiesUsed = [];
   var ret = cb();
