@@ -272,7 +272,7 @@ var Model = function(dbCollection, reference) {
   var model = {
     klass: 'Model',
     name: dbCollection,
-    defaults: ref.defaults,
+    // defaults: ref.defaults,
 
     // The server URL of this model's collection
     url: function() {
@@ -294,31 +294,15 @@ var Model = function(dbCollection, reference) {
       // Copy default collections to instance
       for(var key in ref.collections) {
         var collection = ref.collections[key].clone();
-        // Re-emit change events from collection, so that computed properties and views can update
-        //XXX Templates should listen for the more fine-grained 'add' and 'remove' events
-        // collection.on('change', function() {
-        //   inst.set(key, inst.get(key));
-        //   // if(dbCollection != '_view') {
-        //   //   inst.save();
-        //   // }
-        // });
-        // inst.collections[key] = collection;
-        // inst.set(key, collection);
         inst.data.remote[key] = collection;
       }
       // Copy default queries to instance
       for(var key in ref.queries) {
         var query = ref.queries[key].clone();
-        // Re-emit change events from query
-        // query.on('change', function() {
-        //   inst.set(key, inst.get(key));
-        // });
-        // inst.set(key, query);
         inst.data.remote[key] = query;
       }
       // Copy default values from model and arguments
-      // inst.set(_.merge(this.defaults, values));
-      _.each(_.merge(this.defaults, values), function(value, key) {
+      _.each(_.merge(ref.defaults, values), function(value, key) {
         inst.data.remote[key] = value;
       });
       return inst;
@@ -400,6 +384,8 @@ var separateMethods = function(reference) {
       ret.collections[key] = val;
     } else if(val && val.klass == 'Query') {
       ret.queries[key] = val;
+    } else if(val && Array.isArray(val)) {
+      ret.collections[key] = Collection(val);
     } else {
       ret.defaults[key] = val;
     }
