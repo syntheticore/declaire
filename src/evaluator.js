@@ -72,6 +72,14 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     }
   };
 
+  var walkChildren = function(node, cb) {
+    node = node.firstChild;
+    while(node) {
+      if(cb(node)) return;
+      node = node.nextSibling;
+    }
+  };
+
   var renderCb;
   var pending = 0;
 
@@ -165,19 +173,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             elem.scope = scope;
             var loop = function(items) {
               _.each(items, function(item) {
-                var itemData;
-                // Long form with variable name
-                if(node.itemPath) {
-                  itemData = {};
-                  itemData[node.itemPath] = item;
-                // Short form
-                } else {
-                  itemData = item;
-                }
-                if(node.children.length) {
-                  var newScope = scope.clone().addLayer(itemData).addLayer();
-                  recurse(elem, newScope);
-                }
+                self.renderLoopItem(item, elem);
               });
               self.register(elem);
             };
@@ -193,6 +189,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
                   elem.listHandler = items.on('change', function() {
                     items.resolve(function(newItems) {
                       self.updateList(elem, realItems, newItems);
+                      realItems = newItems;
                     });
                   });
                 }
@@ -376,6 +373,30 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       });
     },
 
+    renderLoopItem: function(item, loopElem) {
+      var self = this;
+      var node = loopElem.node;
+      var itemData;
+      // Long form with variable name
+      if(node.itemPath) {
+        itemData = {};
+        itemData[node.itemPath] = item;
+      // Short form
+      } else {
+        itemData = item;
+      }
+      if(node.children.length) {
+        var newScope = loopElem.scope.clone().addLayer(itemData).addLayer();
+        // Recurse
+        _.each(node.children, function(child) {
+          child = self.evaluate(child, newScope).firstChild;
+          // Stick item to DOM node to allow for identifying it later
+          child.iteratorItem = item;
+          loopElem.appendChild(child);
+        });
+      }
+    },
+
     // Register the given element for updates,
     // should the data at one of its paths change
     register: function(elem) {
@@ -399,7 +420,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     // Unbind event handlers and discard views for all elements below this one
     unregister: function(elem) {
       walkTheDOM(elem, function(child) {
-        // Unbind action handlers
+        //XXX Unbind action handlers
         // $(child).off();
         // Unbind model events
         _.each(child.handlers, function(h) {
@@ -417,21 +438,41 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           delete child.iterator;
           delete child.listHandler;
         }
+        if(child.iteratorItem) {
+          delete child.iteratorItem;
+        }
       });
     },
 
     // Replace DOM from this node downward with an updated version
     updateElement: function(elem) {
       this.unregister(elem);
-      // Replace element with a freshly rendered version
       if(elem.parentNode) {
         elem.parentNode.replaceChild(this.evaluate(elem.node, elem.scope), elem);
       }
     },
 
+    // Create and delete DOM elements as neccessary to match the new list
     updateList: function(elem, oldItems, newItems) {
-      // this.updateElement(elem);
-
+      var self = this;
+      // Diff lists
+      var obsoleteItems = _.select(oldItems, function(old) { return !_.contains(newItems, old) });
+      var freshItems = _.select(newItems, function(fresh) { return !_.contains(oldItems, fresh) });
+      // Remove old elements
+      _.each(obsoleteItems, function(item) {
+        walkChildren(elem, function(child) {
+          if(child.iteratorItem == item) {
+            self.unregister(child);
+            elem.removeChild(child);
+            return true;
+          }
+        });
+      });
+      // Add new items
+      _.each(freshItems, function(item) {
+        self.renderLoopItem(item, elem);
+      });
+      //XXX Maintain order
     }
   };
 };

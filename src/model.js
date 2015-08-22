@@ -218,7 +218,8 @@ var Instance = function() {
     // Subscribe to push updates from the server
     connect: function() {
       var self = this;
-      if(self.connected || !self.id) throw("Trying to connect twice");
+      if(self.connected) throw("Trying to connect twice");
+      if(!self.id) throw("Trying to connect unsaved model");
       // Merge push data into remote data bucket and emit change events
       self.model.app.pubSub.subscribe('update', self.model.name, self.id, function(data) {
         console.log("Received push update");

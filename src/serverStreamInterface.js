@@ -29,22 +29,9 @@ var StreamInterface = function() {
 
         appendChild: function(elem) {
           this.children.push(elem);
+          this.firstChild = this.children[0];
           return this;
         },
-
-        // append: function(elem) {
-        //   return this.appendChild(elem);
-        // },
-
-        // text: function(text) {
-        //   this.tekst = text;
-        //   return this;
-        // },
-
-        // html: function(text) {
-        //   this.tekst = text;
-        //   return this;
-        // },
 
         // Called when an asynchronous operation on this element begins
         unfinish: function() {

@@ -105,9 +105,11 @@ var Query = function(modelOrCollection, query, options) {
         console.log("subscribe " + modelOrCollection.name);
         modelOrCollection.app.pubSub.subscribe('create update delete', modelOrCollection.name, function(data) {
           console.log("Updating query due to pubsub");
-          getItems();
-          inst.emit('change', 'length');
-          inst.emit('change');
+          getItems(false, function() {
+            console.log("Got new items");
+            inst.emit('change', 'length');
+            inst.emit('change');
+          });
         });
         subscribed = true;
       }
