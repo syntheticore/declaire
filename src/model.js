@@ -1,6 +1,7 @@
 var RSVP = require('rsvp');
 
 var Query = require('./query.js');
+var Collection = require('./collection.js');
 var _ = require('./utils.js');
 var eventMethods = require('./events.js');
 
@@ -46,6 +47,9 @@ var Instance = function() {
       var value = this.data.local[key];
       if(value === undefined) {
         value = this.data.remote[key];
+      }
+      if(value === undefined) {
+        value = this.model.defaults[key];
       }
       // Methods called through get() are treated as computed properties
       if(typeof(this[key]) == 'function') {
@@ -273,7 +277,7 @@ var Model = function(dbCollection, reference) {
   var model = {
     klass: 'Model',
     name: dbCollection,
-    // defaults: ref.defaults,
+    defaults: ref.defaults,
 
     // The server URL of this model's collection
     url: function() {

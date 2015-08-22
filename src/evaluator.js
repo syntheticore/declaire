@@ -196,13 +196,15 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
               });
             } else if(items.klass == 'Collection') {
               loop(items.values());
-            } else {
+            } else if(Array.isArray(items)) {
               loop(items);
+            } else {
+              console.error('Cannot iterate over ' + node.itemsPath);
             }
             frag.appendChild(elem);
             break;
           case 'view':
-            var elem = interface.createDOMElement('span', null, ['placeholder-view'])
+            var elem = interface.createDOMElement('span', null, ['placeholder-view']);
             var viewModel = viewModels[node.viewModel];
             if(node.viewModel && !viewModel) console.error('View model not found: ' + node.viewModel);
             // Evaluate constructor arguments
@@ -228,17 +230,24 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             frag.appendChild(elem);
             break;
           case 'import':
-            var importedNode = parseTrees[node.templateName];
+            var elem = interface.createDOMElement('span', null, ['placeholder-import']);
+            // Look up arguments in scope
             var args = _.map(node.arguments, function(expr) {
               return evalExpr(scope, expr);
             });
+            node.paths = _.values(node.arguments);
+            elem.node = node;
+            elem.scope = scope;
+            // Render indented nodes for placement using content statement
             var contentFrag = interface.createFragment();
-            _.each(node.children, function(child) {
-              contentFrag.appendChild(self.evaluate(child, scope));
-            });
+            recurse(contentFrag, scope);
             args._content = contentFrag;
+            // Recurse into different template with a fresh scope
+            var importedNode = parseTrees[node.templateName];
             var newScope = Scope().addLayer(args);
-            frag.appendChild(self.evaluate(importedNode, newScope));
+            elem.appendChild(self.evaluate(importedNode, newScope));
+            self.register(elem);
+            frag.appendChild(elem);
             break;
           case 'content':
             frag.appendChild(scope.get('_content'));
@@ -317,7 +326,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         self.execMicroStatements(node.statements, elem);
         // Register two-way bindings
         if(Object.keys(bindings).length) {
-          elem.addEventListener('change', function() {
+          var onChange = function() {
             _.each(bindings, function(binding, attr) {
               var ref = scope.resolvePath(binding.expr).ref;
               var value;
@@ -331,7 +340,8 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
                 ref.obj.save();
               }
             });
-          });
+          };
+          elem.addEventListener('change', onChange);
         }
         if(!node.content) {
           recurse(elem, scope, (node.tag == 'script' || node.tag == 'pre'));
