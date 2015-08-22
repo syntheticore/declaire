@@ -28,12 +28,12 @@ var ClientDataInterface = function(model) {
   return {
     all: function(options, cb) {
       // Build incomplete results from local storage
-      var datas = localStore.query(options.query || {});
+      var datas = localStore.query(options.query || {}, options.limit);
       var instances = _.map(datas, function(data) {
         return cache[data._id] ? cache[data._id] : init(data);
       });
       // Use callback to return complete results from server
-      $.get(url)
+      $.get(url, options)
       .done(function(data) {
         cb(null, _.map(data, function(item) {
           return cache[item._id] ? cache[item._id] : init(item);

@@ -48,8 +48,8 @@ var LocalStore = function(modelName) {
     // Allow the internal attributes in queries as well
     var data = _.merge(item.data, item.meta);
     return _.all(query, function(value, key) {
-      if(value.$contains) {
-        return data[key].indexOf(value.$contains) != -1;
+      if(value.$regex) {
+        return data[key].indexOf(value.$regex) != -1;
       } else {
         return data[key] == value;
       }
@@ -57,7 +57,7 @@ var LocalStore = function(modelName) {
   };
 
   // Return all objects in local storage that match the given query
-  var query = function(query) {
+  var query = function(query, limit) {
     var out = {};
     all(function(item, key) {
       var item = get(key);
@@ -104,8 +104,8 @@ var LocalStore = function(modelName) {
       return this;
     },
 
-    query: function(q) {
-      return _.values(query(q));
+    query: function(q, limit) {
+      return _.values(query(q, limit));
     },
 
     // Retrieve all operations that didn't make it to the database yet

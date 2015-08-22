@@ -7,12 +7,8 @@ var REST = function(name, express, dataInterface) {
 
       // Get all items
       express.get(baseUrl, function(req, res) {
-        var from = parseInt(req.query.queryFrom) || 0;
-        var limit = parseInt(req.query.queryLimit) || 0;
         delete req.query._;
-        delete req.query.queryFrom;
-        delete req.query.queryLimit;
-        dataInterface.all({query: req.query, from: from, limit: limit}, function(err, items) {
+        dataInterface.all(req.query, function(err, items) {
           if(err) {
             res.send(404, err);
           } else {

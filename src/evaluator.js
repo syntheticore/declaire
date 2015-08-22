@@ -119,7 +119,6 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     // Returns a document fragment
     evaluate: function(node, scope, preFormated) {
       var self = this;
-      // var frag = node.keyword == 'view' ? interface.createDOMElement('span', null, ['placeholder-view']) : interface.createFragment();
       var frag = interface.createFragment();
       var recurse = function(frag, scope, pre) {
         _.each(node.children, function(child) {

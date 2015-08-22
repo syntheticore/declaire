@@ -13,7 +13,7 @@ var Query = function(modelOrCollection, query, options) {
 
   var getItems = function(onlyOne, cb) {
     if(modelOrCollection.klass == 'Model') {
-      modelOrCollection.dataInterface.all({query: query}, function(err, items) {
+      modelOrCollection.dataInterface.all(_.merge(options, {query: query}), function(err, items) {
         inst.length = items.length;
         allCache = items;
         firstCache = items[0];
@@ -33,6 +33,7 @@ var Query = function(modelOrCollection, query, options) {
   var inst = _.merge(eventMethods(), {
     klass: 'Query',
     length: 0,
+    query: query,
 
     resolve: function(cb) {
       var self = this;
