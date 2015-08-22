@@ -10,9 +10,13 @@ Declarative, full-stack web application framework
 ## Usage
 
   ```JavaScript
-  require('declaire')({
+  var declaire = require('declaire');
+
+  var app = declaire.Application({
     mongoDevUrl: 'mongodb://127.0.0.1:27017/myapp'
-  }, function(declaire, start) {
+  });
+
+  app.init(function(start) {
     start();
   });
   ```
@@ -21,19 +25,3 @@ Declarative, full-stack web application framework
 
   MIT
 
-## Todo
-
-  - [x] Template imports
-  - [x] Link bundle in header using async attr
-  - [ ] Asynchronous get for models
-  - [ ] Statement alternatives
-  - [ ] Update local storage IDs
-  - [ ] Local queries
-  - [ ] Selectively update data structures using deep merge
-  - [ ] Extend Models
-  - [ ] ViewModel.listenTo()
-  - [ ] Render Cache
-  - [ ] Pipe external services through model to allow render caching and offline use
-  - [x] History & Rollback
-  - [ ] Access permissions
-  - [ ] Remote blocks
