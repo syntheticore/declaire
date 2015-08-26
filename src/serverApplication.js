@@ -221,6 +221,9 @@ var ServerApplication = function(options) {
   }
 
   return {
+    // Export main model
+    mainModel: mainModel,
+    
     // Register models and view models for use with this application
     use: function(model) {
       model.app = this;

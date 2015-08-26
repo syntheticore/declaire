@@ -439,6 +439,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         // Allow view models to dispose of manually allocated resources
         if(child.view) {
           child.view.emit('remove');
+          child.view.discardEventHandlers();
           delete child.view;
         }
         // Remove list handler

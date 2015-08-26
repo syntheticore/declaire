@@ -85,6 +85,9 @@ var ClientApplication = function() {
     // Allow subscribing to database updates
     pubSub: require('./clientSubscriber.js')(),
 
+    // Export main model
+    mainModel: mainModel,
+
     // Register models and view models for use with this application
     use: function(model) {
       model.app = this;
