@@ -4,28 +4,37 @@ var Publisher = function(express, db) {
 
   // Create tailable cursor on db to get notified of added documents
   var openCursor = function(cb) {
-    db.collection('pubsub').drop();
-    db.createCollection('pubsub', {capped: true, size: 10000}, function(err, pubsub){
-      if(err) throw err;
-      pubsub.insert({type: 'init'}, function(err, items) {
-        if(err) throw err;
-        pubsub
-        .find({}, {tailable: true, awaitdata: true, numberOfRetries: -1})
-        .sort({$natural: 1})
-        .each(function(err, doc) {
-          if(doc) {
-            // Write new data to connected clients
-            for(var i in clients) {
-              var res = clients[i];
-              delete doc._id;
-              res.write('event: ' + 'pubsub' + '\n');
-              res.write('data: ' + JSON.stringify(doc) + '\n\n');
-              res.flush();
-            }
-          }
-        });
-        cb();
+    var loadCollection = function(cbb) {
+      db.collection('pubsub', {strict: true}, function(err, pubsub) {
+        if(err) {
+          // Loading collection failed -> Create it
+          db.createCollection('pubsub', {capped: true, size: 10000}, function(err, pubsub) {
+            pubsub.insert({type: 'init'}, function(err) {
+              cbb(pubsub);
+            });
+          });
+        } else {
+          cbb(pubsub);
+        }
       });
+    };
+    loadCollection(function(pubsub) {
+      pubsub
+      .find({}, {tailable: true, awaitdata: true, numberOfRetries: -1})
+      .sort({$natural: 1})
+      .each(function(err, doc) {
+        if(doc) {
+          // Write new data to connected clients
+          for(var i in clients) {
+            var res = clients[i];
+            delete doc._id;
+            res.write('event: ' + 'pubsub' + '\n');
+            res.write('data: ' + JSON.stringify(doc) + '\n\n');
+            res.flush();
+          }
+        }
+      });
+      cb();
     });
   };
 
