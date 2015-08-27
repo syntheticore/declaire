@@ -84,6 +84,7 @@ var Query = function(modelOrCollection, query, options) {
         _.invoke(items, method);
         cb && cb();
       });
+      return this;
     },
 
     // Set the given property on all result objects
@@ -95,6 +96,7 @@ var Query = function(modelOrCollection, query, options) {
         });
         cb && cb();
       });
+      return this;
     },
 
     clone: function() {
@@ -149,7 +151,7 @@ var Query = function(modelOrCollection, query, options) {
       });
       subscribed = true;
     } else {
-      throw 'Queries work with models and collections only';
+      console.error('Queries work with models and collections only');
     }
   };
 
