@@ -20,7 +20,7 @@ var Query = function(modelOrCollection, query, options) {
         cb && cb(filter(items), onlyOne);
       });
     } else {
-      cb(filter(modelOrCollection.values(), onlyOne));
+      cb(filter(modelOrCollection.items, onlyOne));
     }
   };
 

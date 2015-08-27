@@ -185,13 +185,13 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
               elem.iterator = items;
               // Resolve Query or Collection
               items.resolve(function(realItems) {
-                if(!realItems) realItems = items.values();
+                if(!realItems) realItems = items.items;
                 loop(realItems);
                 // Update list when query changes
                 if(_.onClient()) {
                   elem.listHandler = items.on('change:length', function() {
                     items.resolve(function(newItems) {
-                      if(!newItems) newItems = items.values();
+                      if(!newItems) newItems = items.items;
                       self.updateList(elem, realItems, newItems);
                       realItems = newItems;
                     });
