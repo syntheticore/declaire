@@ -13,21 +13,6 @@ var Scope = function() {
       return this;
     },
 
-    // // Return value from the topmost layer that has the given key
-    // get: function(key) { //XXX can be replaced by resolvePath
-    //   for(var i = layers.length - 1; i >= 0; i--) {
-    //     var layer = layers[i];
-    //     if(layer.model) {
-    //       var val = layer.get(key);
-    //       if(val !== undefined) {
-    //         return val;
-    //       }
-    //     } else if(layer[key] !== undefined) {
-    //       return layer[key];
-    //     }
-    //   }
-    // },
-
     getTopLayer: function() {
       return _.last(layers);
     },
@@ -60,15 +45,14 @@ var Scope = function() {
         obj = self.readAttribute(lastObj, firstSegment);
       }
       // Then follow the regular object structure
-      for(var i = 0; i < segments.length; i++) {
-        var segment = segments[i];
+      _.each(segments, function(segment, i) {
         lastObj = obj;
         if(i == segments.length - 1) {
           obj = self.readAttribute(obj, segment, arguments);
         } else {
           obj = self.readAttribute(obj, segment);
         }
-      }
+      });
       var lastSegment = segments.pop() || firstSegment;
       var ref = {obj: lastObj, key: lastSegment};
       return {value: obj, ref: ref};
@@ -83,7 +67,7 @@ var Scope = function() {
           // Call model method
           return obj[seg].apply(obj, args);
         } else {
-          // Return model getter
+          // Return property or computed property
           return obj.get(seg);
         }
       } else {
@@ -101,9 +85,9 @@ var Scope = function() {
     // Create a copy of the stack that can be added to independently
     clone: function() {
       var copy = Scope();
-      for(var i in layers) {
-        copy.addLayer(layers[i]);
-      }
+      _.each(layers, function(layer) {
+        copy.addLayer(layer);
+      });
       return copy;
     }
   }
