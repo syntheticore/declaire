@@ -1,3 +1,6 @@
+var _ = require('./utils.js');
+
+
 // Publish data from any server instance to all connected clients
 var Publisher = function(express, db) {
   var clients = [];
@@ -20,11 +23,14 @@ var Publisher = function(express, db) {
       });
     };
     loadCollection(function(pubsub) {
+      // This technique will create stream of old items when a client reconnects
+      // Wait for these to rush through before feeding data to clients
+      var t = Date.now();
       pubsub
       .find({}, {tailable: true, awaitdata: true, numberOfRetries: -1})
       .sort({$natural: 1})
       .each(function(err, doc) {
-        if(doc) {
+        if(doc && Date.now() - t > 1000) {
           // Write new data to connected clients
           for(var i in clients) {
             var res = clients[i];
