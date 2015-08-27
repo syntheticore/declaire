@@ -57,9 +57,11 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       return _.map(m[1].split(','), function(item) {
         return evalExpr(scope, item);
       });
-    } else {
-      // Path
+    // Path
+    } else if(isPath(expr)) {
       return scope.resolvePath(expr).value;
+    } else {
+      console.error('Cannot evaluate expression "' + expr + "'");
     }
   };
 
