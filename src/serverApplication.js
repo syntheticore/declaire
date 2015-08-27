@@ -155,14 +155,15 @@ var ServerApplication = function(options) {
     _.each(layout.children, function(node) {
       if(node.tag == 'head') {
         // Inject bootstrapping script
-        node.children.push({
+        var scriptTag = {
           type: 'HTMLTag',
           tag: 'script',
           children: [{
             type: 'Text',
             content: bootstrap
           }]
-        });
+        };
+        // node.children.push(scriptTag);
         // Inject bundle
         node.children.push({
           type: 'HTMLTag',
