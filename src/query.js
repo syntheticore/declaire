@@ -35,6 +35,8 @@ var Query = function(modelOrCollection, query, options) {
     length: 0,
     query: query,
 
+    // Return actual results for this query,
+    // from cache or from the data interface
     resolve: function(cb) {
       var self = this;
       if(allCache) {
@@ -47,6 +49,7 @@ var Query = function(modelOrCollection, query, options) {
       return self;
     },
 
+    // Return only the first match
     first: function(cb) {
       var self = this;
       if(firstCache) {
@@ -59,16 +62,39 @@ var Query = function(modelOrCollection, query, options) {
       return self;
     },
 
+    // Return another Query with the given filter applied
     filter: function(moreQuery) {
       return Query(modelOrCollection, _.deepMerge(query, moreQuery), options);
     },
 
+    // Return another Query that has its limit set
     limit: function(limit) {
       return Query(modelOrCollection, query, _.merge(options, {limit: limit}));
     },
 
+    // Return another query with a sort constraint set 
     sortBy: function(fieldOrFunc) {
-      return this;
+      return this.clone();
+    },
+
+    // Call the given method on all result objects
+    // Will resolve this collection
+    invoke: function(method, cb) {
+      this.resolve(function(items) {
+        _.invoke(items, method);
+        cb && cb();
+      });
+    },
+
+    // Set the given property on all result objects
+    // Will resolve this collection
+    set: function(property, value, cb) {
+      this.resolve(function(items) {
+        _.each(items, function(item) {
+          item.set(property, value);
+        });
+        cb && cb();
+      });
     },
 
     clone: function() {
