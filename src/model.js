@@ -6,21 +6,6 @@ var _ = require('./utils.js');
 var eventMethods = require('./events.js');
 
 
-// var localStore;
-// // Use a dummy local store on the server, that never caches values
-// if(_.onServer()) {
-//   localStore = {
-//     get: function(key) {
-//       return undefined;
-//     },
-//     save: function(key, value) {},
-//     delete: function(key, value) {}
-//   };
-// } else {
-//   localStore = require('./clientStore.js')();
-// }
-
-
 var Instance = function() {
   return _.merge(eventMethods(), {
     klass: 'Instance',
@@ -48,6 +33,8 @@ var Instance = function() {
       if(value === undefined) {
         value = this.data.remote[key];
       }
+      // Defaults may have changed in code since object was created
+      //XXX Do the same for default collections and queries
       if(value === undefined) {
         value = this.model.defaults[key];
       }
@@ -316,44 +303,19 @@ var Model = function(dbCollection, reference) {
     // Load the object with the given id
     // Local storage will be used immediately if available
     // Server data gets fetched afterwards
-    load: function(id) {
+    load: function(id, cb) {
       var self = this;
       return new RSVP.Promise(function(resolve, reject) {
         self.dataInterface.one(id, function(err, inst) {
           if(inst) {
+            cb && cb(inst);
             resolve(inst);
           } else {
+            cb && cb();
             reject();
           }
         });
       });
-      // return new RSVP.Promise(function(resolve, reject) {
-      //   var obj = this.create();
-      //   obj.id = id;
-      //   var localData = localStore.get(id);
-      //   // Return immediately with local data if possible
-      //   if(localData) {
-      //     console.log("local data");
-      //     obj.data = localData;
-      //     resolve(obj);
-      //     // Fetch anyways to receive more recent data
-      //     obj.fetch(function(success) {
-      //       // Object has been deleted on server -> Terminate local instance as well
-      //       if(!success) {
-      //         console.log("retroactively deleting local model");
-      //         obj.delete();
-      //       }
-      //     });
-      //   } else {
-      //     console.log("remote data");
-      //     // Fetch data from remote server
-      //     obj.fetch(function(obj) {
-      //       resolve(obj);
-      //     });
-      //   }
-      //   // Also subscribe to updates
-      //   obj.connect();
-      // });
     }
   };
   models[model.name] = model;
