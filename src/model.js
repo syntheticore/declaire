@@ -282,8 +282,14 @@ var Model = function(dbCollection, reference) {
       return '/api/' + this.name;
     },
 
+    // Return a Query over all items of this model
     all: function() {
       return Query(this);
+    },
+
+    // Return a Query over all items of this model with a filter already set
+    filter: function(query, options) {
+      return Query(this, query, options);
     },
 
     // Create a fresh model instance

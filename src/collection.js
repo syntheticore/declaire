@@ -3,17 +3,16 @@ var eventMethods = require('./events.js');
 
 
 var Collection = function(array) {
-  var items = [];
-
   var col = _.merge(eventMethods(), {
     klass: 'Collection',
+    items: [],
 
     // Add one or many items
     add: function(item) {
       var self = this;
-      var itms = Array.isArray(item) ? item : [item];
-      _.each(itms, function(item) {
-        items.push(item);
+      var items = Array.isArray(item) ? item : [item];
+      _.each(items, function(item) {
+        self.items.push(item);
         if(item && item.klass == 'Instance') {
           item.once('delete', function() {
             self.remove(item);
@@ -28,12 +27,12 @@ var Collection = function(array) {
 
     // Remove a given element
     remove: function(item) {
-      return this.removeAt(items.indexOf(item));
+      return this.removeAt(this.items.indexOf(item));
     },
 
     // Remove the element at the given index
     removeAt: function(index) {
-      items.splice(index, 1);
+      this.items.splice(index, 1);
       this.emit('remove');
       this.emit('change', 'length');
       this.emit('change');
@@ -42,24 +41,20 @@ var Collection = function(array) {
 
     // Return the element at the given index
     at: function(index) {
-      return items[index];
+      return this.items[index];
     },
 
     each: function(cb) {
-      _.each(items, cb);
+      _.each(this.items, cb);
       return this;
     },
 
     map: function(cb) {
-      return Collection(_.map(items, cb));
-    },
-
-    values: function() {
-      return items;
+      return Collection(_.map(this.items, cb));
     },
 
     length: function() {
-      return items.length;
+      return this.items.length;
     },
 
     // Return a simple array of all values,
@@ -85,7 +80,7 @@ var Collection = function(array) {
     },
 
     clone: function() {
-      return Collection(items);
+      return Collection(this.items);
     },
 
     filter: function(query) {
