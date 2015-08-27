@@ -43,25 +43,28 @@ module.exports = function() {
     },
 
     // Call all handlers that listen to this event
-    emit: function(action, key) {
+    emit: function(action, key, data) {
       var self = this;
+      data = _.merge({
+        action: action,
+        object: self,
+        property: key
+      }, data);
       var listeners = _.clone(self.listeners);
-      // _.defer(function() {
-        for(var i in listeners) {
-          var l = listeners[i];
-          if(l.action == action) {
-            if(key) {
-              if(l.key == key) {
-                l.cb();
-              }
-            } else {
-              if(!l.key) {
-                l.cb();
-              }
+      for(var i in listeners) {
+        var l = listeners[i];
+        if(l.action == action) {
+          if(key) {
+            if(l.key == key) {
+              l.cb(data);
+            }
+          } else {
+            if(!l.key) {
+              l.cb(data);
             }
           }
         }
-      // });
+      }
       return self;
     },
 
