@@ -10,6 +10,7 @@ var Publisher = function(express, db) {
           // Loading collection failed -> Create it
           db.createCollection('pubsub', {capped: true, size: 10000}, function(err, pubsub) {
             pubsub.insert({type: 'init'}, function(err) {
+              if(err) throw err;
               cbb(pubsub);
             });
           });

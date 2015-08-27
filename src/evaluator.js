@@ -178,15 +178,18 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             };
             // Synchronous or asynchronous recurse, depending on iterator type
             var items = evalExpr(scope, node.itemsPath);
-            if(items.klass == 'Query') {
+            if(items.klass == 'Query' || items.klass == 'Collection') {
               unfinish(frag);
               elem.iterator = items;
+              // Resolve Query or Collection
               items.resolve(function(realItems) {
+                if(!realItems) realItems = items.values();
                 loop(realItems);
                 // Update list when query changes
                 if(_.onClient()) {
-                  elem.listHandler = items.on('change', function() {
+                  elem.listHandler = items.on('change:length', function() {
                     items.resolve(function(newItems) {
+                      if(!newItems) newItems = items.values();
                       self.updateList(elem, realItems, newItems);
                       realItems = newItems;
                     });
@@ -194,8 +197,6 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
                 }
                 finish(frag);
               });
-            } else if(items.klass == 'Collection') {
-              loop(items.values());
             } else if(Array.isArray(items)) {
               loop(items);
             } else {

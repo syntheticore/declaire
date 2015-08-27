@@ -7,8 +7,8 @@ var Collection = function(array) {
 
   var col = _.merge(eventMethods(), {
     klass: 'Collection',
-    // listeners: [],
 
+    // Add one or many items
     add: function(item) {
       var self = this;
       var itms = Array.isArray(item) ? item : [item];
@@ -26,31 +26,32 @@ var Collection = function(array) {
       return self;
     },
 
+    // Remove a given element
     remove: function(item) {
-      items.splice(items.indexOf(item), 1);
+      return this.removeAt(items.indexOf(item));
+    },
+
+    // Remove the element at the given index
+    removeAt: function(index) {
+      items.splice(index, 1);
       this.emit('remove');
       this.emit('change', 'length');
       this.emit('change');
       return this;
     },
 
+    // Return the element at the given index
     at: function(index) {
       return items[index];
     },
 
     each: function(cb) {
-      for(var i in items) {
-        cb(items[i], i);
-      }
+      _.each(items, cb);
       return this;
     },
 
     map: function(cb) {
-      var out = [];
-      this.each(function(item, i) {
-        out.push(cb(item, i));
-      });
-      return Collection(out);
+      return Collection(_.map(items, cb));
     },
 
     values: function() {
@@ -78,12 +79,13 @@ var Collection = function(array) {
       return out;
     },
 
-    unserialize: function(index) {
-
+    // Replace contained model references with full model instances
+    resolve: function(cb) {
+      cb();
     },
 
     clone: function() {
-      return this.map(function(item) { return item });
+      return Collection(items);
     },
 
     filter: function(query) {
