@@ -322,14 +322,14 @@ var Model = function(dbCollection, reference) {
     // Server data gets fetched afterwards
     load: function(id, cb) {
       var self = this;
-      return new RSVP.Promise(function(resolve, reject) {
+      return _.promise(function(ok, fail) {
         self.dataInterface.one(id, function(err, inst) {
           if(inst) {
             cb && cb(inst);
-            resolve(inst);
+            ok(inst);
           } else {
             cb && cb();
-            reject();
+            fail('Could not load ' + self.name + '#' + id);
           }
         });
       });

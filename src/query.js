@@ -14,7 +14,7 @@ var Query = function(modelOrCollection, query, options) {
   var getItems = function(onlyOne, cb) {
     if(modelOrCollection.klass == 'Model') {
       modelOrCollection.dataInterface.all(_.merge(options, {query: query}), function(err, items) {
-        inst.length = items.length;
+        // inst.length = items.length;
         allCache = items;
         firstCache = items[0];
         cb && cb(filter(items), onlyOne);
@@ -32,7 +32,7 @@ var Query = function(modelOrCollection, query, options) {
 
   var inst = _.merge(eventMethods(), {
     klass: 'Query',
-    length: 0,
+    // length: 0,
     query: query,
 
     // Return actual results for this query,
@@ -101,6 +101,16 @@ var Query = function(modelOrCollection, query, options) {
 
     clone: function() {
       return Query(modelOrCollection, query, options);
+    },
+
+    // Return a promise that resolves to the result set's length
+    length: function() {
+      var self = this;
+      return _.promise(function(ok, fail) {
+        self.resolve(function(items) {
+          ok(items.length);
+        });
+      });
     },
 
     // Dynamically subscribe and unsubscribe when listeners are added and removed

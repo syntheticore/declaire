@@ -122,30 +122,38 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     evaluate: function(node, scope, preFormated) {
       var self = this;
       var frag = interface.createFragment();
+
       var recurse = function(frag, scope, pre) {
         _.each(node.children, function(child) {
           frag.appendChild(self.evaluate(child, scope, pre || preFormated));
         });
       };
+
       if(node.type == 'Statement') {
+
         var evaluateIf = function(expressions, condition) {
           var elem = interface.createDOMElement('span', null, ['placeholder-if']);
           var values = _.map(expressions, function(expr) {
             return evalExpr(scope, expr);
           });
           node.paths = expressions;
-          if(condition(values)) {
-            recurse(elem, scope);
-          } else if(node.alternatives) {
-            _.each(node.alternatives[0], function(child) {
-              elem.appendChild(self.evaluate(child, scope));
-            });
-          }
           elem.node = node;
           elem.scope = scope;
+          unfinish(frag);
+          _.resolvePromises(values, function(values) {
+            if(condition(values)) {
+              recurse(elem, scope);
+            } else if(node.alternatives) {
+              _.each(node.alternatives[0], function(child) {
+                elem.appendChild(self.evaluate(child, scope));
+              });
+            }
+            finish(frag);
+          });
           frag.appendChild(elem);
           self.register(elem);
         };
+
         switch(node.keyword) {
           case 'if':
             evaluateIf([node.path], function(values) {
@@ -385,6 +393,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       });
     },
 
+    // Append item to list that's already hooked into the DOM
     renderLoopItem: function(item, loopElem) {
       var self = this;
       var node = loopElem.node;
@@ -415,10 +424,13 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       var self = this;
       if(_.onServer()) return;
       elem.handlers = [];
+      // Bind one handler for every path
       _.each(elem.node.paths, function(path) {
         if(isPath(path)) {
+          // Resolve actual instance the path points to
           var reference = elem.scope.resolvePath(path).ref;
           if(reference.obj && reference.obj.once) {
+            // Listen for changes of the individual property
             var handler = function() {
               self.updateElement(elem);
             };

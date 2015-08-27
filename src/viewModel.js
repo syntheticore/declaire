@@ -30,7 +30,9 @@ var ViewModel = function(name, reference, constructor) {
       });
       // Resolve instance on level deep
       inst.resolve(function() {
-        var post = function() {
+        // Completely execute asynchronous or synchronous constructor before calling back
+        var promise = constructor && constructor.apply(inst, args);
+        _.promiseFrom(promise).then(function() {
           cb(inst);
           if(_.onClient()) {
             _.defer(function() {
@@ -40,16 +42,7 @@ var ViewModel = function(name, reference, constructor) {
               // });
             });
           }
-        };
-        // Completely execute asynchronous or synchronous constructor before calling back
-        var promise = constructor && constructor.apply(inst, args);
-        if(promise) {
-          promise.then(function() {
-            post();
-          });
-        } else {
-          post();
-        }
+        });
       });
     }
   };

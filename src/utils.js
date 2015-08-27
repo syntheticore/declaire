@@ -1,4 +1,6 @@
 // "use strict";
+var RSVP = require('rsvp');
+
 
 // Check if we are executing on the server
 //XXX Would browserify minifier optimize this away if it wasn't a function?
@@ -158,6 +160,28 @@ exports.capitalize = function(str) {
 // Execute function at a later time
 exports.defer = function(cb, millis) {
   return setTimeout(cb, millis || 0);
+};
+
+// Return a Promises/A+ compliant promise object
+exports.promise = function(cb) {
+  return new RSVP.Promise(cb);
+};
+
+// Wrap a value with a promise
+exports.promiseFrom = function(val) {
+  return RSVP.resolve(val);
+};
+
+// Resolve all values in items before calling back
+exports.resolvePromises = function(items, cb) {
+  var wrapped = exports.map(items, function(item) {
+    return exports.promiseFrom(item);
+  });
+  if(Array.isArray(items)) {
+    RSVP.all(wrapped).then(cb);
+  } else {
+    RSVP.hash(wrapped).then(cb);
+  }
 };
 
 // Return a wrapper function that calls <cb>,
