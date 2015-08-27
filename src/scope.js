@@ -77,18 +77,22 @@ var Scope = function() {
     // Resolve path segment by using getter or direct property access
     // Functions are called immediately
     readAttribute: function(obj, seg, args) {
-      // if(!obj) throw('Path not found: ' + seg);
       if(!obj) return null;
       if(obj.klass == 'Instance') {
         if(args) {
+          // Call model method
           return obj[seg].apply(obj, args);
         } else {
+          // Return model getter
           return obj.get(seg);
         }
       } else {
         if(typeof obj[seg] == 'function') {
-          return obj[seg]();
+          // Call regular function
+          // return obj[seg]();
+          return obj[seg].apply(obj, args);
         } else {
+          // Return regular attribute
           return obj[seg];
         }
       }
