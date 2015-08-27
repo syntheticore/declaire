@@ -145,8 +145,14 @@ exports.merge = function(obj1, obj2) {
   return obj;
 };
 
+// Recursively merge two data structures
 exports.deepMerge = function(obj1, obj2) {
   return exports.merge(obj1, obj2);
+};
+
+// Convert the given strings first character to upperspace
+exports.capitalize = function(str) {
+  return str.slice(0, 1).toUpperCase() + str.slice(1);
 };
 
 // Execute function at a later time
