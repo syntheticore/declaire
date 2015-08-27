@@ -12,10 +12,10 @@ var Instance = function() {
     model: null,
     id: null,
     localId: _.uuid(),
-    // listeners: [],
     data: {
       local: {},
-      remote: {}
+      remote: {},
+      temporary: {}
     },
     // collections: {},
     computedProperties: {},
@@ -38,6 +38,10 @@ var Instance = function() {
       if(value === undefined) {
         value = this.model.defaults[key];
       }
+      // Use temporary value as last resort
+      if(value === undefined) {
+        value = this.data.temporary[key];
+      }
       // Methods called through get() are treated as computed properties
       if(typeof(this[key]) == 'function') {
         if(!value) {
@@ -56,9 +60,10 @@ var Instance = function() {
     },
 
     // Register a local change
-    set: function(valuesOrKey, value) {
-      var values;
+    set: function(valuesOrKey, value, options) {
+      options = options || {};
       // Allow for setting single values or whole hashes
+      var values;
       if(value === undefined) {
         values = valuesOrKey;
       } else {
@@ -67,7 +72,11 @@ var Instance = function() {
       }
       for(var key in values) {
         // Save given value locally
-        this.data.local[key] = values[key];
+        if(options.temporary) {
+          this.data.temporary[key] = values[key];
+        } else {
+          this.data.local[key] = values[key];
+        }
         //XXX Catch attempt to set a computed property or collection
         // Emit specific change event
         this.emit('change', key);
@@ -94,9 +103,11 @@ var Instance = function() {
     },
 
     // Discard local modifications and revert to server state
+    // Will also discard temporary data
     revert: function() {
-      var locals = this.data.local;
-      this.data.local = [];
+      var locals = _.merge(this.data.temporary, this.data.local);
+      this.data.local = {};
+      this.data.temporary = {};
       for(var key in locals) {
         this.emit('change', key);
       }
