@@ -17,15 +17,15 @@ exports.onClient = function(cb) {
 };
 
 // Loop through objects and arrays
-// Return false from callback to stop iteration
+// Return true from callback to stop iteration
 exports.each = function(items, cb) {
   for(var key in items) {
     var cancel = cb(items[key], key);
-    if(cancel) return;
+    if(cancel) return true;
   }
 };
 
-// Return a copy the given array
+// Return a copy the given array or object
 // with each item replaced according to <cb>
 exports.map = function(items, cb) {
   var out = Array.isArray(items) ? [] : {};
@@ -81,6 +81,16 @@ exports.all = function(items, cb) {
   return exports.select(items, cb).length == items.length;
 };
 
+// Check if any item matches the given condition
+exports.any = function(items, cb) {
+  return exports.each(items, function(item, key) {
+    if(cb(item, key)) {
+      return true;
+    }
+  })
+};
+
+// Return the last item in the given array
 exports.last = function(items) {
   return items[items.length - 1];
 };
