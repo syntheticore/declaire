@@ -19,20 +19,21 @@ exports.onClient = function(cb) {
 };
 
 // Loop through objects and arrays
-// Return true from callback to stop iteration
+// Return something truthy from callback to stop iteration
 exports.each = function(items, cb) {
   for(var key in items) {
     var cancel = cb(items[key], key);
-    if(cancel) return true;
+    if(cancel) return cancel;
   }
 };
 
-// Return a copy the given array or object
-// with each item replaced according to <cb>
-exports.map = function(items, cb) {
+// Return a copy the given array
+// with each item replaced according to <cbOrName>
+exports.map = function(items, cbOrName) {
+  var callback = (typeof cbOrName === 'function');
   var out = Array.isArray(items) ? [] : {};
   exports.each(items, function(item, key) {
-    out[key] = cb(item, key);
+    out[key] = (callback ? cbOrName(item, key) : item[cbOrName]);
   });
   return out;
 };
@@ -45,19 +46,26 @@ exports.times = function(n, cb) {
 };
 
 // Invoke the named method on each item
+// Additional arguments will be passed to the invoked methods
 exports.invoke = function(items, key) {
   var out = [];
+  var args = Array.prototype.slice.call(arguments).splice(2);
   exports.each(items, function(item) {
-    out.push(item[key]());
+    out.push(item[key].apply(item, args);
   });
   return out;
 };
 
 // Interleave the items of two arrays
 exports.zip = function(items1, items2, cb) {
+   var out = [];
   exports.each(items1, function(item1, i) {
-    cb(item1, items2[i]);
+    var item2 = items2[i];
+    if(item2 == undefined) return true;
+    out.push([item1, item2]);
+    cb && cb(item1, item2);
   });
+  return out;
 };
 
 // Select items fron an array or object that match the given condition
@@ -92,15 +100,26 @@ exports.any = function(items, cb) {
   })
 };
 
-// Return the last item in the given array
+// Return the last element of the given array or string
 exports.last = function(items) {
   return items[items.length - 1];
 };
 
-// Check if <item> is a member of the array
+// Check if <item> is a member of the array, object or string
+// Return the key where <item> was found if <items> is an object
 exports.contains = function(items, item) {
-  return items.indexOf(item) != -1;
-};
+  // For arrays and strings
+  if(items.indexOf) {
+    return items.indexOf(item) != -1;
+  // For objects
+  } else {
+    return exports.each(items, function(value, key) {
+      if(value === item) {
+        return key;
+      }
+    });
+  }
+ };
 
 // Merge two arrays
 exports.union = function(items1, items2) {
