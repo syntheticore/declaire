@@ -79,22 +79,10 @@ var Query = function(modelOrCollection, query, options) {
 
     // Call the given method on all result objects
     // Will resolve this collection
-    invoke: function(method, cb) {
+    invoke: function(method) {
+      var args = Array.prototype.slice.call(arguments).splice(1);
       this.resolve(function(items) {
-        _.invoke(items, method);
-        cb && cb();
-      });
-      return this;
-    },
-
-    // Set the given property on all result objects
-    // Will resolve this collection
-    set: function(property, value, cb) {
-      this.resolve(function(items) {
-        _.each(items, function(item) {
-          item.set(property, value);
-        });
-        cb && cb();
+        _.invoke(_.union([items, method], args));
       });
       return this;
     },
