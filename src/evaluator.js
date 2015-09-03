@@ -160,21 +160,25 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
               return !!values[0];
             });
             break;
+          
           case 'if-greater':
             evaluateIf([node.path1, node.path2], function(values) {
               return values[0] > values[1];
             });
             break;
+          
           case 'if-equal':
             evaluateIf([node.path1, node.path2], function(values) {
               return values[0] == values[1];
             });
             break;
+          
           case 'if-not-equal':
             evaluateIf([node.path1, node.path2], function(values) {
               return values[0] != values[1];
             });
             break;
+          
           case 'for':
             var elem = interface.createDOMElement('span', null, ['placeholder-for']);
             node.paths = [node.itemsPath];
@@ -214,6 +218,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             }
             frag.appendChild(elem);
             break;
+          
           case 'view':
             var elem = interface.createDOMElement('span', null, ['placeholder-view']);
             var viewModel = viewModels[node.viewModel];
@@ -240,6 +245,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             }
             frag.appendChild(elem);
             break;
+          
           case 'import':
             var elem = interface.createDOMElement('span', null, ['placeholder-import']);
             // Look up arguments in scope
@@ -260,9 +266,11 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             self.register(elem);
             frag.appendChild(elem);
             break;
+          
           case 'content':
             frag.appendChild(scope.get('_content'));
             break;
+          
           case 'client':
             if(_.onClient()) {
               recurse(frag, scope);
@@ -272,6 +280,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
               });
             }
             break;
+          
           case 'route':
             var vars = {};
             var elem = interface.createDOMElement('span', null, ['placeholder-route']);
@@ -288,6 +297,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             self.register(elem);
             break;
         }
+      
       } else if(node.type == 'HTMLTag') {
         // Don't regenerate script tags as these
         // would be downloaded and reexecuted each time
@@ -313,7 +323,8 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             }
             var v = scope.resolvePath(expr).value;
             if(v) attributes[key] = v;
-            paths.push(expr);
+            // One time only binding?
+            if(expr[0] != ':') paths.push(expr);
           } else {
             attributes[key] = value;
           }
@@ -363,6 +374,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           node.paths = paths; //XXX Should it be elem.paths?
           self.register(elem);
         }
+      
       } else if(node.type == 'Text') {
         var text;
         if(preFormated) {
@@ -372,6 +384,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           text.innerHTML = node.content;
         }
         frag.appendChild(text);
+      
       } else if(node.type == 'TOP') {
         recurse(frag, scope);
       }
