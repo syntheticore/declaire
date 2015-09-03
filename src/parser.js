@@ -12,17 +12,19 @@ var inverseBreadth = function(node, cb) {
   });
 };
 
-// Clean tree from alternatives
+// Clean tree from alternatives and temporary data
 var cleanTree = function(node) {
-  if(!node.children) return;
-  for(var i = node.children.length - 1; i >= 0; i--) {
-    var child = node.children[i];
-    if(child.type == 'Alternative') {
-      node.children.splice(i, 1);
-    } else {
-      cleanTree(child);
+  if(node.children) {
+    for(var i = node.children.length - 1; i >= 0; i--) {
+      var child = node.children[i];
+      if(child.type == 'Alternative') {
+        node.children.splice(i, 1);
+      } else {
+        cleanTree(child);
+      }
     }
-  };
+  }
+  if(node.slurpy) delete node.slurpy;
   return node;
 };
 
