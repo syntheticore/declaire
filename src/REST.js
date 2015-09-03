@@ -7,8 +7,9 @@ var REST = function(name, express, dataInterface) {
 
       // Get all items
       express.get(baseUrl, function(req, res) {
+        // Remove anti-cache marker
         delete req.query._;
-        dataInterface.all(req.query, function(err, items) {
+        dataInterface.all(JSON.parse(req.query.data), function(err, items) {
           if(err) {
             res.send(404, err);
           } else {

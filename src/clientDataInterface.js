@@ -33,7 +33,7 @@ var ClientDataInterface = function(model) {
         return cache[data._id] ? cache[data._id] : init(data);
       });
       // Use callback to return complete results from server
-      $.get(url, options)
+      $.get(url, {data: JSON.stringify(options)})
       .done(function(data) {
         cb(null, _.map(data, function(item) {
           return cache[item._id] ? cache[item._id] : init(item);
