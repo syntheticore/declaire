@@ -24,7 +24,11 @@ var cleanTree = function(node) {
       }
     }
   }
-  if(node.slurpy) delete node.slurpy;
+  delete node.slurpy;
+  if(node.attributes && !_.keys(node.attributes).length) delete node.attributes;
+  if(node.statements && !node.statements.length) delete node.statements;
+  if(node.children && !node.children.length) delete node.children;
+  if(node.classes && !node.classes.length) delete node.classes;
   return node;
 };
 
