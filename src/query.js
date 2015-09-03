@@ -82,7 +82,7 @@ var Query = function(modelOrCollection, query, options) {
     invoke: function(method) {
       var args = Array.prototype.slice.call(arguments).splice(1);
       this.resolve(function(items) {
-        _.invoke(_.union([items, method], args));
+        _.invoke.apply(null, _.union([items, method], args));
       });
       return this;
     },

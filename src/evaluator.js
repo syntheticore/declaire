@@ -61,7 +61,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     } else if(isPath(expr)) {
       return scope.resolvePath(expr).value;
     } else {
-      console.error('Cannot evaluate expression "' + expr + "'");
+      console.error('Cannot evaluate expression "' + expr + '"');
     }
   };
 
@@ -289,7 +289,6 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
               var newScope = scope.clone().addLayer(params);
               recurse(elem, newScope);
             }
-            // frag.append(elem);
             frag.appendChild(elem);
             node.paths = ['_page'];
             elem.node = node;
@@ -336,11 +335,9 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         if(node.content) {
           if(hasMustaches(node.content)) {
             var resolved = resolveMustaches(node.content, scope);
-            // elem.html(resolved.text);
             elem.innerHTML = resolved.text;
             paths = _.union(paths, resolved.paths);
           } else {
-            // elem.html(node.content);
             elem.innerHTML = node.content;
           }
         }
@@ -358,6 +355,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
                 value = elem.value
               }
               ref.obj.set(ref.key, value);
+              // Also save if two exclamation marks were used
               if(binding.save) {
                 ref.obj.save();
               }
