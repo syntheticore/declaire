@@ -85,9 +85,6 @@ var StreamInterface = function() {
               html += '>';
             }
             // Free text
-            // if(this.tekst) {
-            //   html += this.tekst;
-            // }
             if(this.innerHTML) {
               html += this.innerHTML;
             }

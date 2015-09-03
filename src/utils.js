@@ -51,7 +51,7 @@ exports.invoke = function(items, key) {
   var out = [];
   var args = Array.prototype.slice.call(arguments).splice(2);
   exports.each(items, function(item) {
-    out.push(item[key].apply(item, args);
+    out.push(item[key].apply(item, args));
   });
   return out;
 };
@@ -227,6 +227,9 @@ exports.throttle = function(thresh, cb) {
     }
   };
 };
+
+// Empty placeholder function
+exports.noop = function() {};
 
 // Return a mapping from path params to url arguments
 exports.extractUrlParams = function(url, path) {

@@ -382,12 +382,40 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       _.each(statements, function(statement) {
         // Register action handlers
         if(statement.statement == 'action') {
-          elem.addEventListener(statement.event, function(e) {
+          var eName = statement.event;
+          // Map virtual events to real DOM events
+          var condition = function() { return true };
+          var lastClickTime;
+          if(eName == 'enter') {
+            eName = 'keyup';
+            condition = function(e) {
+              return e.keyCode == 13;
+            };
+          } else if(eName == 'escape') {
+            eName = 'keyup';
+            condition = function(e) {
+              return e.keyCode == 27;
+            };
+          } else if(eName == 'doubleClick') {
+            eName = 'click';
+            condition = function(e) {
+              var t = (new Date()).getTime();
+              var ret = (lastClickTime && t - lastClickTime < 500);
+              lastClickTime = t;
+              return ret;
+            };
+          }
+          // Listen to real DOM event
+          elem.addEventListener(eName, function(e) {
+            if(!condition(e)) return;
             e.preventDefault();
+            // Call action method
+            // The method may prevent event bubbling by returning false
             //XXX Pass arguments to method
             return elem.scope.resolvePath(statement.method, [e, elem]).value;
           });
         } else if(statement.statement == 'as') {
+          // Add a variable pointing to the current element to the scope
           elem.scope.getTopLayer()[statement.varName] = elem;
         }
       });
