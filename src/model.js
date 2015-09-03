@@ -118,13 +118,16 @@ var Instance = function() {
 
     // Persist object
     // Also save local modifications to the server if possible
-    save: function(values, cb) {
+    save: function(values) {
       var self = this;
+      // Detect event object to allow calling from actions
+      if(values && values.target) {
+        values = undefined;
+      }
+      // Allow setting values immediately before saving
       if(values) {
         self.set(values);
       }
-      // LocalStore.set(self.localId, self.data);
-      // localStore.save(self.localId, self.data);
       if(self.isDirty() || !self.id) {
         // Persist local changes to server
         var url = self.id ? self.url() : self.model.url();
@@ -145,7 +148,7 @@ var Instance = function() {
         }
         var finish = function() {
           self.data.local = {};
-          cb && typeof(cb) == 'function' && cb();
+          // cb && typeof(cb) == 'function' && cb();
           self.emit('save');
         };
       }

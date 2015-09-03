@@ -354,8 +354,6 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         var elem = interface.createDOMElement(node.tag, node.id, node.classes, attributes);
         elem.node = node;
         elem.scope = scope;
-        // Execute embeded statements
-        self.execMicroStatements(node.statements, elem);
         // Register two-way bindings
         if(Object.keys(bindings).length) {
           var onChange = function() {
@@ -376,6 +374,8 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           };
           elem.addEventListener('change', onChange);
         }
+        // Execute embeded statements
+        self.execMicroStatements(node.statements, elem);
         // Nodes have either content or children
         if(node.content) {
           // Replace mustaches with actual values
