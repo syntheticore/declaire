@@ -133,7 +133,7 @@ var Parser = {
   // Parse all major components from a tag, including inline content
   parseTag: function(line) {
     var self = this;
-    var m = line.match(/(([\w-#\.]+>)*)([\w-]+)?(#([\w-]+))?((\.[\w-]+)*)(\((.*)\))?(\.)?( (.*))?/);
+    var m = line.match(/(([\w-#\.]+\s*>\s*)*)([\w-]+)?(#([\w-]+))?((\.[\w-]+)*)(\((.*)\))?(\.)?( (.*))?/);
     var multiTags = m[1];
     var tag = m[3] || 'div';
     var id = m[5];
@@ -177,9 +177,10 @@ var Parser = {
     };
     // Build a hierarchy from multi tags
     if(multiTags) {
-      multiTags = multiTags.slice(0, -1);
+      // Remove trailing '>' before splitting
+      multiTags = multiTags.trim().slice(0, -1);
       var tags = _.map(multiTags.split('>'), function(t) {
-        return self.parseTag(t);
+        return self.parseTag(t.trim());
       });
       var top = tags.shift();
       var prev = top;
