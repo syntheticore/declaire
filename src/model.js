@@ -72,7 +72,7 @@ var Instance = function() {
       }
       for(var key in values) {
         // Save given value locally
-        if(options.temporary) {
+        if(options.local) {
           this.data.temporary[key] = values[key];
         } else {
           this.data.local[key] = values[key];
@@ -270,7 +270,7 @@ var references = function(values) {
 var models = {}; //XXX This is per package and should be per app
 
 // Define a new data model under the given name
-var Model = function(dbCollection, reference) {
+var Model = function(dbCollection, reference, constructor) {
   var ref = separateMethods(reference);
   var model = {
     klass: 'Model',
@@ -314,6 +314,8 @@ var Model = function(dbCollection, reference) {
       _.each(_.merge(ref.defaults, values), function(value, key) {
         inst.data.remote[key] = value;
       });
+      // Call constructor function
+      constructor && constructor.call(inst, values);
       return inst;
     },
 
