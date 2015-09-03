@@ -2,26 +2,40 @@ var _ = require('./utils.js');
 var Scope = require('./scope.js');
 
 
+// Renders a parse tree from <topNode> downward and emits either
+// a document fragment or a virtual DOM
 var Evaluator = function(topNode, viewModels, parseTrees, interface) {
 
-  // Replace all mustaches in text with the value of their paths
-  var resolveMustaches = function(text, scope) {
+  // Replace all mustaches in text with the value at their paths
+  var resolveMustaches = function(text, scope, cb) {
+    // Collect mustaches in reverse order
+    var matches = _.scan(text, /{(.*?)}/g).reverse();
+    // Resolve all - potentially asynchronous - expressions
+    // and collect their paths along the way
     var paths = [];
-    _.each(_.scan(text, /{(.*?)}/g).reverse(), function(m) {
+    var promises = _.map(matches, function(m) {
       var i = m.index;
       var l = m[0].length;
       var expr = m[1];
-      var val = evalExpr(scope, expr);
-      // var val = evalInScope(expr, scope);
-      text = text.substring(0, i) + val + text.substring(i+l);
       if(isPath(expr)) paths.push(expr);
+      return _.promiseFrom(evalExpr(scope, expr)).then(function(value) {
+        return {
+          index: m.index,
+          length: m[0].length,
+          value: value
+        }
+      });
     });
-    return {text: text, paths: paths};
-  };
-
-  // Does the given text contain mustache pairs?
-  var hasMustaches = function(text) {
-    return !!text.match(/{.*?}/);
+    // Replace mustaches in text with resolved values
+    _.resolvePromises(promises).then(function(items) {
+      _.each(items, function(item) {
+        text = text.substring(0, item.index) + item.value + text.substring(item.index + item.length);
+      });
+      // Return mangled text asynchronously..
+      cb(text);
+    });
+    // ..and paths immediately
+    return paths;
   };
 
   // Is the given obj a string describing a data path?
@@ -85,11 +99,13 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
   var renderCb;
   var pending = 0;
 
+  // Indicate an asynchronous section during evaluation
   var unfinish = function(frag) {
     frag.unfinish && frag.unfinish();
     pending++;
   };
 
+  // Terminate an asynchronous section
   var finish = function(frag) {
     frag.finish && frag.finish();
     pending--;
@@ -133,14 +149,17 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
 
         var evaluateIf = function(expressions, condition) {
           var elem = interface.createDOMElement('span', null, ['placeholder-if']);
+          // Evaluate expressions
           var values = _.map(expressions, function(expr) {
             return evalExpr(scope, expr);
           });
           node.paths = expressions;
           elem.node = node;
           elem.scope = scope;
+          // Resolve potential promises among values
           unfinish(frag);
-          _.resolvePromises(values, function(values) {
+          _.resolvePromises(values).then(function(values) {
+            // Recurse into either regular children, or alternatives
             if(condition(values)) {
               recurse(elem, scope);
             } else if(node.alternatives) {
@@ -184,18 +203,20 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             node.paths = [node.itemsPath];
             elem.node = node;
             elem.scope = scope;
+            // Render every child,
+            // then register element for updates, should the whole collection be exchanged
             var loop = function(items) {
               _.each(items, function(item) {
                 self.renderLoopItem(item, elem);
               });
               self.register(elem);
             };
-            // Synchronous or asynchronous recurse, depending on iterator type
+            // Resolve actual iterable at path
             var items = evalExpr(scope, node.itemsPath);
+            // Resolve Query or Collection
             if(items.klass == 'Query' || items.klass == 'Collection') {
               unfinish(frag);
               elem.iterator = items;
-              // Resolve Query or Collection
               items.resolve(function(realItems) {
                 if(!realItems) realItems = items.items;
                 loop(realItems);
@@ -211,6 +232,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
                 }
                 finish(frag);
               });
+            // Regular array
             } else if(Array.isArray(items)) {
               loop(items);
             } else {
@@ -284,6 +306,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           case 'route':
             var vars = {};
             var elem = interface.createDOMElement('span', null, ['placeholder-route']);
+            // Extract params from current URL
             var params = _.extractUrlParams(scope.resolvePath('_page').value, node.path);
             if(params) {
               var newScope = scope.clone().addLayer(params);
@@ -331,16 +354,6 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         var elem = interface.createDOMElement(node.tag, node.id, node.classes, attributes);
         elem.node = node;
         elem.scope = scope;
-        // Nodes have either content or children
-        if(node.content) {
-          if(hasMustaches(node.content)) {
-            var resolved = resolveMustaches(node.content, scope);
-            elem.innerHTML = resolved.text;
-            paths = _.union(paths, resolved.paths);
-          } else {
-            elem.innerHTML = node.content;
-          }
-        }
         // Execute embeded statements
         self.execMicroStatements(node.statements, elem);
         // Register two-way bindings
@@ -363,7 +376,17 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           };
           elem.addEventListener('change', onChange);
         }
-        if(!node.content) {
+        // Nodes have either content or children
+        if(node.content) {
+          // Replace mustaches with actual values
+          unfinish(frag);
+          var mustachePaths = resolveMustaches(node.content, scope, function(text) {
+            elem.innerHTML = text;
+            finish(frag);
+          });
+          // Save binding paths for future updates
+          paths = _.union(paths, mustachePaths);
+        } else {
           recurse(elem, scope, (node.tag == 'script' || node.tag == 'pre'));
         }
         frag.appendChild(elem);

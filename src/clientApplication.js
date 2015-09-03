@@ -30,9 +30,9 @@ var ClientApplication = function() {
       // Add main model to baseScope
       // Also add another, neutral layer to which subsequent vars can be added
       evaluator.baseScope.addLayer(mainModel).addLayer();
+      // Render and replace body after page load event
       var frag = evaluator.render(function() {
         $(document).ready(function() {
-          // $('body').replaceWith($(frag));
           document.body.parentNode.replaceChild(frag, document.body);
           cb();
         });
@@ -77,9 +77,6 @@ var ClientApplication = function() {
       }
     });
   };
-
-  // var attachHandlers = [];
-  // var attached = false;
 
   return {
     // Allow subscribing to database updates
@@ -127,12 +124,6 @@ var ClientApplication = function() {
           console.log("Anchors have been hijacked");
           // Reproduce events captured during bootstrap phase
           replayEvents();
-          // // Run attach handlers
-          // attached = true;
-          // _.each(attachHandlers, function(handler) {
-          //   console.log("attachHandler");
-          //   handler();
-          // });
           // Start routing
           router.on('*', function() {
             console.log("router " + document.location.pathname);
@@ -141,15 +132,7 @@ var ClientApplication = function() {
           cbb && cbb();
         });
       });
-    },
-
-    // onAttach: function(cb) {
-    //   if(attached) {
-    //     cb();
-    //   } else {
-    //     attachHandlers.push(cb);
-    //   }
-    // }
+    }
   };
 };
 

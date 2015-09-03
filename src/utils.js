@@ -191,15 +191,15 @@ exports.promiseFrom = function(val) {
   return RSVP.resolve(val);
 };
 
-// Resolve all values in items before calling back
-exports.resolvePromises = function(items, cb) {
+// Resolve all values in items
+exports.resolvePromises = function(items) {
   var wrapped = exports.map(items, function(item) {
     return exports.promiseFrom(item);
   });
   if(Array.isArray(items)) {
-    RSVP.all(wrapped).then(cb);
+    return RSVP.all(wrapped);
   } else {
-    RSVP.hash(wrapped).then(cb);
+    return RSVP.hash(wrapped);
   }
 };
 
