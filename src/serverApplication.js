@@ -207,7 +207,7 @@ var ServerApplication = function(options) {
     mainModel.set('_page', req.url);
     // Stream chunks of rendered html
     evaluator.render().render(function(chunk) {
-      console.log(chunk);
+      // console.log(chunk);
       res.write(chunk.data);
       res.flush();
       if(chunk.eof) {
