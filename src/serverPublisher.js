@@ -5,6 +5,15 @@ var _ = require('./utils.js');
 var Publisher = function(express, db) {
   var clients = [];
 
+  // Write data to all connected clients
+  var distribute = function(data) {
+    _.each(clients, function(client) {
+      client.write('event: ' + 'pubsub' + '\n');
+      client.write('data: ' + JSON.stringify(data) + '\n\n');
+      client.flush();
+    });
+  };
+
   // Create tailable cursor on db to get notified of added documents
   var openCursor = function(cb) {
 
@@ -32,19 +41,18 @@ var Publisher = function(express, db) {
       .sort({$natural: 1})
       .each(function(err, doc) {
         if(doc) {
+          delete doc._id;
           // Write new data to connected clients
-          for(var i in clients) {
-            var res = clients[i];
-            delete doc._id;
-            res.write('event: ' + 'pubsub' + '\n');
-            res.write('data: ' + JSON.stringify(doc) + '\n\n');
-            res.flush();
-          }
+          distribute(doc);
         }
       });
       // Wait for old documents to rush through
       // before allowing clients to connect
       _.defer(cb, 500);
+      // Send a heartbeat to connected clients
+      setInterval(function() {
+        distribute({type: 'heartbeat'})
+      }, 1000 * 25);
     });
   };
 

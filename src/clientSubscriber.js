@@ -9,6 +9,7 @@ var Subscriber = function() {
   var evtSource = new EventSource('/events');
   evtSource.addEventListener('pubsub', function(e) {
     var obj = JSON.parse(e.data);
+    if(obj.type == 'heartbeat') return;
     // Call all matching subscribers
     var colKey = obj.type + obj.collection;
     var itemKey = colKey + obj.id;
