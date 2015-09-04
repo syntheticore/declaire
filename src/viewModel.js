@@ -28,18 +28,20 @@ var ViewModel = function(name, reference, constructor) {
           handler.obj.off(handler.cb);
         });
       });
-      // Resolve instance on level deep
+      // Resolve instance
       inst.resolve(function() {
         // Completely execute asynchronous or synchronous constructor before calling back
         var promise = constructor && constructor.apply(inst, args);
         _.promiseFrom(promise).then(function() {
           cb(inst);
           if(_.onClient()) {
+            // Defer once to be executed after view element has been filled
             _.defer(function() {
-              // self.app.onAttach(function() {
-                // postCb.apply(inst);
+              //XXX This is really hacky and fails for children views that load data over the network
+              // Defer again to be executed after children have been filled
+              _.defer(function() {
                 inst.emit('attach');
-              // });
+              });
             });
           }
         });

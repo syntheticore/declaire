@@ -261,6 +261,8 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
                 elem.view = view;
                 recurse(elem, newScope);
                 finish(frag);
+                //XXX A view should be able to tell when all children have
+                //XXX fully rendered and emit its attach event afterwards
               });
             } else {
               // Allow view statement without view model as a way to create a new scope

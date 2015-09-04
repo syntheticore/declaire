@@ -7,7 +7,7 @@ var Router = function() {
   var suppressNextPopstate = false;
 
   var scrollTo = function(id) {
-    document.body.scrollTop = document.getElementById(id).offsetTop;
+    window.scrollTo(0, document.getElementById(id).offsetTop);
   };
 
   var self = {
