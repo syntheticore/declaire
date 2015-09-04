@@ -187,8 +187,12 @@ exports.promise = function(cb) {
 };
 
 // Wrap a value with a promise
-exports.promiseFrom = function(val) {
-  return RSVP.resolve(val);
+exports.promiseFrom = function(value) {
+  return exports.promise(function(ok) {
+    exports.defer(function() {
+      ok(value);
+    });
+  });
 };
 
 // Resolve all values in items

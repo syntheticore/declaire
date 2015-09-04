@@ -18,7 +18,7 @@ var StreamInterface = function() {
         tag: tag,
         id: id,
         classes: classes || [],
-        attributes: attributes,
+        attributes: attributes || {},
         children: [],
         finished: true,
 
@@ -31,6 +31,10 @@ var StreamInterface = function() {
           this.children.push(elem);
           this.firstChild = this.children[0];
           return this;
+        },
+
+        setAttribute: function(key, value) {
+          this.attributes[key] = value;
         },
 
         // Called when an asynchronous operation on this element begins

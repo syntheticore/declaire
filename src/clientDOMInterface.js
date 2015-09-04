@@ -14,15 +14,11 @@ var DOMInterface = function() {
       var elem = document.createElement(tag);
       if(id) elem.id = id;
       if(classes && classes.length) elem.className = classes.join(' ');
-      // elem = $(elem);
-      _.each(attributes, function(value, key) {
-        // if(['checked', 'selected', 'disabled', 'readonly', 'multiple', 'defer', 'declare', 'noresize'].indexOf(key) != -1) {
-        // } else {
+      if(attributes) {
+        _.each(attributes, function(value, key) {
           elem.setAttribute(key, value);
-        // }
-        // elem[key] = value;
-        // elem.attr(key, value);
-      });
+        });
+      }
       return elem;
     },
 

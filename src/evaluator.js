@@ -249,6 +249,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             var args = _.map(node.arguments, function(arg) {
               return evalExpr(scope, arg);
             });
+            //XXX resolve promises
             if(viewModel) {
               unfinish(frag);
               // Instantiate view model
@@ -327,9 +328,9 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         var attributes = {};
         var paths = [];
         var bindings = {};
-        // Resolve dynamic attributes
-        for(var key in node.attributes) {
-          var value = node.attributes[key];
+        // Resolve attributes
+        var promises = _.map(node.attributes, function(value, key) {
+          // Dynamic attribute
           if(value.indexOf('{') != -1) {
             var expr = value.slice(1, -1);
             // Two way binding
@@ -343,15 +344,25 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
               }
               bindings[key] = {expr: expr, save: save};
             }
-            var v = scope.resolvePath(expr).value;
-            if(v) attributes[key] = v;
             // One time only binding?
             if(expr[0] != ':') paths.push(expr);
+            // Resolve attribute value
+            return _.promiseFrom(scope.resolvePath(expr).value).then(function(v) {
+              if(v) {
+                if(v == true) {
+                  attributes[key] = key;
+                } else {
+                  attributes[key] = v;
+                }
+              }
+            });
+          // Static attribute
           } else {
             attributes[key] = value;
+            return _.promiseFrom();
           }
-        }
-        var elem = interface.createDOMElement(node.tag, node.id, node.classes, attributes);
+        });
+        var elem = interface.createDOMElement(node.tag, node.id, node.classes);
         elem.node = node;
         elem.scope = scope;
         // Register two-way bindings
@@ -360,41 +371,49 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             _.each(bindings, function(binding, attr) {
               var ref = scope.resolvePath(binding.expr).ref;
               var value;
-              if(attr == 'checked') {
-                value = !!elem.checked;
+              var booleans = ['checked', 'selected', 'disabled', 'readonly', 'multiple', 'defer', 'declare', 'noresize'];
+              if(_.contains(booleans, attr)) {
+                value = !!elem[attr];
               } else if(attr == 'value') {
                 value = elem.value
+              } else {
+                console.error('Trying to activate two-way binding from unknown attribute');
               }
               ref.obj.set(ref.key, value);
               // Also save if two exclamation marks were used
-              if(binding.save) {
-                ref.obj.save();
-              }
+              if(binding.save) ref.obj.save();
             });
           };
           elem.addEventListener('change', onChange);
         }
         // Execute embeded statements
         self.execMicroStatements(node.statements, elem);
-        // Nodes have either content or children
-        if(node.content) {
-          // Replace mustaches with actual values
-          unfinish(frag);
-          var mustachePaths = resolveMustaches(node.content, scope, function(text) {
-            elem.innerHTML = text;
-            finish(frag);
+        // Resolve attribute values
+        unfinish(frag);
+        _.resolvePromises(promises).then(function() {
+          _.each(attributes, function(value, key) {
+            elem.setAttribute(key, value);
           });
-          // Save binding paths for future updates
-          paths = _.union(paths, mustachePaths);
-        } else {
-          recurse(elem, scope, (node.tag == 'script' || node.tag == 'pre'));
-        }
+          // Nodes have either content or children
+          if(node.content) {
+            // Replace mustaches with actual values
+            var mustachePaths = resolveMustaches(node.content, scope, function(text) {
+              elem.innerHTML = text;
+              finish(frag);
+            });
+            // Save binding paths for future updates
+            paths = _.union(paths, mustachePaths);
+          } else {
+            recurse(elem, scope, (node.tag == 'script' || node.tag == 'pre'));
+            finish(frag);
+          }
+          // If node had either dynamic content or dynamic attributes -> register for updates
+          if(paths.length) {
+            node.paths = paths; //XXX Should it be elem.paths?
+            self.register(elem);
+          }
+        });
         frag.appendChild(elem);
-        // If node had either dynamic content or dynamic attributes -> register for updates
-        if(paths.length) {
-          node.paths = paths; //XXX Should it be elem.paths?
-          self.register(elem);
-        }
       
       } else if(node.type == 'Text') {
         var text;
