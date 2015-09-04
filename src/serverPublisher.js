@@ -7,11 +7,12 @@ var Publisher = function(express, db) {
 
   // Create tailable cursor on db to get notified of added documents
   var openCursor = function(cb) {
+
     var loadCollection = function(cbb) {
       db.collection('pubsub', {strict: true}, function(err, pubsub) {
         if(err) {
           // Loading collection failed -> Create it
-          db.createCollection('pubsub', {capped: true, size: 10000}, function(err, pubsub) {
+          db.createCollection('pubsub', {capped: true, size: 4096, max: 10}, function(err, pubsub) {
             pubsub.insert({type: 'init'}, function(err) {
               if(err) throw err;
               cbb(pubsub);
@@ -22,15 +23,15 @@ var Publisher = function(express, db) {
         }
       });
     };
+
     loadCollection(function(pubsub) {
       // This technique will create stream of old items when a client reconnects
       // Wait for these to rush through before feeding data to clients
-      var t = Date.now();
       pubsub
       .find({}, {tailable: true, awaitdata: true, numberOfRetries: -1})
       .sort({$natural: 1})
       .each(function(err, doc) {
-        if(doc && Date.now() - t > 1000) {
+        if(doc) {
           // Write new data to connected clients
           for(var i in clients) {
             var res = clients[i];
@@ -41,7 +42,9 @@ var Publisher = function(express, db) {
           }
         }
       });
-      cb();
+      // Wait for old documents to rush through
+      // before allowing clients to connect
+      _.defer(cb, 500);
     });
   };
 
@@ -60,7 +63,6 @@ var Publisher = function(express, db) {
       console.log("Serving " + clients.length + " clients");
     });
   };
-
 
   return {
     init: function(cb) {
