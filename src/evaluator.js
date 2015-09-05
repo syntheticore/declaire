@@ -395,7 +395,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         // Execute embeded statements
         self.execMicroStatements(node.statements, elem);
         // Resolve remaining attribute values asynchronously
-        if(promises.length) {
+        if(_.keys(promises).length) {
           unfinish(frag);
           _.resolvePromises(promises).then(function(values) {
             _.each(values, function(v, k) {
