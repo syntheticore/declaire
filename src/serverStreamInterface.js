@@ -20,7 +20,7 @@ var StreamInterface = function() {
         classes: classes || [],
         attributes: attributes || {},
         children: [],
-        finished: true,
+        pending: 0,
 
         // Don't register actions handlers on the server
         on: function() {},
@@ -39,16 +39,20 @@ var StreamInterface = function() {
 
         // Called when an asynchronous operation on this element begins
         unfinish: function() {
-          this.finished = false;
+          this.pending++;
           pending++;
         },
 
         // Called when an asynchronous operation on this element is finished
         // Tries to render another chunk
         finish: function() {
-          this.finished = true;
+          this.pending--;
           pending--;
           topNode && topNode.render();
+        },
+
+        finished: function() {
+          return !this.pending;
         },
 
         // If render is called before all views have been fully resolved, the callback
@@ -98,7 +102,7 @@ var StreamInterface = function() {
           var terminated = false;
           for(var i in this.children) {
             var child = this.children[i];
-            if(child.finished) {
+            if(child.finished()) {
               var out = child.serialize();
               html += out.html;
               // Also terminate if child terminated
@@ -123,7 +127,6 @@ var StreamInterface = function() {
 
     createTextNode: function(text) {
       var frag = this.createFragment();
-      // frag.text(text);
       frag.innerHTML = text;
       return frag;
     }

@@ -166,6 +166,12 @@ exports.merge = function(obj1, obj2) {
   return obj;
 };
 
+exports.compact = function(items) {
+  return exports.select(items, function(item) {
+    return item != null && item != undefined;
+  });
+};
+
 // Recursively merge two data structures
 exports.deepMerge = function(obj1, obj2) {
   return exports.merge(obj1, obj2);

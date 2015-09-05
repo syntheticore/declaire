@@ -327,12 +327,22 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         // Don't regenerate script tags as these
         // would be downloaded and reexecuted each time
         if(node.tag == 'script' && _.onClient()) return frag;
-        var attributes = {};
+        var elem = interface.createDOMElement(node.tag, node.id, node.classes);
+        elem.node = node;
+        elem.scope = scope;
+        var setAttribute = function(k, v) {
+          if(v) {
+          // Booleans write back the key name itself
+            elem.setAttribute(k, v == true ? k : v)
+          }
+        };
+        // Resolve attribute values, collect two-way binding expressions, collect binding paths
+        // Collect potential promises for async attribute resolution
         var paths = [];
         var bindings = {};
-        // Resolve attributes
-        var promises = _.map(node.attributes, function(value, key) {
+        var promises = _.compact(_.map(node.attributes, function(value, key) {
           // Dynamic attribute
+          //XXX this should be moved to the parser
           if(value.indexOf('{') != -1) {
             var expr = value.slice(1, -1);
             // Two way binding
@@ -349,24 +359,18 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             // One time only binding?
             if(expr[0] != ':') paths.push(expr);
             // Resolve attribute value
-            return _.promiseFrom(scope.resolvePath(expr).value).then(function(v) {
-              if(v) {
-                if(v == true) {
-                  attributes[key] = key;
-                } else {
-                  attributes[key] = v;
-                }
-              }
-            });
+            var v = scope.resolvePath(expr).value;
+            // Return promises unmangled, mangle regular values directly
+            if(v && v.then) {
+              return v;
+            } else {
+              setAttribute(key, v);
+            }
           // Static attribute
           } else {
-            attributes[key] = value;
-            return _.promiseFrom();
+            elem.setAttribute(key, value);
           }
-        });
-        var elem = interface.createDOMElement(node.tag, node.id, node.classes);
-        elem.node = node;
-        elem.scope = scope;
+        }));
         // Register two-way bindings
         if(Object.keys(bindings).length) {
           var onChange = function() {
@@ -390,31 +394,35 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         }
         // Execute embeded statements
         self.execMicroStatements(node.statements, elem);
-        // Resolve attribute values
-        unfinish(frag);
-        _.resolvePromises(promises).then(function() {
-          _.each(attributes, function(value, key) {
-            elem.setAttribute(key, value);
-          });
-          // Nodes have either content or children
-          if(node.content) {
-            // Replace mustaches with actual values
-            var mustachePaths = resolveMustaches(node.content, scope, function(text) {
-              elem.innerHTML = text;
-              finish(frag);
+        // Resolve remaining attribute values asynchronously
+        if(promises.length) {
+          unfinish(frag);
+          _.resolvePromises(promises).then(function(values) {
+            _.each(values, function(v, k) {
+              setAttribute(k, v);
             });
-            // Save binding paths for future updates
-            paths = _.union(paths, mustachePaths);
-          } else {
-            recurse(elem, scope, (node.tag == 'script' || node.tag == 'pre'));
             finish(frag);
-          }
-          // If node had either dynamic content or dynamic attributes -> register for updates
-          if(paths.length) {
-            node.paths = paths; //XXX Should it be elem.paths?
-            self.register(elem);
-          }
-        });
+          });
+        }
+        // Nodes have either content or children
+        if(node.content) {
+          // Replace mustaches with actual values
+          unfinish(frag);
+          //XXX Should only be async if any mustache resolved to a promise
+          var mustachePaths = resolveMustaches(node.content, scope, function(text) {
+            elem.innerHTML = text;
+            finish(frag);
+          });
+          // Save binding paths for future updates
+          paths = _.union(paths, mustachePaths);
+        } else {
+          recurse(elem, scope, (node.tag == 'script' || node.tag == 'pre'));
+        }
+        // If node had either dynamic content or dynamic attributes -> register for updates
+        if(paths.length) {
+          node.paths = paths; //XXX Should it be elem.paths?
+          self.register(elem);
+        }
         frag.appendChild(elem);
       
       } else if(node.type == 'Text') {
