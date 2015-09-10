@@ -1,6 +1,6 @@
 {
   "name": "declaire",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "dependencies": {
     "aliasify": {
       "version": "1.7.2",
