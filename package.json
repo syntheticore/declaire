@@ -32,7 +32,8 @@
     "coveralls": "^2.11.2"
   },
   "scripts": {
-    "test": "make test"
+    "test": "make test",
+    "postinstall": "npm ddp"
   },
   "repository": {
     "type": "git",
