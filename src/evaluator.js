@@ -330,22 +330,14 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         var elem = interface.createDOMElement(node.tag, node.id, node.classes);
         elem.node = node;
         elem.scope = scope;
-        var setAttribute = function(k, v) {
-          if(v) {
-          // Booleans write back the key name itself
-            elem.setAttribute(k, v == true ? k : v)
-          }
-        };
         // Resolve attribute values, collect two-way binding expressions, collect binding paths
-        // Collect potential promises for async attribute resolution
         var paths = [];
-        var bindings = {};
-        var promises = _.compact(_.map(node.attributes, function(value, key) {
+        var twoWayBindings = {};
+        var promises = _.compact(_.flatten(_.values(_.map(node.attributes, function(attr, key) {
           // Dynamic attribute
-          //XXX this should be moved to the parser
-          if(value.indexOf('{') != -1) {
-            var expr = value.slice(1, -1);
-            // Two way binding
+          if(attr.type == 'dynamic') {
+            var expr = attr.expression;
+            // Collect two way binding
             if(_.last(expr) == '!') {
               expr = expr.slice(0, -1);
               // .. with auto save
@@ -354,27 +346,42 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
                 expr = expr.slice(0, -1);
                 save = true;
               }
-              bindings[key] = {expr: expr, save: save};
+              twoWayBindings[key] = {expr: expr, save: save};
             }
-            // One time only binding?
-            if(expr[0] != ':') paths.push(expr);
+            // One time only binding? -> Otherwise register for updates
+            if(!attr.oneTimeOnly) paths.push(expr);
             // Resolve attribute value
-            var v = scope.resolvePath(expr).value;
-            // Return promises unmangled, mangle regular values directly
-            if(v && v.then) {
-              return v;
-            } else {
-              setAttribute(key, v);
-            }
+            return _.promiseFrom(evalExpr(scope, expr)).then(function(v) {
+              if(v) {
+                // Booleans write back the key name itself
+                elem.setAttribute(key, (v == true ? key : v));
+              }
+            });
+          // CSS class selector
+          } else if(attr.type == 'CSS') {
+            return _.values(_.map(attr.classes, function(expr, klassName) {
+              if(!attr.oneTimeOnly) paths.push(expr);
+              return _.promiseFrom(evalExpr(scope, expr)).then(function(bool) {
+                // Add class name if expression evaluates to truthy value
+                if(bool) elem.className += ' ' + klassName;
+              });
+            }));
           // Static attribute
           } else {
-            elem.setAttribute(key, value);
+            elem.setAttribute(key, attr.value);
           }
-        }));
+        }))));
+        // Resolve asynchronous attribute values
+        if(_.keys(promises).length) {
+          unfinish(frag);
+          _.resolvePromises(promises).then(function() {
+            finish(frag);
+          });
+        }
         // Register two-way bindings
-        if(Object.keys(bindings).length) {
+        if(Object.keys(twoWayBindings).length) {
           var onChange = function() {
-            _.each(bindings, function(binding, attr) {
+            _.each(twoWayBindings, function(binding, attr) {
               var ref = scope.resolvePath(binding.expr).ref;
               var value;
               var booleans = ['checked', 'selected', 'disabled', 'readonly', 'multiple', 'defer', 'declare', 'noresize'];
@@ -394,16 +401,6 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         }
         // Execute embeded statements
         self.execMicroStatements(node.statements, elem);
-        // Resolve remaining attribute values asynchronously
-        if(_.keys(promises).length) {
-          unfinish(frag);
-          _.resolvePromises(promises).then(function(values) {
-            _.each(values, function(v, k) {
-              setAttribute(k, v);
-            });
-            finish(frag);
-          });
-        }
         // Nodes have either content or children
         if(node.content) {
           // Replace mustaches with actual values
@@ -565,9 +562,16 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
 
     // Replace DOM from this node downward with an updated version
     updateElement: function(elem) {
-      this.unregister(elem);
+      var self = this;
+      self.unregister(elem);
       if(elem.parentNode) {
-        elem.parentNode.replaceChild(this.evaluate(elem.node, elem.scope), elem);
+        // Build separate evaluator for element's node
+        var evaluator = Evaluator(elem.node, viewModels, parseTrees, interface);
+        evaluator.baseScope = elem.scope.clone();
+        var frag = evaluator.render(function() {
+          // Replace old element once rendering has completely finished
+          elem.parentNode.replaceChild(frag, elem);
+        });
       }
     },
 

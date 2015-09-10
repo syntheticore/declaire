@@ -163,7 +163,7 @@ var Parser = {
       _.each(_.scan(attrDefinitions, /([\w-]+?)=(['"])(.+?)\2\s?/g), function(m) { // '
         var key = m[1];
         var value = m[3];
-        attributes[key] = value;
+        attributes[key] = self.parseAttribute(value);
       });
       // _.each(_.scan(statementDefinitions, /{{(\w+)\s+(\w+)\s+(\w+)}}/g), function(m) {
       //   statements[m[2]] = m[3];
@@ -198,6 +198,35 @@ var Parser = {
       return top;
     } else {
       return tag;
+    }
+  },
+
+  parseAttribute: function(str) {
+    var attr = {type: 'static', value: str};
+    // Dynamic attribute
+    if(str[0] == '{') {
+      // Trim off curlies
+      var expr = str.slice(1, -1);
+      // One time only binding?
+      var oneTime = (expr[0] == ':');
+      if(oneTime) expr = expr.slice(1);
+      // CSS class chooser?
+      var m;
+      if(m = expr.match(/((\w+):\s*(\w+))+/g)) {
+        var classes = {};
+        _.each(m, function(match) {
+          var parts = match.split(':');
+          var className = parts[0];
+          var expr = parts[1].trim();
+          classes[className] = expr;
+        });
+        return {type: 'CSS', classes: classes, oneTimeOnly: oneTime};
+      } else {
+        return {type: 'dynamic', expression: expr, oneTimeOnly: oneTime};
+      }
+    // Static attribute
+    } else {
+      return {type: 'static', value: str};
     }
   },
 

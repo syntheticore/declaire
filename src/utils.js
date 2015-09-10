@@ -68,6 +68,20 @@ exports.zip = function(items1, items2, cb) {
   return out;
 };
 
+// Make a flat array from a hierarchy of nested arrays
+exports.flatten = function(items) {
+  var out = [];
+  exports.each(items, function(item) {
+    if(Array.isArray(item)) {
+      var flat = exports.flatten(item);
+      out.push.apply(out, flat);
+    } else {
+      out.push(item);
+    }
+  });
+  return out;
+};
+
 // Select items fron an array or object that match the given condition
 exports.select = function(items, cb, n) {
   var ary = Array.isArray(items);

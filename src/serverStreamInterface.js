@@ -17,7 +17,7 @@ var StreamInterface = function() {
       return {
         tag: tag,
         id: id,
-        classes: classes || [],
+        className: classes ? classes.join(' ') : '',
         attributes: attributes || {},
         children: [],
         pending: 0,
@@ -83,7 +83,7 @@ var StreamInterface = function() {
                 html += ' ' + key + '="' + val + '"';
               };
               if(this.id) addAttr('id', this.id);
-              if(this.classes.length) addAttr('class', this.classes.join(' '));
+              if(this.className.length) addAttr('class', this.className);
               if(this.attributes) {
                 for(var attr in this.attributes) {
                   var val = this.attributes[attr];

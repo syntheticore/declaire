@@ -168,7 +168,10 @@ var ServerApplication = function(options) {
         node.children.push({
           type: 'HTMLTag',
           tag: 'script',
-          attributes: {src: '/bundle.js', async: 'async'},
+          attributes: {
+            src: {type: 'static', value: '/bundle.js'},
+            async: {type: 'static', value: 'async'}
+          },
           children: []
         });
         return false;

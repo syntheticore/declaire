@@ -7,15 +7,19 @@ module.exports = function() {
 
     // Register a handler to be called every time an event happens
     //XXX Support registering multiple events at once
-    on: function(action, cb) {
-      var res = action.split(':'); ///XXX not needed -> use event:key directly as event name
-      var l = {
-        action: res[0],
-        key: res[1],
-        cb: cb
-      };
-      this.listeners.push(l);
-      this.listenerAdded();
+    on: function(actions, cb) {
+      var self = this;
+      actions = actions.split(' ');
+      _.each(actions, function(action) {
+        var res = action.split(':');
+        var l = {
+          action: res[0],
+          key: res[1],
+          cb: cb
+        };
+        self.listeners.push(l);
+        self.listenerAdded();
+      });
       return cb;
     },
 
@@ -32,13 +36,13 @@ module.exports = function() {
     },
 
     // Register a handler to be called as soon as an event happens
-    once: function(action, cb) {
+    once: function(actions, cb) {
       var self = this;
       var handler = function() {
         self.off(handler);
         cb();
       };
-      self.on(action, handler);
+      self.on(actions, handler);
       return handler;
     },
 
@@ -56,11 +60,11 @@ module.exports = function() {
         if(l.action == action) {
           if(key) {
             if(l.key == key) {
-              l.cb(data);
+              l.cb.call(self, data);
             }
           } else {
             if(!l.key) {
-              l.cb(data);
+              l.cb.call(self, data);
             }
           }
         }
