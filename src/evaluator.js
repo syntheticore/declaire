@@ -563,13 +563,13 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     // Replace DOM from this node downward with an updated version
     updateElement: function(elem) {
       var self = this;
-      self.unregister(elem);
       if(elem.parentNode) {
         // Build separate evaluator for element's node
         var evaluator = Evaluator(elem.node, viewModels, parseTrees, interface);
         evaluator.baseScope = elem.scope.clone();
         var frag = evaluator.render(function() {
           // Replace old element once rendering has completely finished
+          self.unregister(elem);
           elem.parentNode.replaceChild(frag, elem);
         });
       }

@@ -220,6 +220,7 @@ var Parser = {
           var expr = parts[1].trim();
           classes[className] = expr;
         });
+        //XXX oneTimeOnly should exist for every expression
         return {type: 'CSS', classes: classes, oneTimeOnly: oneTime};
       } else {
         return {type: 'dynamic', expression: expr, oneTimeOnly: oneTime};
