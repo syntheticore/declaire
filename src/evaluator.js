@@ -405,7 +405,6 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         if(node.content) {
           // Replace mustaches with actual values
           unfinish(frag);
-          //XXX Should only be async if any mustache resolved to a promise
           var mustachePaths = resolveMustaches(node.content, scope, function(text) {
             elem.innerHTML = text;
             finish(frag);
@@ -441,7 +440,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     execMicroStatements: function(statements, elem) {
       _.each(statements, function(statement) {
         // Register action handlers
-        if(statement.statement == 'action') {
+        if(statement.statement == 'on') {
           var eName = statement.event;
           // Map virtual events to real DOM events
           var condition = function() { return true };

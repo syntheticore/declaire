@@ -191,7 +191,7 @@ exports.deepMerge = function(obj1, obj2) {
   return exports.merge(obj1, obj2);
 };
 
-// Convert the given strings first character to upperspace
+// Convert the given string's first character to uppercase
 exports.capitalize = function(str) {
   return str.slice(0, 1).toUpperCase() + str.slice(1);
 };
