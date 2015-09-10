@@ -1,18 +1,19 @@
+var fs = require('fs');
 var path = require('path');
+
 var mongo = require('mongodb');
 var express = require('express');
+
+var compression = require('compression')
 var morgan = require('morgan');
-// var methodOverride = require('method-override');
-var session = require('express-session');
-var MongoStore = require('connect-mongo')(session);
 var bodyParser = require('body-parser');
 var multer = require('multer');
 var favicon = require('serve-favicon');
-var compression = require('compression')
 var errorHandler = require('errorhandler');
-var fs = require('fs');
 var stylus = require('stylus');
 var browserify = require('browserify');
+var session = require('express-session');
+var MongoStore = require('connect-mongo')(session);
 
 var _ = require('./utils.js');
 var Parser = require('./parser.js');
@@ -43,9 +44,12 @@ var ServerApplication = function(options) {
   // Logging
   expressApp.use(morgan('combined'));
 
-  // Fake http verbs for dumb clients
-  // expressApp.use(methodOverride());
-  
+  // Fix Safari caching bug
+  expressApp.use(require('jumanji'));
+
+  // Gzip compression
+  expressApp.use(compression());
+
   // Mongo based sessions
   if(!process.env.SESSION_SECRET) console.warn("Warning: No SESSION_SECRET environment variable set!")
   expressApp.use(session({
@@ -58,6 +62,7 @@ var ServerApplication = function(options) {
   // Parse form data
   expressApp.use(bodyParser.json());
   expressApp.use(bodyParser.urlencoded({ extended: true }));
+  
   // multipart/form-data
   expressApp.use(multer());
   
@@ -80,12 +85,6 @@ var ServerApplication = function(options) {
   // Serve favicon
   try { expressApp.use(favicon(__dirname + '/../public/favicon.png')) } catch(e) {}
   
-  // Gzip compression
-  expressApp.use(compression());
-  
-  // Fix Safari caching bug
-  expressApp.use(require('jumanji'));
-
   //XXX Remove this
   expressApp.get('/', function(req, res) {
     res.redirect('/pages/index');
