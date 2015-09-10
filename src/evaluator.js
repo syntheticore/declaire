@@ -472,10 +472,13 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           elem.addEventListener(eName, function(e) {
             if(!condition(e)) return;
             e.preventDefault();
+            // Evaluate arguments to be passed to the method
+            var args = _.map(statement.args, function(arg) {
+              return evalExpr(elem.scope, arg);
+            });
             // Call action method
             // The method may prevent event bubbling by returning false
-            //XXX Pass arguments to method
-            return elem.scope.resolvePath(statement.method, [e, elem]).value;
+            return elem.scope.resolvePath(statement.method, _.union([e], args)).value;
           });
         } else if(statement.statement == 'as') {
           // Add a variable pointing to the current element to the scope

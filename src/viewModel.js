@@ -16,7 +16,7 @@ var ViewModel = function(name, reference, constructor) {
     create: function(args, elem, cb) {
       var inst = model.create();
       // DOM element this instance was rendered to
-      inst.el = elem;
+      inst.element = elem;
       // Allow for automatic removal of event handlers
       inst.listenToHandlers = [];
       inst.listenTo = function(obj, eventName, cb) {

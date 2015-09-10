@@ -27,6 +27,8 @@ var Instance = function() {
 
     // Return the current value at the given key
     get: function(key) {
+      // Catch remaining arguments as parameters for computed properties
+      var args = Array.prototype.slice.call(arguments).splice(1);
       //XXX Should return a deep copy of defaults and remote data
       // var value = this.collections[key] || this.data.local[key] || this.data.remote[key] || this.model.defaults[key];
       var value = this.data.local[key];
@@ -47,9 +49,11 @@ var Instance = function() {
         if(!value) {
           var self = this;
           var comp = findDependencies(function() {
-            return self[key]();
+            // Pass potential arguments to computed property
+            return self[key].apply(self, args);
           });
           value = comp.value;
+          // Remember dependencies
           this.computedProperties[key] = comp.keys;
         }
       } else {

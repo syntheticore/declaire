@@ -209,8 +209,9 @@ var Parser = {
       if(statement == 'as') {
         statements.push({statement: 'as', varName: rest});
       } else if(statement == 'action') {
-        var m = rest.match(/(\w+)\s+(\w+)/);
-        statements.push({statement: 'action', event: m[1], method: m[2]});
+        var m = rest.match(/(\w+)\s+(\w+)(\((.+)\))?/);
+        var args = m[4] && _.map(m[4].split(','), function(arg) { return arg.trim() });
+        statements.push({statement: 'action', event: m[1], method: m[2], args: args});
       } else {
         throw('Unknown statement: ' + statement);
       }
