@@ -440,7 +440,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     execMicroStatements: function(statements, elem) {
       _.each(statements, function(statement) {
         // Register action handlers
-        if(statement.statement == 'on') {
+        if(statement.statement == 'on' && _.onClient()) {
           var eName = statement.event;
           // Map virtual events to real DOM events
           var condition = function() { return true };
@@ -476,6 +476,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             // The method may prevent event bubbling by returning false
             return elem.scope.resolvePath(statement.method, _.union([e], args)).value;
           });
+        
         } else if(statement.statement == 'as') {
           // Add a variable pointing to the current element to the scope
           elem.scope.getTopLayer()[statement.varName] = elem;

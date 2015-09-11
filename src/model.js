@@ -109,9 +109,10 @@ var Instance = function() {
     // Discard local modifications and revert to server state
     // Will also discard temporary data
     revert: function() {
-      var locals = _.merge(this.data.temporary, this.data.local);
+      // var locals = _.merge(this.data.temporary, this.data.local);
+      var locals = this.data.local;
       this.data.local = {};
-      this.data.temporary = {};
+      // this.data.temporary = {};
       for(var key in locals) {
         this.emit('change', key);
       }
@@ -155,6 +156,9 @@ var Instance = function() {
           // cb && typeof(cb) == 'function' && cb();
           self.emit('save');
         };
+      } else {
+        // Emit save event anyway to be more predictable
+        self.emit('save');
       }
       return self;
     },

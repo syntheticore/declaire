@@ -235,7 +235,7 @@ var Parser = {
 
   parseMicroStatements: function(string) {
     var statements = [];
-    _.each(_.scan(string, /{{(\w+)\s+(.*)}}/g), function(m) {
+    _.each(_.scan(string, /{{(\w+)\s+(.*?)}}/g), function(m) {
       var statement = m[1];
       var rest = m[2];
       if(statement == 'as') {
