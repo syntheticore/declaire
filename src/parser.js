@@ -19,11 +19,13 @@ var cleanTree = function(node) {
       var child = node.children[i];
       if(child.type == 'Alternative') {
         node.children.splice(i, 1);
-      } else {
-        cleanTree(child);
       }
     }
   }
+  var children = _.flatten(_.union(node.children, node.alternatives));
+  _.each(children, function(child) {
+    cleanTree(child);
+  })
   delete node.slurpy;
   if(node.attributes && !_.keys(node.attributes).length) delete node.attributes;
   if(node.statements && !node.statements.length) delete node.statements;
@@ -238,10 +240,12 @@ var Parser = {
       var rest = m[2];
       if(statement == 'as') {
         statements.push({statement: 'as', varName: rest});
+      
       } else if(statement == 'on') {
         var m = rest.match(/(\w+)\s+(\w+)(\((.+)\))?/);
         var args = m[4] && _.map(m[4].split(','), function(arg) { return arg.trim() });
         statements.push({statement: 'on', event: m[1], method: m[2], args: args});
+      
       } else {
         throw('Unknown statement: ' + statement);
       }
