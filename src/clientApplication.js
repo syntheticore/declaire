@@ -28,8 +28,7 @@ var ClientApplication = function() {
       var body = topNode.children[1];
       var evaluator = Evaluator(body, viewModels, templates, DOMInterface());
       // Add main model to baseScope
-      // Also add another, neutral layer to which subsequent vars can be added
-      evaluator.baseScope.addLayer(mainModel).addLayer();
+      evaluator.baseScope.addLayer(mainModel);
       // Render and replace body after page load event
       var frag = evaluator.render(function() {
         $(document).ready(function() {

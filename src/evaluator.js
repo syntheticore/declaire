@@ -254,9 +254,8 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
               unfinish(frag);
               // Instantiate view model
               viewModel.create(args, elem, function(view) {
-                // Add view model instance to scope
-                // Also add another, neutral layer to which subsequent vars can be added
-                var newScope = scope.clone().addLayer(view).addLayer();
+                // Add view model instance to new scope level
+                var newScope = scope.clone().addLayer(view);
                 view.scope = newScope;
                 elem.view = view;
                 recurse(elem, newScope);
@@ -266,7 +265,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
               });
             } else {
               // Allow view statement without view model as a way to create a new scope
-              recurse(elem, scope.clone().addLayer());
+              recurse(elem, scope.clone());
             }
             frag.appendChild(elem);
             break;
@@ -312,6 +311,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             // Extract params from current URL
             var params = _.extractUrlParams(scope.resolvePath('_page').value, node.path);
             if(params) {
+              // Fresh scope level
               var newScope = scope.clone().addLayer(params);
               recurse(elem, newScope);
             }
@@ -479,7 +479,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         
         } else if(statement.statement == 'as') {
           // Add a variable pointing to the current element to the scope
-          elem.scope.getTopLayer()[statement.varName] = elem;
+          elem.scope.addLayer().getTopLayer()[statement.varName] = elem;
         }
       });
     },
@@ -498,7 +498,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         itemData = item;
       }
       if(node.children.length) {
-        var newScope = loopElem.scope.clone().addLayer(itemData).addLayer();
+        var newScope = loopElem.scope.clone().addLayer(itemData);
         // Recurse
         _.each(node.children, function(child) {
           child = self.evaluate(child, newScope).firstChild;

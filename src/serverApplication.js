@@ -11,6 +11,7 @@ var multer = require('multer');
 var favicon = require('serve-favicon');
 var errorHandler = require('errorhandler');
 var stylus = require('stylus');
+var nib = require('nib');
 var browserify = require('browserify');
 var session = require('express-session');
 var MongoStore = require('connect-mongo')(session);
@@ -72,7 +73,11 @@ var ServerApplication = function(options) {
     dest: __dirname + '/../../../public',
     compress: true,
     compile: function compile(str, path) {
-      return stylus(str).set('filename', path).set('compress', true).use(require('nib')());
+      return stylus(str)
+        .set('filename', path)
+        .set('compress', true)
+        .use(require('nib')())
+        .import('nib');
     }
   }));
   
@@ -144,8 +149,7 @@ var ServerApplication = function(options) {
   var setupEvaluator = function() {
     var topNode = parseTrees['layout.tmpl'];
     evaluator = Evaluator(topNode, viewModels, parseTrees, StreamInterface());
-    // Also add another, neutral layer to which subsequent vars can be added
-    evaluator.baseScope.addLayer(mainModel).addLayer();
+    evaluator.baseScope.addLayer(mainModel);
   };
 
   // Inject bootstrapping script and bundle reference into head tag
