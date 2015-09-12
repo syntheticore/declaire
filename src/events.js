@@ -20,6 +20,9 @@ module.exports = function() {
         self.listeners.push(l);
         self.listenerAdded();
       });
+      // return function() {
+      //   self.off(cb);
+      // };
       return cb;
     },
 
@@ -42,8 +45,7 @@ module.exports = function() {
         self.off(handler);
         cb();
       };
-      self.on(actions, handler);
-      return handler;
+      return self.on(actions, handler);
     },
 
     // Call all handlers that listen to this event

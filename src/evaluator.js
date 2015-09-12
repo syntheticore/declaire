@@ -522,11 +522,10 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           var reference = elem.scope.resolvePath(path).ref;
           if(reference.obj && reference.obj.once) {
             // Listen for changes of the individual property
-            var handler = function() {
+            var handler = reference.obj.once('change:' + reference.key, function() {
               self.updateElement(elem);
-            };
-            var realHandler = reference.obj.once('change:' + reference.key, handler);
-            elem.handlers.push({handler: realHandler, obj: reference.obj});
+            });
+            elem.handlers.push({handler: handler, obj: reference.obj});
           }
         }
       });

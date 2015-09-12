@@ -88,7 +88,9 @@ var ServerApplication = function(options) {
   });
   
   // Serve favicon
-  try { expressApp.use(favicon(__dirname + '/../public/favicon.png')) } catch(e) {}
+  try { expressApp.use(favicon(__dirname + '/../public/favicon.png')) } catch(e) {
+    console.error("Warning: Your application provides no icon!")
+  }
   
   //XXX Remove this
   expressApp.get('/', function(req, res) {
@@ -135,23 +137,6 @@ var ServerApplication = function(options) {
   // Let New Relic measure uptime
   expressApp.get('/ping', function(req, res) { res.send('pong'); });
 
-  // Create main model singleton instance
-  var mainModel = Model('_main', {
-    _page: null
-  }).create();
-
-  // Save view model declarations for lookup in templates
-  var viewModels = {};
-
-  // Build an evaluator for the main layout
-  // and add the main model instance to its scope
-  var evaluator;
-  var setupEvaluator = function() {
-    var topNode = parseTrees['layout.tmpl'];
-    evaluator = Evaluator(topNode, viewModels, parseTrees, StreamInterface());
-    evaluator.baseScope.addLayer(mainModel);
-  };
-
   // Inject bootstrapping script and bundle reference into head tag
   var injectScripts = function(layout) {
     var bootstrap = fs.readFileSync(__dirname + '/../../../node_modules/declaire/src/bootstrap.js', 'utf8');
@@ -197,7 +182,6 @@ var ServerApplication = function(options) {
       }
     });
     injectScripts(parseTrees['layout.tmpl']);
-    setupEvaluator();
   };
   parseTemplates();
 
@@ -206,11 +190,30 @@ var ServerApplication = function(options) {
     res.send(JSON.stringify(parseTrees));
   });
 
+  // Save view model declarations for lookup in templates
+  var viewModels = {};
+
+  // Generic main model
+  var MainModel = Model('_main', {_page: '/'});
+
+  // Build an evaluator for the given URL
+  var buildEvaluator = function(url) {
+    // Create main model instance
+    var mainModel = MainModel.create({_page: url});
+    mainModel.set('_page', url);
+    app.mainModel = mainModel;
+    // Build evaluator for main layout
+    var topNode = parseTrees['layout.tmpl'];
+    var evaluator = Evaluator(topNode, viewModels, parseTrees, StreamInterface());
+    evaluator.baseScope.addLayer(mainModel);
+    return evaluator;
+  };
+
   // Render layout for the requested page
   expressApp.get('/pages/*', function(req, res) {
     res.setHeader('Content-Type', 'text/html');
     if(expressApp.get('env') == 'development') parseTemplates();
-    mainModel.set('_page', req.url);
+    var evaluator = buildEvaluator(req.url);
     // Stream chunks of rendered html
     evaluator.render().render(function(chunk) {
       // console.log(chunk);
@@ -227,9 +230,9 @@ var ServerApplication = function(options) {
     expressApp.use(errorHandler({dumpExceptions: true, showStack: true}));
   }
 
-  return {
+  var app = {
     // Export main model
-    mainModel: mainModel,
+    mainModel: MainModel.create(),
     
     // Register models and view models for use with this application
     use: function(model) {
@@ -289,6 +292,7 @@ var ServerApplication = function(options) {
       });
     }
   };
+  return app;
 };
 
 

@@ -17,7 +17,7 @@ var ClientApplication = function() {
 
   // Create main model singleton instance
   var mainModel = Model('_main', {
-    _page: null
+    _page: document.location.pathname
   }).create();
 
   // Load pre-parsed template and
@@ -115,7 +115,6 @@ var ClientApplication = function() {
       // No init phase on client -> execute callback directly
       cb(function(cbb) {
         var router = Router();
-        mainModel.set('_page', document.location.pathname);
         // Replace page with client generated version
         install(function() {
           // Make links use history api instead of default action
