@@ -1,4 +1,3 @@
-var $ = require('jquery');
 var _ = require('./utils.js');
 
 
@@ -29,8 +28,9 @@ var Router = function() {
     // Prevent page internal links from reloading the page
     hijackLocalLinks: function() {
       var self = this;
-      $('body').on('click', 'a', function(e) {
-        var href = $(this).attr('href');
+      // Register event once and for all on the body
+      _.delegate(document.body, 'click', 'a', function(e) {
+        var href = e.target.getAttribute('href');
         // Internal links
         if(href.slice(0, 1) == '/' && href.slice(1, 2) != '/') {
           e.preventDefault();

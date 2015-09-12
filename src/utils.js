@@ -260,7 +260,7 @@ _.throttle = function(thresh, cb) {
 // Execute callback as soon as the DOM is complete
 _.documentReady = function(cb) {
   if(document.readyState == "loading") {
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener('DOMContentLoaded', function() {
       cb();
     });
   } else {
@@ -290,6 +290,17 @@ _.ajax = function(verb, url, data) {
     };
     req.send(JSON.stringify(data));
   });
+};
+
+// Delegate DOM event handling to a parent object
+_.delegate = function(parent, eName, tagName, cb) {
+  var handler = function(e) {
+    if(e.target.tagName.toLowerCase() == tagName.toLowerCase()) {
+      return cb(e);
+    }
+  };
+  parent.addEventListener(eName, handler);
+  return handler;
 };
 
 // Return a mapping from path params to url arguments
