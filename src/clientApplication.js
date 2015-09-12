@@ -31,7 +31,7 @@ var ClientApplication = function() {
       evaluator.baseScope.addLayer(mainModel);
       // Render and replace body after page load event
       var frag = evaluator.render(function() {
-        $(document).ready(function() {
+        _.documentReady(function() {
           document.body.parentNode.replaceChild(frag, document.body);
           cb();
         });

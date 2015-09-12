@@ -257,6 +257,17 @@ _.throttle = function(thresh, cb) {
   };
 };
 
+_.documentReady = function(cb) {
+  console.log(document.readyState);
+  if(document.readyState == "loading") {
+    document.addEventListener("DOMContentLoaded", function() {
+      cb();
+    });
+  } else {
+    _.defer(cb);
+  }
+};
+
 // Return a mapping from path params to url arguments
 _.extractUrlParams = function(url, path) {
   var pathSegments = path.slice(1).split('/');
