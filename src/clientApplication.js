@@ -1,4 +1,3 @@
-var $ = require('jquery');
 var _ = require('./utils.js');
 var Model = require('./model.js');
 var ViewModel = require('./viewModel.js');
@@ -23,7 +22,7 @@ var ClientApplication = function() {
   // Load pre-parsed template and
   // install evaluator on the document body
   var install = function(cb) {
-    $.getJSON('/templates.json', function(templates) {
+    _.ajax('GET', '/templates.json').then(function(templates) {
       var topNode = templates['layout.tmpl'];
       var body = topNode.children[1];
       var evaluator = Evaluator(body, viewModels, templates, DOMInterface());
@@ -69,10 +68,9 @@ var ClientApplication = function() {
     });
     _.each(_declaireLog, function(e) {
       if(e.type == 'keypress') {
-        var elem = $(e.target);
-        elem.val(elem.val() + String.fromCharCode(e.which));
+        elem.value += String.fromCharCode(e.which);
       } else if(e.type == 'click') {
-        $(e.target).trigger('click');
+        // $(e.target).trigger('click');
       }
     });
   };

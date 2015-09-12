@@ -257,8 +257,8 @@ _.throttle = function(thresh, cb) {
   };
 };
 
+// Execute callback as soon as the DOM is complete
 _.documentReady = function(cb) {
-  console.log(document.readyState);
   if(document.readyState == "loading") {
     document.addEventListener("DOMContentLoaded", function() {
       cb();
@@ -266,6 +266,30 @@ _.documentReady = function(cb) {
   } else {
     _.defer(cb);
   }
+};
+
+// JSON data over XMLHttpRequest as a promise
+_.ajax = function(verb, url, data) {
+  return _.promise(function(ok, fail) {
+    var req = new XMLHttpRequest();
+    req.timeout = 1000 * 20;
+    req.open(verb, url);
+    req.setRequestHeader('Content-Type', 'application/json')
+    req.onload = function() {
+      if(req.status == 200) {
+        ok(JSON.parse(req.response));
+      } else {
+        fail(Error(req.statusText));
+      }
+    };
+    req.onerror = function() {
+      fail(Error("Network Error"));
+    };
+    req.ontimeout = function() {
+      fail(Error("Timeout"));
+    };
+    req.send(JSON.stringify(data));
+  });
 };
 
 // Return a mapping from path params to url arguments
