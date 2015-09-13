@@ -275,9 +275,11 @@ _.ajax = function(verb, url, data) {
     req.timeout = 1000 * 20;
     req.open(verb, url);
     req.setRequestHeader('Content-Type', 'application/json')
+    req.setRequestHeader('Accept', 'application/json');
+    req.responseType = 'json';
     req.onload = function() {
       if(req.status == 200) {
-        ok(JSON.parse(req.response));
+        ok(req.response);
       } else {
         fail(Error(req.statusText));
       }
