@@ -15,6 +15,14 @@ var ViewModel = function(name, reference, constructor) {
     // Return a fully resolved and constructed view model instance
     create: function(args, elem, cb) {
       var inst = model.create();
+      // Remove persistance related methods
+      delete inst.save;
+      delete inst.fetch;
+      delete inst.delete;
+      delete inst.reference;
+      delete inst.serialize;
+      delete inst.connect;
+      delete inst.disconnect;
       // DOM element this instance was rendered to
       inst.element = elem;
       // Allow for automatic removal of event handlers

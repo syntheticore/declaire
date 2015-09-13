@@ -238,9 +238,11 @@ var Parser = {
     _.each(_.scan(string, /{{(\w+)\s+(.*?)}}/g), function(m) {
       var statement = m[1];
       var rest = m[2];
+      // as
       if(statement == 'as') {
         statements.push({statement: 'as', varName: rest});
       
+      // on
       } else if(statement == 'on') {
         var m = rest.match(/(\w+)\s+(\w+)(\((.+)\))?/);
         var args = m[4] && _.map(m[4].split(','), function(arg) { return arg.trim() });

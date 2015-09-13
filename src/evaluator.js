@@ -145,6 +145,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         });
       };
 
+      // Evaluate statement
       if(node.type == 'Statement') {
 
         var evaluateIf = function(expressions, condition) {
@@ -324,6 +325,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             break;
         }
       
+      // Evaluate HTML tag
       } else if(node.type == 'HTMLTag') {
         // Don't regenerate script tags as these
         // would be downloaded and reexecuted each time
@@ -422,6 +424,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         }
         frag.appendChild(elem);
       
+      // Evaluate free text
       } else if(node.type == 'Text') {
         var text;
         if(preFormated) {
@@ -432,6 +435,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         }
         frag.appendChild(text);
       
+      // Evaluate the whole tree
       } else if(node.type == 'TOP') {
         recurse(frag, scope);
       }
@@ -446,16 +450,19 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           // Map virtual events to real DOM events
           var condition = function() { return true };
           var lastClickTime;
+          // Enter event
           if(eName == 'enter') {
             eName = 'keyup';
             condition = function(e) {
               return e.keyCode == 13;
             };
+          // Escape event
           } else if(eName == 'escape') {
             eName = 'keyup';
             condition = function(e) {
               return e.keyCode == 27;
             };
+            // Double click event
           } else if(eName == 'doubleClick') {
             eName = 'click';
             condition = function(e) {
@@ -478,8 +485,8 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             return elem.scope.resolvePath(statement.method, _.union([e], args)).value;
           });
         
+        // Add a variable pointing to the current element to the scope
         } else if(statement.statement == 'as') {
-          // Add a variable pointing to the current element to the scope
           elem.scope.addLayer().getTopLayer()[statement.varName] = elem;
         }
       });
