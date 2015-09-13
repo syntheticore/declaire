@@ -174,11 +174,14 @@ var ServerApplication = function(options) {
     _.each(fs.readdirSync(options.viewsFolder), function(file) {
       if(path.extname(file) == '.tmpl'){
         console.log("Parsing " + file);
-        var fn = options.viewsFolder + file;
-        _.improveExceptions(fn, function() {
+        var fn = path.normalize(options.viewsFolder + file);
+        try {
           var node = Parser.parseTemplate(fs.readFileSync(fn, 'utf8'));
           parseTrees[file] = node;
-        });
+        } catch(e) {
+          console.error( "Parse error: " + e.message + "\n  at " + fn + ":" + e.lineNum);
+          throw e;
+        }
       }
     });
     injectScripts(parseTrees['layout.tmpl']);

@@ -220,7 +220,7 @@ _.promiseFrom = function(value) {
   });
 };
 
-// Resolve all values in items
+// Resolve all values in <items>, which need not all be promises
 _.resolvePromises = function(items) {
   var wrapped = _.map(items, function(item) {
     return _.promiseFrom(item);
@@ -261,7 +261,7 @@ _.throttle = function(thresh, cb) {
 
 // Execute callback as soon as the DOM is complete
 _.documentReady = function(cb) {
-  if(document.readyState == "loading") {
+  if(document.readyState == 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
       cb();
     });
@@ -343,23 +343,6 @@ _.uuid = function() {
     var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
     return v.toString(16);
   });
-};
-
-// Execute the given function, while modifying raised exceptions to
-// point to the parsed Template, instead of the library code
-var $debug = true;
-_.improveExceptions = function(filename, cb) {
-  if($debug) {
-    return cb();
-  } else {
-    try {
-      return cb();
-    } catch(e) {
-      // throw('Error: ' + filename + ':' + e.lineNum + ': ' + e.message);
-      console.log("Error in " + _.last(filename.split('/')) + ":" + e.lineNum + ": " + e.message);
-      throw e;
-    }
-  }
 };
 
 module.exports = _;

@@ -310,6 +310,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             var elem = interface.createDOMElement('span', null, ['placeholder-route']);
             // Extract params from current URL
             var params = _.extractUrlParams(scope.resolvePath('_page').value, node.path);
+            // Recurse if route matches
             if(params) {
               // Fresh scope level
               var newScope = scope.clone().addLayer(params);
