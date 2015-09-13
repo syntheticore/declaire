@@ -238,21 +238,23 @@ _.throttle = function(thresh, cb) {
   thresh = thresh || 1000;
   var lastT;
   var handle;
+  var trailingArguments;
   return function() {
     var t = new Date().getMilliseconds();
     if(!lastT) {
-      cb();
+      cb.apply(null, arguments);
       lastT = t;
     } else {
       if(!handle) {
         var delta = t - lastT;
         var sleep = Math.max(0, thresh - delta);
         handle = _.defer(function() {
-          cb();
+          cb.apply(null, trailingArguments);
           lastT = t;
           handle = null;
         }, sleep);
       }
+      trailingArguments = arguments;
     }
   };
 };
