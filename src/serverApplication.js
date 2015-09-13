@@ -82,9 +82,10 @@ var ServerApplication = function(options) {
   }));
   
   // Serve public files
-  expressApp.use(express.static(__dirname + '/../../../public'));
+  var oneDay = 86400000;
+  expressApp.use(express.static(__dirname + '/../../../public', {maxAge: oneDay}));
   _.each(options.npmPublic, function(folder) {
-    expressApp.use('/' + folder, express.static(__dirname + '/../../../node_modules/' + folder));
+    expressApp.use('/' + folder, express.static(__dirname + '/../../../node_modules/' + folder, {maxAge: oneDay}));
   });
   
   // Serve favicon
