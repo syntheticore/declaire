@@ -1,3 +1,4 @@
+require('http').globalAgent.maxSockets = Infinity
 var fs = require('fs');
 var path = require('path');
 
@@ -8,6 +9,7 @@ var compression = require('compression')
 var morgan = require('morgan');
 var bodyParser = require('body-parser');
 var multer = require('multer');
+var lusca = require('lusca');
 var favicon = require('serve-favicon');
 var errorHandler = require('errorhandler');
 var stylus = require('stylus');
@@ -58,6 +60,25 @@ var ServerApplication = function(options) {
     store: new MongoStore({url: options.mongoUrl}),
     saveUninitialized: true,
     resave: true
+  }));
+  
+  // Prevent common vulnerabilities and attacks
+  expressApp.use(lusca({
+    // Cross site request forgery
+    csrf: true,
+    // Allow only images from other domains
+    csp: {
+      policy: {
+        'default-src': "'self'",
+        'img-src': '*'
+      }
+    },
+    // Prevent clickjacking
+    xframe: 'SAMEORIGIN',
+    // Enforce HTTPS
+    hsts: {maxAge: 31536000, includeSubDomains: true, preload: true},
+    // Prevent cross site scripting
+    xssProtection: true
   }));
   
   // Parse form data
