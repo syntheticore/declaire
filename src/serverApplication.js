@@ -194,7 +194,7 @@ var ServerApplication = function(options) {
   var parseTemplates = function() {
     parseTrees = {};
     _.each(fs.readdirSync(options.viewsFolder), function(file) {
-      if(path.extname(file) == '.tmpl'){
+      if(path.extname(file) == '.dcl'){
         console.log("Parsing " + file);
         var fn = path.normalize(options.viewsFolder + file);
         try {
@@ -206,7 +206,12 @@ var ServerApplication = function(options) {
         }
       }
     });
-    injectScripts(parseTrees['layout.tmpl']);
+    var layout = parseTrees['layout.dcl'];
+    if(!layout) {
+      console.error("ERROR: The main layout at " + path.normalize(options.viewsFolder + '/layout.dcl') + " could not be found!");
+      process.exit(1);
+    }
+    injectScripts(layout);
   };
   parseTemplates();
 
@@ -228,7 +233,7 @@ var ServerApplication = function(options) {
     mainModel.set('_page', url);
     app.mainModel = mainModel;
     // Build evaluator for main layout
-    var topNode = parseTrees['layout.tmpl'];
+    var topNode = parseTrees['layout.dcl'];
     var evaluator = Evaluator(topNode, viewModels, parseTrees, StreamInterface());
     evaluator.baseScope.addLayer(mainModel);
     return evaluator;

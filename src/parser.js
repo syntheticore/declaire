@@ -325,7 +325,7 @@ var Parser = {
       out = {
         type: 'Statement',
         keyword: 'import',
-        templateName: m[1] + '.tmpl',
+        templateName: m[1] + '.dcl',
         arguments: args
       };
     // content
