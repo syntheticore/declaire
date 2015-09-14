@@ -141,13 +141,13 @@ var Parser = {
   // Parse all major components from a tag, including inline content
   parseTag: function(line) {
     var self = this;
-    var m = line.match(/(([\w-#\.]+\s*>\s*)*)([\w-]+)?(#([\w-]+))?((\.[\w-]+)*)(\((.*)\))?(\.)?( (.*))?/);
+    var m = line.match(/(([\w-#\.]+\s*>\s*)*)([\w-]+)?(#([\w-]+))?((\.[\w-]+)*)(\((.*)\))?(\+)?( (.*))?/);
     var multiTags = m[1];
     var tag = m[3] || 'div';
     var id = m[5];
     var classes = m[6] ? m[6].slice(1).split('.') : [];
     var inParens = m[9];
-    var dot = m[10];
+    var plus = m[10];
     var content = m[12];
     var attributes = {};
     var statements = [];
@@ -180,7 +180,7 @@ var Parser = {
       attributes: attributes,
       content: content,
       statements: statements,
-      slurpy: !!dot,
+      slurpy: !!plus,
       children: []
     };
     // Build a hierarchy from multi tags
