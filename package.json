@@ -2,19 +2,34 @@
   "name": "declaire",
   "version": "0.2.6",
   "description": "Declarative, full-stack web application framework",
-  "author": "Björn Breitgoff <syntheticore@gmail.com>",
   "homepage": "https://github.com/syntheticore/declaire",
+  "author": "Björn Breitgoff <syntheticore@gmail.com>",
+  "license": {
+    "type": "MIT",
+    "url": "https://github.com/syntheticore/declaire/blob/master/LICENSE"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/syntheticore/declaire.git"
+  },
+  "bugs": {
+    "url": "https://github.com/syntheticore/declaire/issues"
+  },
   "main": "declaire.js",
+  "scripts": {
+    "test": "make test"
+  },
   "dependencies": {
     "aliasify": "^1.7.2",
     "body-parser": "^1.13.3",
     "browserify": "^11.1.0",
     "compression": "^1.5.2",
     "connect-mongo": "^0.8.0",
+    "eakwell": "^0.1.0",
     "errorhandler": "^1.4.2",
     "express": "^4.12.2",
     "express-session": "^1.11.3",
-    "jquery": "^2.1.3",
+    "jquery": "^2.1.4",
     "jumanji": "^0.1.1",
     "lusca": "^1.3.0",
     "minifyify": "^6.3.2",
@@ -33,25 +48,11 @@
     "istanbul": "^0.3.13",
     "mocha": "^2.2.1"
   },
-  "scripts": {
-    "test": "make test"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/syntheticore/declaire.git"
-  },
   "keywords": [
     "web",
     "realtime",
     "offline",
     "streaming",
     "templating"
-  ],
-  "license": {
-    "type": "MIT",
-    "url": "https://github.com/syntheticore/declaire/blob/master/LICENSE"
-  },
-  "bugs": {
-    "url": "https://github.com/syntheticore/declaire/issues"
-  }
+  ]
 }

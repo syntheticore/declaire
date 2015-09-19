@@ -1,6 +1,6 @@
-require('http').globalAgent.maxSockets = Infinity
 var fs = require('fs');
 var path = require('path');
+require('http').globalAgent.maxSockets = 20;
 
 var mongo = require('mongodb');
 var express = require('express');
@@ -132,6 +132,7 @@ var ServerApplication = function(options) {
     b.ignore('newrelic');
     b.ignore('express');
     b.ignore('connect');
+    b.ignore('request');
     // Exchange require calls
     b.transform(require('aliasify'), {
       aliases: {
