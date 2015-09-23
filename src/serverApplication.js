@@ -69,7 +69,7 @@ var ServerApplication = function(options) {
     // Allow only images from other domains
     csp: {
       policy: {
-        'default-src': "'self'",
+        // 'default-src': "'self'",
         'img-src': '*'
       }
     },
@@ -133,6 +133,7 @@ var ServerApplication = function(options) {
     b.ignore('express');
     b.ignore('connect');
     b.ignore('request');
+    b.ignore('socket.io');
     // Exchange require calls
     b.transform(require('aliasify'), {
       aliases: {
@@ -311,7 +312,7 @@ var ServerApplication = function(options) {
             var port = options.port || process.env.PORT || 3000;
             var server = expressApp.listen(port, function () {
               console.log('Listening on port ' + port);
-              cb && cb();
+              cb && cb(server);
             });
           };
           // Make sure we have a cached bundle ready before listening for requests
