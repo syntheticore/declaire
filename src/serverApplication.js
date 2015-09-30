@@ -1,6 +1,6 @@
+require('http').globalAgent.maxSockets = Infinity
 var fs = require('fs');
 var path = require('path');
-require('http').globalAgent.maxSockets = 20;
 
 var mongo = require('mongodb');
 var express = require('express');
