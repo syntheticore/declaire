@@ -66,9 +66,9 @@ var Publisher = function(express, db) {
       // Delete connection on disconnect
       res.on('close', function () {
         clients.splice(clients.indexOf(res), 1);
-        console.log("Client disconnected");
+        console.log("Declaire: Client disconnected");
       });
-      console.log("Serving " + clients.length + " clients");
+      console.log("Declaire: Serving " + clients.length + " clients");
     });
   };
 

@@ -133,6 +133,7 @@ var ServerApplication = function(options) {
     b.ignore('express');
     b.ignore('connect');
     b.ignore('request');
+    b.ignore('canvas');
     b.ignore('socket.io');
     // Exchange require calls
     b.transform(require('aliasify'), {
@@ -311,7 +312,7 @@ var ServerApplication = function(options) {
           var start = function(cb) {
             var port = options.port || process.env.PORT || 3000;
             var server = expressApp.listen(port, function () {
-              console.log('Listening on port ' + port);
+              console.log("Listening on port " + port);
               cb && cb(server);
             });
           };
