@@ -316,6 +316,10 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
               // Fresh scope level
               var newScope = scope.clone().addLayer(params);
               recurse(elem, newScope);
+            } else if(node.alternatives) {
+              _.each(node.alternatives[0], function(child) {
+                elem.appendChild(self.evaluate(child, scope));
+              });
             }
             frag.appendChild(elem);
             node.paths = ['_page'];
