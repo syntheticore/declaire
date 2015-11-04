@@ -369,6 +369,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         elem.scope = scope;
         // Resolve attribute values, collect two-way binding expressions, collect binding paths
         var paths = [];
+        var attributePaths = [];
         var twoWayBindings = {};
         var promises = _.compact(_.flatten(_.values(_.map(node.attributes, function(attr, key) {
           // Dynamic attribute
@@ -386,26 +387,28 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
               twoWayBindings[key] = {expr: expr, save: save};
             }
             // One time only binding? -> Otherwise register for updates
-            if(!attr.oneTimeOnly) paths.push(expr);
+            if(!attr.oneTimeOnly) {
+              attributePaths.push({
+                type: 'dynamic',
+                key: key,
+                expr: expr,
+                paths: resolveCompoundPaths([expr])
+              });
+            }
             // Resolve attribute value
-            return _.promiseFrom(evalExpr(scope, expr)).then(function(v) {
-              if(v) {
-                // Booleans write back the key name itself
-                elem.setAttribute(key, (v == true ? key : v));
-              }
-            });
+            return self.updateAttribute(elem, key, expr);
           // CSS class selector
           } else if(attr.type == 'CSS') {
             return _.values(_.map(attr.classes, function(expr, klassName) {
               if(!attr.oneTimeOnly) {
-                _.each(resolveCompoundPaths([expr]), function(path) {
-                  paths.push(path);
+                attributePaths.push({
+                  type: 'CSS',
+                  klassName: klassName,
+                  expr: expr,
+                  paths: resolveCompoundPaths([expr])
                 });
               }
-              return _.promiseFrom(evalCompoundExpr(scope, expr)).then(function(bool) {
-                // Add class name if expression evaluates to truthy value
-                if(bool) elem.className += ' ' + klassName;
-              });
+              return self.updateCssClass(elem, klassName, expr);
             }));
           // Static attribute
           } else {
@@ -456,8 +459,9 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           recurse(elem, scope, (node.tag == 'script' || node.tag == 'pre'));
         }
         // If node had either dynamic content or dynamic attributes -> register for updates
-        if(paths.length) {
+        if(paths.length || attributePaths.length) {
           node.paths = paths; //XXX Should it be elem.paths?
+          node.attributePaths = attributePaths;
           self.register(elem);
         }
         frag.appendChild(elem);
@@ -563,18 +567,34 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       elem.handlers = [];
       // Bind one handler for every path
       _.each(elem.node.paths, function(path) {
-        if(isPath(path)) {
-          // Resolve actual instance the path points to
-          var reference = elem.scope.resolvePath(path).ref;
-          if(reference.obj && reference.obj.once) {
-            // Listen for changes of the individual property
-            var handler = reference.obj.once('change:' + reference.key, function() {
-              self.updateElement(elem);
-            });
-            elem.handlers.push({handler: handler, obj: reference.obj});
-          }
-        }
+        self.registerPath(elem, path, true, function() {
+          self.updateElement(elem);
+        });
       });
+      _.each(elem.node.attributePaths, function(attrPath) {
+        _.each(attrPath.paths, function(path) {
+          self.registerPath(elem, path, false, function() {
+            if(attrPath.type == 'dynamic') {
+              self.updateAttribute(elem, attrPath.key, attrPath.expr);
+            } else if(attrPath.type == 'CSS') {
+              self.updateCssClass(elem, attrPath.klassName, attrPath.expr);
+            }
+          });
+        });
+      });
+    },
+
+    // Register a callback to be called when the data at <path> changes
+    registerPath: function(elem, path, onceOnly, cb) {
+      if(isPath(path)) {
+        // Resolve actual instance the path points to
+        var reference = elem.scope.resolvePath(path).ref;
+        if(reference.obj && reference.obj.once) {
+          // Listen for changes of the individual property
+          var handler = (onceOnly ? reference.obj.once('change:' + reference.key, cb) : reference.obj.on('change:' + reference.key, cb));
+          elem.handlers.push({handler: handler, obj: reference.obj});
+        }
+      }
     },
 
     // Unbind event handlers and discard views for all elements below this one
@@ -619,6 +639,20 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           elem.parentNode.replaceChild(frag, elem);
         });
       }
+    },
+
+    updateAttribute: function(elem, key, expr) {
+      var value = _.promiseFrom(evalCompoundExpr(elem.scope, expr));
+      return value.then(function(value) {
+        if(value) elem.setAttribute(key, (value == true ? key : value));
+      });
+    },
+
+    updateCssClass: function(elem, klassName, expr) {
+      var value = _.promiseFrom(evalCompoundExpr(elem.scope, expr));
+      return value.then(function(bool) {
+        if(bool) elem.className += ' ' + klassName;
+      });
     },
 
     // Create and delete DOM elements as neccessary to match the new list
