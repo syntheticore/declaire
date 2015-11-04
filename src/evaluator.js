@@ -52,20 +52,24 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
   // which can either be a JS literal or a path
   var evalExpr = function(scope, expr) {
     var m;
+    // Negation
+    var negate = (expr[0] == '!');
+    if(negate) expr = expr.slice(1);
+    var ret;
     // Boolean
     if(expr == 'true') {
-      return true;
+      ret = true;
     } else if(expr == 'false') {
-      return false;
+      ret = false;
     // Null
     } else if(expr == 'null') {
-      return null;
+      ret = null;
     // Number
     } else if(!isNaN(expr)) {
-      return parseFloat(expr);
+      ret = parseFloat(expr);
     // String
     } else if(m = (expr.match && expr.match(/(["'])(.*)\1/))) {
-      return m[2];
+      ret = m[2];
     // Array
     } else if(m = expr.match(/\[(.*)\]/)) {
       return _.map(m[1].split(','), function(item) {
@@ -77,6 +81,32 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     } else {
       console.error('Cannot evaluate expression "' + expr + '"');
     }
+    return negate ? !ret : ret;
+  };
+
+  var evalCompoundExpr = function(scope, expr) {
+    var parts = expr.split(/\s+/);
+    var out = evalExpr(scope, parts.shift());
+    // Expect alternating values and boolean operators
+    for(var i = 0; i < parts.length - 1; i += 2) {
+      var op = parts[i];
+      var nextValue = evalExpr(scope, parts[i + 1]);
+      if(op == '||') {
+        out = out || nextValue;
+      } else if(op == '&&') {
+        out = out && nextValue;
+      }
+    }
+    return out;
+  };
+
+  var resolveCompoundPaths = function(expressions) {
+    return _.flatten(_.map(expressions, function(expr) {
+      var parts = expr.split(/\s+/);
+      return _.select(parts, function(part) {
+        return isPath(part);
+      });
+    }));
   };
 
   var walkTheDOM = function(node, cb) {
@@ -152,9 +182,9 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           var elem = interface.createDOMElement('span', null, ['placeholder-if']);
           // Evaluate expressions
           var values = _.map(expressions, function(expr) {
-            return evalExpr(scope, expr);
+            return evalCompoundExpr(scope, expr);
           });
-          node.paths = expressions;
+          node.paths = resolveCompoundPaths(expressions);
           elem.node = node;
           elem.scope = scope;
           // Resolve potential promises among values
@@ -572,6 +602,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     },
 
     // Replace DOM from this node downward with an updated version
+    //XXX only update attributes if possible
     updateElement: function(elem) {
       var self = this;
       if(elem.parentNode) {
