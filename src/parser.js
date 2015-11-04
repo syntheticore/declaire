@@ -214,12 +214,14 @@ var Parser = {
       if(oneTime) expr = expr.slice(1);
       // CSS class chooser?
       var m;
-      if(m = expr.match(/((\w+):\s*(\w+))+/g)) {
+      if(m = expr.match(/((\w+):\s*(\w+|\(.+\)))+/g)) {
         var classes = {};
         _.each(m, function(match) {
           var parts = match.split(':');
           var className = parts[0];
           var expr = parts[1].trim();
+          // Trim off parens from compound expressions
+          if(expr[0] == '(') expr = expr.slice(1, -1);
           classes[className] = expr;
         });
         //XXX oneTimeOnly should exist for every expression

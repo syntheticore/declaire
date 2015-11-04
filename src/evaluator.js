@@ -397,8 +397,12 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           // CSS class selector
           } else if(attr.type == 'CSS') {
             return _.values(_.map(attr.classes, function(expr, klassName) {
-              if(!attr.oneTimeOnly) paths.push(expr);
-              return _.promiseFrom(evalExpr(scope, expr)).then(function(bool) {
+              if(!attr.oneTimeOnly) {
+                _.each(resolveCompoundPaths([expr]), function(path) {
+                  paths.push(path);
+                });
+              }
+              return _.promiseFrom(evalCompoundExpr(scope, expr)).then(function(bool) {
                 // Add class name if expression evaluates to truthy value
                 if(bool) elem.className += ' ' + klassName;
               });
