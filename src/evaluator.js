@@ -644,14 +644,24 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     updateAttribute: function(elem, key, expr) {
       var value = _.promiseFrom(evalCompoundExpr(elem.scope, expr));
       return value.then(function(value) {
-        if(value) elem.setAttribute(key, (value == true ? key : value));
+        if(value) {
+          elem.setAttribute(key, (value == true ? key : value));
+        } else {
+          elem.removeAttribute(key);
+        }
       });
     },
 
     updateCssClass: function(elem, klassName, expr) {
       var value = _.promiseFrom(evalCompoundExpr(elem.scope, expr));
       return value.then(function(bool) {
-        if(bool) elem.className += ' ' + klassName;
+        if(bool) {
+          elem.className += ' ' + klassName;
+          // elem.classList.add(klassName);
+        } else {
+          elem.className.replace(new RegExp('\b' + klassName + '\b'), '');
+          // elem.classList.remove(klassName);
+        }
       });
     },
 
