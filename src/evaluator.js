@@ -656,10 +656,10 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       var value = _.promiseFrom(evalCompoundExpr(elem.scope, expr));
       return value.then(function(bool) {
         if(bool) {
-          elem.className += ' ' + klassName;
+          if(!_.contains(elem.className, klassName)) elem.className += ' ' + klassName;
           // elem.classList.add(klassName);
         } else {
-          elem.className.replace(new RegExp('\b' + klassName + '\b'), '');
+          elem.className = elem.className.replace(klassName, '');
           // elem.classList.remove(klassName);
         }
       });
