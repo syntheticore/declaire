@@ -644,7 +644,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     updateAttribute: function(elem, key, expr) {
       var value = _.promiseFrom(evalCompoundExpr(elem.scope, expr));
       return value.then(function(value) {
-        if(value) {
+        if(_.hasValue(value)) {
           elem.setAttribute(key, (value == true ? key : value));
         } else {
           elem.removeAttribute(key);

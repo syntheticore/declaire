@@ -1,3 +1,4 @@
+var _ = require('./utils.js');
 
 // When passed to the template evaluator, its render method will create a virtual DOM
 // Call render on the virtual DOM again to serialize it to actual html
@@ -79,7 +80,7 @@ var StreamInterface = function() {
             if(!this._fragment) {
               html += '<' + this.tag;
               var addAttr = function(key, val) {
-                if(!val) return;
+                if(!_.hasValue(val)) return;
                 html += ' ' + key + '="' + val + '"';
               };
               if(this.id) addAttr('id', this.id);
