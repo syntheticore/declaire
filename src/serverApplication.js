@@ -37,7 +37,7 @@ var ServerApplication = function(options) {
   // Default options
   options = _.merge({
     mongoUrl: process.env.MONGOHQ_URL || process.env.MONGOLAB_URI || 'mongodb://127.0.0.1:27017/declaire',
-    viewsFolder: __dirname + '/../../../src/views/',
+    viewsFolder: './src/views/',
     npmPublic: ['/public']
   }, options);
   if(options.mongoDevUrl && expressApp.get('env') == 'development') {
@@ -90,8 +90,8 @@ var ServerApplication = function(options) {
   
   // Compile Stylus stylesheets
   expressApp.use(stylus.middleware({
-    src: __dirname + '/../../../',
-    dest: __dirname + '/../../../public',
+    src: './',
+    dest: './public',
     compress: true,
     compile: function compile(str, path) {
       return stylus(str)
@@ -104,13 +104,13 @@ var ServerApplication = function(options) {
   
   // Serve public files
   var oneDay = 86400000;
-  expressApp.use(express.static(__dirname + '/../../../public', {maxAge: oneDay}));
+  expressApp.use(express.static('./public', {maxAge: oneDay}));
   _.each(options.npmPublic, function(folder) {
-    expressApp.use('/' + _.last(folder.split('/')), express.static(__dirname + '/../../../node_modules/' + folder, {maxAge: oneDay}));
+    expressApp.use('/' + _.last(folder.split('/')), express.static('./node_modules/' + folder, {maxAge: oneDay}));
   });
   
   // Serve favicon
-  try { expressApp.use(favicon(__dirname + '/../public/favicon.png')) } catch(e) {
+  try { expressApp.use(favicon('./public/favicon.png')) } catch(e) {
     console.error("Warning: Your application provides no icon!")
   }
   
@@ -164,7 +164,7 @@ var ServerApplication = function(options) {
 
   // Inject bootstrapping script and bundle reference into head tag
   var injectScripts = function(layout) {
-    var bootstrap = fs.readFileSync(__dirname + '/../../../node_modules/declaire/src/bootstrap.js', 'utf8');
+    var bootstrap = fs.readFileSync('./node_modules/declaire/src/bootstrap.js', 'utf8');
     _.each(layout.children, function(node) {
       if(node.tag == 'head') {
         // Inject bootstrapping script
