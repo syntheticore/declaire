@@ -22,7 +22,7 @@ var ClientApplication = function() {
   // Load pre-parsed template and
   // install evaluator on the document body
   var install = function(cb) {
-    _.ajax('GET', '/templates.json').then(function(templates) {
+    _.ajax({url: '/templates.json'}).then(function(templates) {
       var topNode = templates['layout.dcl'];
       var body = topNode.children[1];
       var evaluator = Evaluator(body, viewModels, templates, DOMInterface());
