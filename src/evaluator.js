@@ -40,7 +40,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
 
   // Is the given obj a string describing a data path?
   var isPath = function(obj) {
-    return obj.match && !!obj.match(/^[A-z][A-z0-9]+(\.[A-z][A-z0-9]+)*$/);
+    return obj.match && !!obj.match(/^[A-z][A-z0-9]*(\.[A-z][A-z0-9]*)*$/);
   };
 
   // Convert camel cased model names to CSS notation
