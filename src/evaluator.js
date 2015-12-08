@@ -323,7 +323,8 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             break;
           
           case 'content':
-            frag.appendChild(scope.get('_content'));
+            var content = scope.resolvePath('_content');
+            frag.appendChild(content.value);
             break;
           
           case 'client':

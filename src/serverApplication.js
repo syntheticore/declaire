@@ -1,4 +1,4 @@
-require('http').globalAgent.maxSockets = Infinity
+require('http').globalAgent.maxSockets = Infinity;
 var fs = require('fs');
 var path = require('path');
 
@@ -65,7 +65,7 @@ var ServerApplication = function(options) {
   // Prevent common vulnerabilities and attacks
   expressApp.use(lusca({
     // Cross site request forgery
-    csrf: true,
+    // csrf: true,
     // Allow only images from other domains
     csp: {
       policy: {
