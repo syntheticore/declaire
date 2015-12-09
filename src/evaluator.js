@@ -40,7 +40,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
 
   // Is the given obj a string describing a data path?
   var isPath = function(obj) {
-    return obj.match && !!obj.match(/^[A-z][A-z0-9]*(\.[A-z][A-z0-9]*)*$/);
+    return obj.match && !!obj.match(/^[A-z][A-z0-9]*(\.[A-z][A-z0-9]*)*/);
   };
 
   // Convert camel cased model names to CSS notation
@@ -77,7 +77,15 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       });
     // Path
     } else if(isPath(expr)) {
-      return scope.resolvePath(expr).value;
+      // Arguments
+      var args;
+      if(_.contains(expr, '(')) {
+        var parts = expr.split('(');
+        expr = parts[0];
+        args = parts[1].slice(0, -1);
+        args = _.map(args.split(','), function(arg) { return evalExpr(scope, arg.trim()) });
+      }
+      return scope.resolvePath(expr, args).value;
     } else {
       console.error('Cannot evaluate expression "' + expr + '"');
     }
