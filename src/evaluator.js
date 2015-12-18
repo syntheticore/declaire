@@ -261,7 +261,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
                 loop(realItems);
                 // Update list when query changes
                 if(_.onClient()) {
-                  elem.listHandler = items.on('change:length', function() {
+                  elem.listHandler = items.on('change:size', function() {
                     items.resolve(function(newItems) {
                       if(!newItems) newItems = items.items;
                       self.updateList(elem, realItems, newItems);

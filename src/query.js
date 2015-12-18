@@ -92,7 +92,7 @@ var Query = function(modelOrCollection, query, options) {
     },
 
     // Return a promise that resolves to the result set's length
-    length: function() {
+    size: function() {
       var self = this;
       return _.promise(function(ok, fail) {
         self.resolve(function(items) {
@@ -134,17 +134,17 @@ var Query = function(modelOrCollection, query, options) {
           console.log("Updating query due to pubsub");
           getItems(false, function() {
             console.log("Got new items");
-            inst.emit('change', 'length');
+            inst.emit('change', 'size');
             inst.emit('change');
           });
         });
         subscribed = true;
       }
     } else if(modelOrCollection.klass == 'Collection') {
-      modelOrCollection.on('change:length', function() {
+      modelOrCollection.on('change:size', function() {
         allCache = null;
         firstCache = null;
-        inst.emit('change', 'length');
+        inst.emit('change', 'size');
         inst.emit('change');
       });
       subscribed = true;

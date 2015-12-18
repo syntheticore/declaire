@@ -20,7 +20,7 @@ var Collection = function(array) {
         };
       });
       self.emit('add');
-      self.emit('change', 'length');
+      self.emit('change', 'size');
       self.emit('change');
       return self;
     },
@@ -34,7 +34,7 @@ var Collection = function(array) {
     removeAt: function(index) {
       this.items.splice(index, 1);
       this.emit('remove');
-      this.emit('change', 'length');
+      this.emit('change', 'size');
       this.emit('change');
       return this;
     },
@@ -53,7 +53,7 @@ var Collection = function(array) {
       return Collection(_.map(this.items, cb));
     },
 
-    length: function() {
+    size: function() {
       return this.items.length;
     },
 

@@ -19,19 +19,19 @@ describe('Collection', function() {
 
     it('reports its length correctly', function() {
       var c = Collection();
-      c.length().should.equal(0);
+      c.size().should.equal(0);
       c.add(1);
-      c.length().should.equal(1);
+      c.size().should.equal(1);
       c.add(3);
-      c.length().should.equal(2);
+      c.size().should.equal(2);
       c.remove(1);
-      c.length().should.equal(1);
+      c.size().should.equal(1);
     });
 
     it('reports its new length when an item is added', function(done) {
       var c = Collection();
-      c.on('change:length', function() {
-        c.length().should.equal(1);
+      c.on('change:size', function() {
+        c.size().should.equal(1);
         done();
       });
       c.add(null);
