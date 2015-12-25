@@ -1,6 +1,6 @@
 {
   "name": "declaire",
-  "version": "0.2.14",
+  "version": "0.2.15",
   "description": "Declarative, full-stack web application framework",
   "homepage": "https://github.com/syntheticore/declaire",
   "author": "Björn Breitgoff <syntheticore@gmail.com>",
