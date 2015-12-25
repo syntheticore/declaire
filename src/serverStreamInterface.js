@@ -38,6 +38,10 @@ var StreamInterface = function() {
           this.attributes[key] = value;
         },
 
+        removeAttribute: function(key) {
+          delete this.attributes[key];
+        },
+
         // Called when an asynchronous operation on this element begins
         unfinish: function() {
           this.pending++;
