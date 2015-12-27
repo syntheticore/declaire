@@ -654,7 +654,13 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       var value = _.promiseFrom(evalCompoundExpr(elem.scope, expr));
       return value.then(function(value) {
         if(value) {
-          elem.setAttribute(key, (value == true ? key : value));
+          // Boolean attribute
+          value = (value == true ? key : value);
+          // Don't override CSS classes used in template
+          if(key == 'class' && elem.node.classes) {
+            value = elem.node.classes.join(' ') + ' ' + value;
+          }
+          elem.setAttribute(key, value);
         } else {
           elem.removeAttribute(key);
         }
