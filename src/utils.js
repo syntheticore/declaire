@@ -29,7 +29,7 @@ _.extractUrlParams = function(url, path) {
     if(pathSeg[0] == ':') {
       params[pathSeg.slice(1)] = urlSeg;
     } else {
-      if(pathSeg != urlSeg) {
+      if(pathSeg != urlSeg && pathSeg != '*') {
         match = false;
       }
     }
