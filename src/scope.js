@@ -30,7 +30,7 @@ var Scope = function() {
     // Look up values by a deep path
     // Also returns a reference to the found value,
     // so that updated values can be requested at a later time
-    resolvePath: function(path, arguments) {
+    resolvePath: function(path, args) {
       var self = this;
       var segments = path.split('.');
       // Do the first lookup through the actual scope
@@ -39,21 +39,22 @@ var Scope = function() {
       var obj;
       // If arguments are supplied, they are meant for
       // the final method call
-      if(segments.length == 0 && arguments) {
-        obj = self.readAttribute(lastObj, firstSegment, arguments);
+      if(segments.length == 0 && args) {
+        obj = self.readAttribute(lastObj, firstSegment, args);
       } else {
         obj = self.readAttribute(lastObj, firstSegment);
       }
       // Then follow the regular object structure
       _.each(segments, function(segment, i) {
+        if(!obj) return;
         lastObj = obj;
         if(i == segments.length - 1) {
-          obj = self.readAttribute(obj, segment, arguments);
+          obj = self.readAttribute(obj, segment, args);
         } else {
           obj = self.readAttribute(obj, segment);
         }
       });
-      var lastSegment = segments.pop() || firstSegment;
+      var lastSegment = (obj && segments.pop()) || firstSegment;
       var ref = {obj: lastObj, key: lastSegment};
       return {value: obj, ref: ref};
     },

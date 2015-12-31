@@ -29,7 +29,8 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     // Replace mustaches in text with resolved values
     _.resolvePromises(promises).then(function(items) {
       _.each(items, function(item) {
-        text = text.substring(0, item.index) + item.value + text.substring(item.index + item.length);
+        var value = _.hasValue(item.value) ? item.value : '';
+        text = text.substring(0, item.index) + value + text.substring(item.index + item.length);
       });
       // Return mangled text asynchronously..
       cb(text);

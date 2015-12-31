@@ -21,7 +21,7 @@ _.onClient = function(cb) {
 _.extractUrlParams = function(url, path) {
   var pathSegments = path.slice(1).split('/');
   var urlSegments = url.slice(1).split('/');
-  if(pathSegments.length != urlSegments.length) return false;
+  if(_.select(pathSegments, function(s) { return s != '*' }).length > urlSegments.length) return false;
   var match = true;
   var params = {};
   _.zip(pathSegments, urlSegments, function(pathSeg, urlSeg) {
@@ -29,7 +29,10 @@ _.extractUrlParams = function(url, path) {
     if(pathSeg[0] == ':') {
       params[pathSeg.slice(1)] = urlSeg;
     } else {
-      if(pathSeg != urlSeg && pathSeg != '*') {
+      if(pathSeg == '*') {
+        return true;
+      }
+      if(pathSeg != urlSeg) {
         match = false;
       }
     }
