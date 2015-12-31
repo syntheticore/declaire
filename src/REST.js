@@ -9,7 +9,7 @@ var REST = function(name, express, dataInterface) {
       express.get(baseUrl, function(req, res) {
         // Remove anti-cache marker
         delete req.query._;
-        dataInterface.all(JSON.parse(req.query.data), function(err, items) {
+        dataInterface.all(req.query.data, function(err, items) {
           if(err) {
             res.send(404, err);
           } else {
@@ -31,8 +31,7 @@ var REST = function(name, express, dataInterface) {
 
       // Create item
       express.post(baseUrl, function(req, res) {
-        var data = JSON.parse(req.body.data);
-        dataInterface.create({serialize: function() { return data }}, function(err, item) {
+        dataInterface.create({serialize: function() { return req.body }}, function(err, item) {
           if(err) {
             res.send(404, err);
           } else {
@@ -43,8 +42,7 @@ var REST = function(name, express, dataInterface) {
 
       // Update item
       express.post(baseUrl + '/:id', function(req, res) {
-        var data = JSON.parse(req.body.data);
-        dataInterface.update(req.params.id, data, function(err, updatedValues) {
+        dataInterface.update(req.params.id, req.body, function(err, updatedValues) {
           if(err) {
             res.send(404, err);
           } else {

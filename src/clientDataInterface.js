@@ -1,7 +1,5 @@
-var $ = require('jquery');
 var _ = require('./utils.js');
 var ClientStore = require('./clientStore.js');
-
 
 
 var ClientDataInterface = function(model) {
@@ -33,13 +31,11 @@ var ClientDataInterface = function(model) {
         return cache[data._id] ? cache[data._id] : init(data);
       });
       // Use callback to return complete results from server
-      $.get(url, {data: JSON.stringify(options)})
-      .done(function(data) {
+      _.ajax({url: url, data: options}).then(function(data) {
         cb(null, _.map(data, function(item) {
           return cache[item._id] ? cache[item._id] : init(item);
         }));
-      })
-      .fail(function() {
+      }).catch(function() {
         // Gracefully return incomplete results when network fails
         cb(null, instances);
         // cb('error', null);
@@ -50,11 +46,9 @@ var ClientDataInterface = function(model) {
 
     one: function(id, cb, raw) {
       var ajax = function(cbb) {
-        $.get(url + '/' + id)
-        .done(function(data) {
+        _.ajax({url: url + '/' + id}).then(function(data) {
           cbb(data);
-        })
-        .fail(function() {
+        }).catch(function() {
           cb('error', null);
         });
       };
@@ -87,8 +81,7 @@ var ClientDataInterface = function(model) {
       // Save to local storage immediately in pending state
       localStore.set(inst, {_pending: 'create'});
       // Try to persist to server
-      $.post(url, {data: JSON.stringify(inst.serialize())})
-      .done(function(data) {
+      _.ajax({verb: 'POST', url: url, data: inst.serialize()}).then(function(data) {
         // Remove local storage entry under old ID
         localStore.delete(inst.localId);
         // Save again with final ID from server
@@ -96,8 +89,7 @@ var ClientDataInterface = function(model) {
         cb(null, data);
         // inst.data.remote = data;
         localStore.set(inst);
-      })
-      .fail(function() {
+      }).catch(function() {
         cb(null, inst.serialize());
       });
     },
@@ -106,12 +98,10 @@ var ClientDataInterface = function(model) {
       var inst = cache[id];
       // Save to local storage immediately in pending state
       localStore.set(inst, {_pending: 'update', _pendingValues: values});
-      $.post(url + '/' + id, {data: JSON.stringify(values)})
-      .done(function(updatedValues) {
+      _.ajax({verb: 'POST', url: url + '/' + id, data: values}).then(function(updatedValues) {
         cb(null, updatedValues);
         localStore.set(inst, {_pending: null, _pendingValues: null});
-      })
-      .fail(function() {
+      }).catch(function() {
         cb(null, values);
       });
     },
@@ -121,8 +111,7 @@ var ClientDataInterface = function(model) {
       if(inst) {
         localStore.set(inst, {_pending: 'delete'});
         delete cache[id];
-        $.ajax({url: url + '/' + id, type: 'DELETE'})
-        .done(function() {
+        _.ajax({verb: 'DELETE', url: url + '/' + id}).then(function() {
           localStore.delete(id);
         });
       }
