@@ -1,3 +1,5 @@
+var _ = require('./utils.js');
+
 var REST = function(name, express, dataInterface) {
   var baseUrl = '/api/' + name;
   return {
@@ -9,11 +11,12 @@ var REST = function(name, express, dataInterface) {
       express.get(baseUrl, function(req, res) {
         // Remove anti-cache marker
         delete req.query._;
-        dataInterface.all(req.query.data, function(err, items) {
+        var options = JSON.parse(req.query.data);
+        dataInterface.all(options, function(err, items) {
           if(err) {
             res.send(404, err);
           } else {
-            res.json(items);
+            res.json(_.invoke(items, 'serialize'));
           }
         });
       });
@@ -24,7 +27,7 @@ var REST = function(name, express, dataInterface) {
           if(err) {
             res.send(404, err);
           } else {
-            res.json(item);
+            res.json(item.serialize());
           }
         });
       });
@@ -35,7 +38,7 @@ var REST = function(name, express, dataInterface) {
           if(err) {
             res.send(404, err);
           } else {
-            res.json(item);
+            res.json(item.serialize());
           }
         });
       });

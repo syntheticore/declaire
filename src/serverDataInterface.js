@@ -2,7 +2,16 @@ var mongo = require('mongodb');
 var _ = require('./utils.js');
 
 
-var ServerDataInterface = function(app, name) {
+var ServerDataInterface = function(app, model) {
+  var name = model.name;
+
+  var init = function(data) {
+    var inst = model.create();
+    inst.id = data._id;
+    inst.data.remote = data;
+    return inst;
+  };
+
   return {
     all: function(options, cb) {
       options = _.merge({
@@ -11,6 +20,9 @@ var ServerDataInterface = function(app, name) {
         limit: 0
       }, options);
       app.db.collection(name).find(options.query, {image:0, salt:0, hash:0}).skip(options.from).limit(options.limit).toArray(function(err, items) {
+        items = _.map(items, function(item) {
+          return init(item);
+        });
         cb(err, items);
       });
       return this;
@@ -18,11 +30,10 @@ var ServerDataInterface = function(app, name) {
 
     one: function(id, cb) {
       app.db.collection(name).findOne({_id: new mongo.ObjectID(id)}, {image:0, salt:0, hash:0}, function(err, item) {
-        console.log("one error " + item);
         if(!item) {
           cb("Object with id '" + id + "' could not be found in the collection '" + name + "'", null);
         } else {
-          cb(err, item);
+          cb(err, init(item));
         }
       });
     },
@@ -32,7 +43,7 @@ var ServerDataInterface = function(app, name) {
       app.db.collection(name).insert(fields, function(err, items) {
         var item = items[0];
         if(!err) app.pubSub.publish({type: 'create', collection: name, id: item._id, data: item});
-        cb(err, item);
+        cb(err, init(item));
       });
       return this;
     },

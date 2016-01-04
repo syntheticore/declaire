@@ -636,7 +636,6 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     },
 
     // Replace DOM from this node downward with an updated version
-    //XXX only update attributes if possible
     updateElement: function(elem) {
       var self = this;
       if(elem.parentNode) {

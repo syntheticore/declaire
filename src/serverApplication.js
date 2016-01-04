@@ -273,7 +273,7 @@ var ServerApplication = function(options) {
       if(model.klass == 'ViewModel') {
         viewModels[model.name] = model;
       } else if(model.klass == 'Model') {
-        var dataface = DataInterface(this, model.name);
+        var dataface = DataInterface(this, model);
         model.dataInterface = dataface;
         REST(model.name, expressApp, dataface).serveResource();
       }

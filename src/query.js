@@ -9,14 +9,12 @@ var Query = function(modelOrCollection, query, options) {
   options = options || {};
 
   var allCache;
-  var firstCache;
 
   var getItems = function(onlyOne, cb) {
     if(modelOrCollection.klass == 'Model') {
       modelOrCollection.dataInterface.all(_.merge(options, {query: query}), function(err, items) {
         // inst.length = items.length;
         allCache = items;
-        firstCache = items[0];
         cb && cb(filter(items), onlyOne);
       });
     } else {
@@ -27,7 +25,43 @@ var Query = function(modelOrCollection, query, options) {
   var filter = function(items, onlyOne) {
     return _.select(items, function(item) {
       return true;
+      // return _.all(query, function(value, key) {
+      //   return item.get(key) == value;
+      // });
     }, onlyOne ? 1 : options.limit);
+  };
+
+  var subscribed = false;
+
+  var subscribe = function() {
+    if(modelOrCollection.klass == 'Model') {
+      if(_.onClient()) {
+        console.log("subscribe " + modelOrCollection.name);
+        modelOrCollection.app.pubSub.subscribe('create update delete', modelOrCollection.name, function(data) {
+          console.log("Updating query due to pubsub");
+          getItems(false, function() {
+            console.log("Got new items");
+            inst.emit('change', 'size');
+            inst.emit('change');
+          });
+        });
+        subscribed = true;
+      }
+    } else if(modelOrCollection.klass == 'Collection') {
+      modelOrCollection.on('change:size', function() {
+        allCache = null;
+        inst.emit('change', 'size');
+        inst.emit('change');
+      });
+      subscribed = true;
+    } else {
+      console.error('Queries work with models and collections only');
+    }
+  };
+
+  var unsubscribe = function() {
+    console.log("unsubscribe");
+    subscribed = false;
   };
 
   var inst = _.merge(eventMethods(), {
@@ -52,8 +86,8 @@ var Query = function(modelOrCollection, query, options) {
     // Return only the first match
     first: function(cb) {
       var self = this;
-      if(firstCache) {
-        cb(firstCache);
+      if(allCache && allCache[0]) {
+        cb(allCache[0]);
       } else {
         getItems(true, function(items) {
           cb(items[0]);
@@ -117,46 +151,11 @@ var Query = function(modelOrCollection, query, options) {
           if(subscribed && self.listeners.length == 0) {
             unsubscribe();
             allCache = null;
-            firstCache = null;
           }
         }, 1000);
       }
     }
   });
-
-  var subscribed = false;
-
-  var subscribe = function() {
-    if(modelOrCollection.klass == 'Model') {
-      if(_.onClient()) {
-        console.log("subscribe " + modelOrCollection.name);
-        modelOrCollection.app.pubSub.subscribe('create update delete', modelOrCollection.name, function(data) {
-          console.log("Updating query due to pubsub");
-          getItems(false, function() {
-            console.log("Got new items");
-            inst.emit('change', 'size');
-            inst.emit('change');
-          });
-        });
-        subscribed = true;
-      }
-    } else if(modelOrCollection.klass == 'Collection') {
-      modelOrCollection.on('change:size', function() {
-        allCache = null;
-        firstCache = null;
-        inst.emit('change', 'size');
-        inst.emit('change');
-      });
-      subscribed = true;
-    } else {
-      console.error('Queries work with models and collections only');
-    }
-  };
-
-  var unsubscribe = function() {
-    console.log("unsubscribe");
-    subscribed = false;
-  };
 
   return inst;
 };
