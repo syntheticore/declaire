@@ -69,44 +69,61 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     } else if(!isNaN(expr)) {
       ret = parseFloat(expr);
     // String
-    } else if(m = (expr.match && expr.match(/(["'])(.*)\1/))) {
+    } else if(m = (expr.match && expr.match(/^(["'])(.*)\1$/))) {
       ret = m[2];
     // Array
-    } else if(m = expr.match(/\[(.*)\]/)) {
-      return _.map(m[1].split(','), function(item) {
+    } else if(m = expr.match(/^\[(.*)\]$/)) {
+      ret = _.map(m[1].split(','), function(item) {
         return evalExpr(scope, item);
       });
     // Path or Magic variable
     } else if(isPath(expr) || expr[0] == '$') {
-      // Arguments
-      var args;
+      // Arguments for helper functions
       if(_.contains(expr, '(')) {
         var parts = expr.split('(');
         expr = parts[0];
-        args = parts[1].slice(0, -1);
-        args = _.map(args.split(','), function(arg) { return evalExpr(scope, arg.trim()) });
+        var args = parts[1].slice(0, -1).split(',');
+        args = _.map(args, function(arg) {
+          return evalExpr(scope, arg.trim());
+        });
+        ret = _.resolvePromises(args).then(function(args) {
+          return scope.resolvePath(expr, args).value;
+        });
+      } else {
+        ret = scope.resolvePath(expr).value;
       }
-      return scope.resolvePath(expr, args).value;
     } else {
       console.error('Cannot evaluate expression "' + expr + '"');
     }
-    return negate ? !ret : ret;
+    return _.promiseFrom(ret).then(function(ret) {
+      return negate ? !ret : ret;
+    });
   };
 
   var evalCompoundExpr = function(scope, expr) {
+      // Expect alternating values and boolean operators
     var parts = expr.split(/\s+/);
-    var out = evalExpr(scope, parts.shift());
-    // Expect alternating values and boolean operators
-    for(var i = 0; i < parts.length - 1; i += 2) {
-      var op = parts[i];
-      var nextValue = evalExpr(scope, parts[i + 1]);
-      if(op == '||') {
-        out = out || nextValue;
-      } else if(op == '&&') {
-        out = out && nextValue;
+    var values = [];
+    var ops = [];
+    _.each(parts, function(part) {
+      if(part == '||' || part == '&&') {
+        ops.push(part);
+      } else {
+        values.push(evalExpr(scope, part));
       }
-    }
-    return out;
+    });
+    return _.resolvePromises(values).then(function(values) {
+      var out = values.shift();
+      _.each(values, function(value) {
+        var op = ops.shift();
+        if(op == '||') {
+          out = out || value;
+        } else if(op == '&&') {
+          out = out && value;
+        }
+      });
+      return out;
+    });
   };
 
   var resolveCompoundPaths = function(expressions) {
@@ -243,41 +260,46 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             node.paths = [node.itemsPath];
             elem.node = node;
             elem.scope = scope;
-            // Render every child,
-            // then register element for updates, should the whole collection be exchanged
-            var loop = function(items) {
-              _.each(items, function(item) {
-                self.renderLoopItem(item, elem);
-              });
-              self.register(elem);
-            };
             // Resolve actual iterable at path
             var items = evalExpr(scope, node.itemsPath);
-            // Resolve Query or Collection
-            if(items.klass == 'Query' || items.klass == 'Collection') {
-              unfinish(frag);
-              elem.iterator = items;
-              items.resolve(function(realItems) {
-                if(!realItems) realItems = items.items;
-                loop(realItems);
-                // Update list when query changes
-                if(_.onClient()) {
-                  elem.listHandler = items.on('change:size', function() {
-                    items.resolve(function(newItems) {
-                      if(!newItems) newItems = items.items;
-                      self.updateList(elem, realItems, newItems);
-                      realItems = newItems;
+            unfinish(frag);
+            items.then(function(items) {
+              // Render every child,
+              // then register element for updates, should the whole collection be exchanged
+              var loop = function(items) {
+                _.each(items, function(item) {
+                  self.renderLoopItem(item, elem);
+                });
+                self.register(elem);
+              };
+              // Resolve Query or Collection
+              if(items.klass == 'Query' || items.klass == 'Collection') {
+                // unfinish(frag);
+                elem.iterator = items;
+                items.resolve(function(realItems) {
+                  if(!realItems) realItems = items.items;
+                  loop(realItems);
+                  // Update list when query changes
+                  if(_.onClient()) {
+                    elem.listHandler = items.on('change:size', function() {
+                      items.resolve(function(newItems) {
+                        if(!newItems) newItems = items.items;
+                        self.updateList(elem, realItems, newItems);
+                        realItems = newItems;
+                      });
                     });
-                  });
-                }
+                  }
+                  finish(frag);
+                });
+              // Regular array
+              } else if(Array.isArray(items)) {
+                loop(items);
                 finish(frag);
-              });
-            // Regular array
-            } else if(Array.isArray(items)) {
-              loop(items);
-            } else {
-              console.error('Cannot iterate over ' + node.itemsPath);
-            }
+              } else {
+                console.error('Cannot iterate over ' + node.itemsPath);
+                finish(frag);
+              }
+            });
             frag.appendChild(elem);
             break;
           
@@ -285,23 +307,24 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             var elem = interface.createDOMElement('span', null, ['placeholder-view']);
             var viewModel = viewModels[node.viewModel];
             if(node.viewModel && !viewModel) console.error('View model not found: ' + node.viewModel);
-            // Evaluate constructor arguments
-            var args = _.map(node.arguments, function(arg) {
-              return evalExpr(scope, arg);
-            });
-            //XXX resolve promises
             if(viewModel) {
+              // Evaluate constructor arguments
+              var args = _.map(node.arguments, function(arg) {
+                return evalExpr(scope, arg);
+              });
               unfinish(frag);
-              // Instantiate view model
-              viewModel.create(args, elem, function(view) {
-                // Add view model instance to new scope level
-                var newScope = scope.clone().addLayer(view).addLayer({$this: view});
-                view.scope = newScope;
-                elem.view = view;
-                recurse(elem, newScope);
-                finish(frag);
-                //XXX A view should be able to tell when all children have
-                //XXX fully rendered and emit its attach event afterwards
+              _.resolvePromises(args).then(function(args) {
+                // Instantiate view model
+                viewModel.create(args, elem, function(view) {
+                  // Add view model instance to new scope level
+                  var newScope = scope.clone().addLayer(view).addLayer({$this: view});
+                  view.scope = newScope;
+                  elem.view = view;
+                  recurse(elem, newScope);
+                  finish(frag);
+                  //XXX A view should be able to tell when all children have
+                  //XXX fully rendered and emit its attach event afterwards
+                });
               });
             } else {
               // Allow view statement without view model as a way to create a new scope
@@ -312,22 +335,26 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           
           case 'import':
             var elem = interface.createDOMElement('span', null, ['placeholder-import']);
-            // Look up arguments in scope
-            var args = _.map(node.arguments, function(expr) {
-              return evalExpr(scope, expr);
-            });
             node.paths = _.values(node.arguments);
             elem.node = node;
             elem.scope = scope;
             // Render indented nodes for placement using content statement
             var contentFrag = interface.createFragment();
             recurse(contentFrag, scope);
-            args._content = contentFrag;
-            // Recurse into different template with a fresh scope
-            var importedNode = parseTrees[node.templateName];
-            var newScope = Scope().addLayer(args);
-            elem.appendChild(self.evaluate(importedNode, newScope));
-            self.register(elem);
+            // Look up arguments in scope
+            var args = _.map(node.arguments, function(expr) {
+              return evalExpr(scope, expr);
+            });
+            unfinish(frag);
+            _.resolvePromises(args).then(function(args) {
+              args._content = contentFrag;
+              // Recurse into different template with a fresh scope
+              var importedNode = parseTrees[node.templateName];
+              var newScope = Scope().addLayer(args);
+              elem.appendChild(self.evaluate(importedNode, newScope));
+              self.register(elem);
+              finish(frag);
+            });
             frag.appendChild(elem);
             break;
           
@@ -532,9 +559,11 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             var args = _.map(statement.args, function(arg) {
               return evalExpr(elem.scope, arg);
             });
-            // Call action method
-            // The method may prevent event bubbling by returning false
-            return elem.scope.resolvePath(statement.method, _.union([e], args)).value;
+            return _.resolvePromises(args).then(function(args) {
+              // Call action method
+              // The method may prevent event bubbling by returning false
+              return elem.scope.resolvePath(statement.method, _.union([e], args)).value;
+            });
           });
         
         // Add a variable pointing to the current element to the scope
