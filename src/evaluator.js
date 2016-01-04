@@ -76,8 +76,8 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       return _.map(m[1].split(','), function(item) {
         return evalExpr(scope, item);
       });
-    // Path
-    } else if(isPath(expr)) {
+    // Path or Magic variable
+    } else if(isPath(expr) || expr[0] == '$') {
       // Arguments
       var args;
       if(_.contains(expr, '(')) {
@@ -295,7 +295,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
               // Instantiate view model
               viewModel.create(args, elem, function(view) {
                 // Add view model instance to new scope level
-                var newScope = scope.clone().addLayer(view);
+                var newScope = scope.clone().addLayer(view).addLayer({$this: view});
                 view.scope = newScope;
                 elem.view = view;
                 recurse(elem, newScope);
@@ -558,7 +558,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         itemData = item;
       }
       if(node.children.length) {
-        var newScope = loopElem.scope.clone().addLayer(itemData);
+        var newScope = loopElem.scope.clone().addLayer(itemData).addLayer({$this: item});
         // Recurse
         _.each(node.children, function(child) {
           child = self.evaluate(child, newScope).firstChild;
