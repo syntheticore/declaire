@@ -21,6 +21,7 @@ var ViewModel = function(name, reference, constructor) {
       delete inst.delete;
       delete inst.reference;
       delete inst.serialize;
+      // delete inst.revert;
       delete inst.connect;
       delete inst.disconnect;
       // DOM element this instance was rendered to
@@ -28,8 +29,10 @@ var ViewModel = function(name, reference, constructor) {
       // Allow for automatic removal of event handlers
       inst.listenToHandlers = [];
       inst.listenTo = function(obj, eventName, cb) {
-        obj.on(eventName, cb);
-        inst.listenToHandlers.push({obj: obj, cb: cb});
+        var handler = obj.on(eventName, function() {
+          cb.call(inst);
+        });
+        inst.listenToHandlers.push({obj: obj, cb: handler});
       };
       inst.on('remove', function() {
         _.each(inst.listenToHandlers, function(handler) {

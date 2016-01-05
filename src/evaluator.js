@@ -461,7 +461,8 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         }
         // Register two-way bindings
         if(Object.keys(twoWayBindings).length) {
-          var onChange = function() {
+          var eventName = (elem.tagName == 'INPUT' && elem.type == 'text') ? 'keyup' : 'change';
+          elem.addEventListener(eventName, function() {
             _.each(twoWayBindings, function(binding, attr) {
               var ref = scope.resolvePath(binding.expr).ref;
               var value;
@@ -477,8 +478,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
               // Also save if two exclamation marks were used
               if(binding.save) ref.obj.save();
             });
-          };
-          elem.addEventListener('change', onChange);
+          });
         }
         // Execute embeded statements
         self.execMicroStatements(node.statements, elem);

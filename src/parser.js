@@ -246,7 +246,7 @@ var Parser = {
       
       // on
       } else if(statement == 'on') {
-        var m = rest.match(/(\w+)\s+(\w+)(\((.+)\))?/);
+        var m = rest.match(/(\w+)\s+(\$?[\w\.]+)(\((.+)\))?/);
         var args = m[4] && _.map(m[4].split(','), function(arg) { return arg.trim() });
         statements.push({statement: 'on', event: m[1], method: m[2], args: args});
       
