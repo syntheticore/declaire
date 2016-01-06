@@ -1,5 +1,4 @@
 var _ = require('./utils.js');
-var eventMethods = require('./events.js');
 
 
 // Lazy filter over a collection or database collection
@@ -25,9 +24,6 @@ var Query = function(modelOrCollection, query, options) {
   var filter = function(items, onlyOne) {
     return _.select(items, function(item) {
       return true;
-      // return _.all(query, function(value, key) {
-      //   return item.get(key) == value;
-      // });
     }, onlyOne ? 1 : options.limit);
   };
 
@@ -41,7 +37,7 @@ var Query = function(modelOrCollection, query, options) {
           console.log("Updating query due to pubsub");
           getItems(false, function() {
             console.log("Got new items");
-            inst.emit('change', 'size');
+            inst.emit('change:' + 'size');
             inst.emit('change');
           });
         });
@@ -50,7 +46,7 @@ var Query = function(modelOrCollection, query, options) {
     } else if(modelOrCollection.klass == 'Collection') {
       modelOrCollection.on('change:size', function() {
         allCache = null;
-        inst.emit('change', 'size');
+        inst.emit('change:' + 'size');
         inst.emit('change');
       });
       subscribed = true;
@@ -64,7 +60,7 @@ var Query = function(modelOrCollection, query, options) {
     subscribed = false;
   };
 
-  var inst = _.merge(eventMethods(), {
+  var inst = {
     klass: 'Query',
     // length: 0,
     query: query,
@@ -133,27 +129,28 @@ var Query = function(modelOrCollection, query, options) {
           ok(items.length);
         });
       });
-    },
+    }
+  };
 
-    // Dynamically subscribe and unsubscribe when listeners are added and removed
-    listenerAdded: function() {
-      if(!subscribed) {
-        subscribe();
-      }
-    },
+  _.eventHandling(inst);
 
-    listenerRemoved: function() {
-      var self = this;
-      if(subscribed && self.listeners.length == 0) {
-        // Defer unsubscribtion to allow immediately readding
-        // handlers afer dropping to zero
-        _.defer(function() {
-          if(subscribed && self.listeners.length == 0) {
-            unsubscribe();
-            allCache = null;
-          }
-        }, 1000);
-      }
+  // Dynamically subscribe and unsubscribe when listeners are added and removed
+  inst.on('listenerAdded', function() {
+    if(!subscribed) {
+      subscribe();
+    }
+  });
+
+  inst.on('listenerRemoved', function() {
+    if(subscribed && inst.listeners.length == 0) {
+      // Defer unsubscribtion to allow immediately readding
+      // handlers afer dropping to zero
+      _.defer(function() {
+        if(subscribed && inst.listeners.length == 0) {
+          unsubscribe();
+          allCache = null;
+        }
+      }, 1000);
     }
   });
 

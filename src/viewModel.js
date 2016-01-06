@@ -15,6 +15,7 @@ var ViewModel = function(name, reference, constructor) {
     // Return a fully resolved and constructed view model instance
     create: function(args, elem, cb) {
       var inst = model.create();
+      
       // Remove persistance related methods
       delete inst.save;
       delete inst.fetch;
@@ -24,21 +25,38 @@ var ViewModel = function(name, reference, constructor) {
       // delete inst.revert;
       delete inst.connect;
       delete inst.disconnect;
+      
       // DOM element this instance was rendered to
       inst.element = elem;
+      
       // Allow for automatic removal of event handlers
       inst.listenToHandlers = [];
+
       inst.listenTo = function(obj, eventName, cb) {
         var handler = obj.on(eventName, function() {
           cb.call(inst);
         });
         inst.listenToHandlers.push({obj: obj, cb: handler});
       };
+
       inst.on('remove', function() {
         _.each(inst.listenToHandlers, function(handler) {
           handler.obj.off(handler.cb);
         });
       });
+
+      // Allow events to bubble upward in the view hierarchy
+      inst.bubble = function(eName, args) {
+        inst.emit(eName, args);
+        var el = inst.element;
+        while(el) {
+          if(el.view) {
+            el.view.emit(eName, args);
+          }
+          el = el.parentNode;
+        }
+      };
+      
       // Resolve instance
       inst.resolve(function() {
         // Completely execute asynchronous or synchronous constructor before calling back

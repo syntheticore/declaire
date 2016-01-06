@@ -3,11 +3,10 @@ var RSVP = require('rsvp');
 var Query = require('./query.js');
 var Collection = require('./collection.js');
 var _ = require('./utils.js');
-var eventMethods = require('./events.js');
 
 
 var Instance = function() {
-  return _.merge(eventMethods(), {
+  var inst = {
     klass: 'Instance',
     model: null,
     id: null,
@@ -83,11 +82,11 @@ var Instance = function() {
         }
         //XXX Catch attempt to set a computed property or collection
         // Emit specific change event
-        this.emit('change', key);
+        this.emit('change:' + key);
         // Emit change events for computed properties as well
         for(var k in this.computedProperties) {
           if(_.contains(this.computedProperties[k], key)) {
-            this.emit('change', k);
+            this.emit('change:' + k);
           }
         }
       }
@@ -114,7 +113,7 @@ var Instance = function() {
       this.data.local = {};
       // this.data.temporary = {};
       for(var key in locals) {
-        this.emit('change', key);
+        this.emit('change:' + key);
       }
       this.emit('change');
       this.emit('revert');
@@ -239,7 +238,7 @@ var Instance = function() {
         console.log(data.data);
         self.data.remote = _.merge(self.data.remote, data.data);
         for(var key in data.data) {
-          self.emit('change', key);
+          self.emit('change:' + key);
         }
         self.emit('change');
         self.emit('fetch');
@@ -259,7 +258,11 @@ var Instance = function() {
       this.connected = false;
       return this;
     }
-  });
+  };
+
+  _.eventHandling(inst);
+
+  return inst;
 };
 
 var references = function(values) {

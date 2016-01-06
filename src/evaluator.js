@@ -306,29 +306,32 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           case 'view':
             var elem = interface.createDOMElement('span', null, ['placeholder-view']);
             var viewModel = viewModels[node.viewModel];
-            if(node.viewModel && !viewModel) console.error('View model not found: ' + node.viewModel);
-            if(viewModel) {
-              // Evaluate constructor arguments
-              var args = _.map(node.arguments, function(arg) {
-                return evalExpr(scope, arg);
-              });
-              unfinish(frag);
-              _.resolvePromises(args).then(function(args) {
-                // Instantiate view model
-                viewModel.create(args, elem, function(view) {
-                  // Add view model instance to new scope level
-                  var newScope = scope.clone().addLayer(view).addLayer({$this: view});
-                  view.scope = newScope;
-                  elem.view = view;
-                  recurse(elem, newScope);
-                  finish(frag);
-                  //XXX A view should be able to tell when all children have
-                  //XXX fully rendered and emit its attach event afterwards
-                });
-              });
+            if(node.viewModel && !viewModel) {
+              console.error('View model not found: ' + node.viewModel);
             } else {
-              // Allow view statement without view model as a way to create a new scope
-              recurse(elem, scope.clone());
+              if(viewModel) {
+                // Evaluate constructor arguments
+                var args = _.map(node.arguments, function(arg) {
+                  return evalExpr(scope, arg);
+                });
+                unfinish(frag);
+                _.resolvePromises(args).then(function(args) {
+                  // Instantiate view model
+                  viewModel.create(args, elem, function(view) {
+                    // Add view model instance to new scope level
+                    var newScope = scope.clone().addLayer(view).addLayer({$this: view});
+                    view.scope = newScope;
+                    elem.view = view;
+                    recurse(elem, newScope);
+                    finish(frag);
+                    //XXX A view should be able to tell when all children have
+                    //XXX fully rendered and emit its attach event afterwards
+                  });
+                });
+              } else {
+                // Allow view statement without view model as a way to create a new scope
+                recurse(elem, scope.clone());
+              }
             }
             frag.appendChild(elem);
             break;

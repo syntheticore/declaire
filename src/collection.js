@@ -1,9 +1,8 @@
 var _ = require('./utils.js');
-var eventMethods = require('./events.js');
 
 
 var Collection = function(array) {
-  var col = _.merge(eventMethods(), {
+  var col = {
     klass: 'Collection',
     items: [],
 
@@ -20,7 +19,7 @@ var Collection = function(array) {
         };
       });
       self.emit('add');
-      self.emit('change', 'size');
+      self.emit('change:size');
       self.emit('change');
       return self;
     },
@@ -34,7 +33,7 @@ var Collection = function(array) {
     removeAt: function(index) {
       this.items.splice(index, 1);
       this.emit('remove');
-      this.emit('change', 'size');
+      this.emit('change:size');
       this.emit('change');
       return this;
     },
@@ -86,9 +85,12 @@ var Collection = function(array) {
     filter: function(query) {
       return Query(this, query);
     }
-  });
+  };
+
+  _.eventHandling(col);
 
   if(array) col.add(array);
+
   return col;
 };
 
