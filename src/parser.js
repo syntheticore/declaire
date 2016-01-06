@@ -214,7 +214,7 @@ var Parser = {
       if(oneTime) expr = expr.slice(1);
       // CSS class chooser?
       var m;
-      if(m = expr.match(/((\w+):\s*(\w+|\(.+\)))+/g)) {
+      if(m = expr.match(/((\w+):\s*([\w!]+|\(.+\)))+/g)) {
         var classes = {};
         _.each(m, function(match) {
           var parts = match.split(':');
