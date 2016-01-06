@@ -686,14 +686,21 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     updateAttribute: function(elem, key, expr) {
       var value = _.promiseFrom(evalCompoundExpr(elem.scope, expr));
       return value.then(function(value) {
-        if(value) {
+        if(_.hasValue(value)) {
           // Boolean attribute
-          value = (value == true ? key : value);
-          // Don't override CSS classes used in template
-          if(key == 'class' && elem.node.classes) {
-            value = elem.node.classes.join(' ') + ' ' + value;
+          if(value === true || value === false) {
+            if(value) {
+              elem.setAttribute(key, true);
+            } else {
+              elem.removeAttribute(key);
+            }
+          } else {
+            // Don't override CSS classes used in template
+            if(key == 'class' && elem.node.classes) {
+              value = elem.node.classes.join(' ') + ' ' + value;
+            }
+            elem.setAttribute(key, value);
           }
-          elem.setAttribute(key, value);
         } else {
           elem.removeAttribute(key);
         }
