@@ -100,8 +100,8 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     });
   };
 
+  // Evaluate expression of alternating values and boolean operators
   var evalCompoundExpr = function(scope, expr) {
-      // Expect alternating values and boolean operators
     var parts = expr.split(/\s+/);
     var values = [];
     var ops = [];
@@ -126,6 +126,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     });
   };
 
+  // Return all paths used in the given compound expressions
   var resolveCompoundPaths = function(expressions) {
     return _.flatten(_.map(expressions, function(expr) {
       if(expr[0] == '!') expr = expr.slice(1);
@@ -683,6 +684,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       }
     },
 
+    // Set or remove attribute according to given expression
     updateAttribute: function(elem, key, expr) {
       var value = _.promiseFrom(evalCompoundExpr(elem.scope, expr));
       return value.then(function(value) {
@@ -707,6 +709,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       });
     },
 
+    // Add or remove the given class name according to given expression
     updateCssClass: function(elem, klassName, expr) {
       var value = _.promiseFrom(evalCompoundExpr(elem.scope, expr));
       return value.then(function(bool) {
