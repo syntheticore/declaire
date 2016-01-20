@@ -472,15 +472,26 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
               var value;
               var booleans = ['checked', 'selected', 'disabled', 'readonly', 'multiple', 'defer', 'declare', 'noresize'];
               if(_.contains(booleans, attr)) {
+                // Boolean input
                 value = !!elem[attr];
               } else if(attr == 'value') {
-                value = elem.value
+                // String input
+                value = elem.value;
+                // Numeric input
+                if(elem.tagName == 'INPUT' && elem.type == 'number') {
+                  value = parseFloat(value);
+                }
               } else {
                 console.error('Trying to activate two-way binding from unknown attribute');
               }
-              ref.obj.set(ref.key, value);
+              if(ref.obj.klass == 'Instance') {
+                ref.obj.set(ref.key, value);
+              } else {
+                ref.obj[ref.key] = value;
+                ref.lastInstance.emit('change:' + ref.lastInstanceKey);
+              }
               // Also save if two exclamation marks were used
-              if(binding.save) ref.obj.save();
+              if(binding.save) ref.lastInstance.save();
             });
           });
         }

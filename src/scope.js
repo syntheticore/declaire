@@ -38,6 +38,8 @@ var Scope = function() {
       // Do the first lookup through the actual scope
       var firstSegment = segments.shift();
       var lastObj = self.getFirstRespondent(firstSegment);
+      var lastInstance = lastObj;
+      var lastInstanceKey = firstSegment;
       var obj;
       // If arguments are supplied, they are meant for
       // the final method call
@@ -50,14 +52,23 @@ var Scope = function() {
       _.each(segments, function(segment, i) {
         if(!obj) return;
         lastObj = obj;
+        if(lastObj.klass == 'Instance') {
+          lastInstance = lastObj;
+          lastInstanceKey = segment;
+        }
         if(i == segments.length - 1) {
           obj = self.readAttribute(obj, segment, args);
         } else {
           obj = self.readAttribute(obj, segment);
         }
       });
-      var lastSegment = (obj && segments.pop()) || firstSegment;
-      var ref = {obj: lastObj, key: lastSegment};
+      var lastSegment = (_.hasValue(obj) && segments.pop()) || firstSegment;
+      var ref = {
+        obj: lastObj,
+        key: lastSegment,
+        lastInstance: lastInstance,
+        lastInstanceKey: lastInstanceKey
+      };
       return {value: obj, ref: ref};
     },
 
