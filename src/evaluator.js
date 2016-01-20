@@ -276,16 +276,15 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
               };
               // Resolve Query or Collection
               if(items.klass == 'Query' || items.klass == 'Collection') {
-                // unfinish(frag);
                 elem.iterator = items;
                 items.resolve(function(realItems) {
-                  if(!realItems) realItems = items.items;
+                  if(!realItems) realItems = _.clone(items.items);
                   loop(realItems);
                   // Update list when query changes
                   if(_.onClient()) {
                     elem.listHandler = items.on('change:size', function() {
                       items.resolve(function(newItems) {
-                        if(!newItems) newItems = items.items;
+                        if(!newItems) newItems = _.clone(items.items);
                         self.updateList(elem, realItems, newItems);
                         realItems = newItems;
                       });
