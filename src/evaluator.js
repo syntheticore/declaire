@@ -363,8 +363,8 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             break;
           
           case 'content':
-            var content = scope.resolvePath('_content');
-            frag.appendChild(content.value);
+            var content = scope.resolvePath('_content').value;
+            frag.appendChild(content);
             break;
           
           case 'client':
@@ -643,10 +643,11 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       if(isPath(path)) {
         // Resolve actual instance the path points to
         var reference = elem.scope.resolvePath(path).ref;
-        if(reference.obj && reference.obj.once) {
+        if(reference.lastInstance && reference.lastInstance.once) {
           // Listen for changes of the individual property
-          var handler = (onceOnly ? reference.obj.once('change:' + reference.key, cb) : reference.obj.on('change:' + reference.key, cb));
-          elem.handlers.push({handler: handler, obj: reference.obj});
+          var handler = (onceOnly ? reference.lastInstance.once('change:' + reference.lastInstanceKey, cb) : 
+                                    reference.lastInstance.on('change:' + reference.lastInstanceKey, cb));
+          elem.handlers.push({handler: handler, obj: reference.lastInstance});
         }
       }
     },
