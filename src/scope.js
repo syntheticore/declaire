@@ -7,6 +7,8 @@ var Scope = function() {
   var layers = [];
 
   return {
+    layers: layers,
+    
     // Add layer on top
     addLayer: function(obj) {
       layers.push(obj || {});

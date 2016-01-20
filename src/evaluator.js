@@ -343,7 +343,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             elem.node = node;
             elem.scope = scope;
             // Render indented nodes for placement using content statement
-            var contentFrag = interface.createFragment();
+            var contentFrag = interface.createDOMElement('span', null, ['content-fragment']);
             recurse(contentFrag, scope);
             // Look up arguments in scope
             var args = _.map(node.arguments, function(expr) {
