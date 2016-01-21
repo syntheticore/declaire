@@ -324,8 +324,12 @@ var Model = function(dbCollection, reference, constructor) {
         var query = ref.queries[key].clone();
         inst.data.remote[key] = query;
       }
-      // Copy default values from model and arguments
-      _.each(_.merge(ref.defaults, values), function(value, key) {
+      // Copy default values from model
+      _.each(ref.defaults, function(value, key) {
+        inst.data.remote[key] = _.clone(value);
+      });
+      // Copy constructor arguments
+      _.each(values, function(value, key) {
         inst.data.remote[key] = value;
       });
       // Call constructor function
