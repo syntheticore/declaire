@@ -578,6 +578,9 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
               // Call action method
               // The method may prevent event bubbling by returning false
               return elem.scope.resolvePath(statement.method, _.union([e], args)).value;
+            }).catch(function(err) {
+              console.error(err.name + ': ' + err.message);
+              console.error(err.stack);
             });
           });
         
