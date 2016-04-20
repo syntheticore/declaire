@@ -102,17 +102,36 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
 
   // Evaluate expression of alternating values and boolean operators
   var evalCompoundExpr = function(scope, expr) {
+    // Separate expression into values and operators
     var parts = expr.split(/\s+/);
+    var booleans = ['||', '&&'];
+    var comparisons = ['==', '>', '<', '>=', '<='];
+    var allOps = _.union(booleans, comparisons);
     var values = [];
     var ops = [];
     _.each(parts, function(part) {
-      if(part == '||' || part == '&&') {
+      if(_.contains(allOps, part)) {
         ops.push(part);
       } else {
         values.push(evalExpr(scope, part));
       }
     });
+    // Resolve values
     return _.resolvePromises(values).then(function(values) {
+      // Eval comparison operators
+      values = _.compact(_.map(values, function(value, i) {
+        var op = ops[i];
+        var v2 = values[i + 1];
+        if(op == '==') return value == v2;
+        if(op == '>')  return value >  v2;
+        if(op == '<')  return value <  v2;
+        if(op == '>=') return value >= v2;
+        if(op == '<=') return value <= v2;
+        if(!_.contains(comparisons, ops[i - 1])) {
+          return value;
+        }
+      }));
+      // Eval boolean operators
       var out = values.shift();
       _.each(values, function(value) {
         var op = ops.shift();
@@ -203,8 +222,12 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         });
       };
 
+      // Evaluate the whole tree
+      if(node.type == 'TOP') {
+        recurse(frag, scope);
+      
       // Evaluate statement
-      if(node.type == 'Statement') {
+      } else if(node.type == 'Statement') {
 
         var evaluateIf = function(expressions, condition) {
           var elem = interface.createDOMElement('span', null, ['placeholder-if']);
@@ -528,10 +551,6 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           text.innerHTML = node.content;
         }
         frag.appendChild(text);
-      
-      // Evaluate the whole tree
-      } else if(node.type == 'TOP') {
-        recurse(frag, scope);
       }
       return frag;
     },
