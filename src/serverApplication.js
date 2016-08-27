@@ -30,9 +30,12 @@ var DataInterface = require('./serverDataInterface.js');
 var REST = require('./REST.js');
 
 
+
 var ServerApplication = function(options) {
   // Create express app
   var expressApp = express();
+  
+  var environment = expressApp.get('env');
   
   // Default options
   options = _.merge({
@@ -40,7 +43,7 @@ var ServerApplication = function(options) {
     viewsFolder: './src/views/',
     npmPublic: ['/public']
   }, options);
-  if(options.mongoDevUrl && expressApp.get('env') == 'development') {
+  if(options.mongoDevUrl && environment == 'development') {
     options.mongoUrl = options.mongoDevUrl;
   }
   
@@ -142,7 +145,7 @@ var ServerApplication = function(options) {
       },
       verbose: false
     });
-    if(expressApp.get('env') == 'production') {
+    if(environment == 'production') {
       b.plugin(require('minifyify'), {output: 'public/bundle.js.map', map: 'bundle.js.map'});
     }
     b.bundle(function(err, buf) {
@@ -245,7 +248,7 @@ var ServerApplication = function(options) {
   // Render layout for the requested page
   expressApp.get('/pages/*', function(req, res) {
     res.setHeader('Content-Type', 'text/html');
-    if(expressApp.get('env') == 'development') parseTemplates();
+    if(environment == 'development') parseTemplates();
     var evaluator = buildEvaluator(req.url);
     // Stream chunks of rendered html
     evaluator.render().render(function(chunk) {
@@ -259,7 +262,7 @@ var ServerApplication = function(options) {
   });
 
   // Show stack traces in development
-  if(expressApp.get('env') == 'development') {
+  if(environment == 'development') {
     expressApp.use(errorHandler({dumpExceptions: true, showStack: true}));
   }
 
