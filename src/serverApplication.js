@@ -36,7 +36,7 @@ var ServerApplication = function(options) {
   
   // Default options
   options = _.merge({
-    mongoUrl: process.env.MONGODB_URI || process.env.MONGOHQ_URL || process.env.MONGOLAB_URI || 'mongodb://127.0.0.1:27017/declaire',
+    mongoUrl: process.env.MONGODB_URI || process.env.MONGOHQ_URL || process.env.MONGOLAB_URI || 'mongodb://127.0.0.1:27017/declaire',
     viewsFolder: './src/views/',
     npmPublic: ['/public']
   }, options);
@@ -310,7 +310,7 @@ var ServerApplication = function(options) {
           console.log("done");
           // start must be called by application code to listen for requests
           var start = function(cb) {
-            var port = options.port || process.env.PORT || 3000;
+            var port = options.port || process.env.PORT || 3000;
             var server = expressApp.listen(port, function () {
               console.log("Listening on port " + port);
               cb && cb(server);

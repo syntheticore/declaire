@@ -11,7 +11,7 @@ var Scope = function() {
     
     // Add layer on top
     addLayer: function(obj) {
-      layers.push(obj || {});
+      layers.push(obj || {});
       return this;
     },
 

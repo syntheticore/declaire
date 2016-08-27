@@ -94,7 +94,7 @@ var LocalStore = function(modelName) {
     
     // Persist object data to local storage under the given key
     set: function(inst, options) {
-      set(inst.id || inst.localId, inst.serialize(), options);
+      set(inst.id || inst.localId, inst.serialize(), options);
       return this;
     },
 

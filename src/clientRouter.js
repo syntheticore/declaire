@@ -58,7 +58,7 @@ var Router = function() {
     // Extract url params and call listeners
     _.each(listeners, function(listener, path) {
       var params = _.values(_.extractUrlParams(url, path));
-      if(params || path == '*') {
+      if(params || path == '*') {
         listener.apply(null, params);
       }
     });

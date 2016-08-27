@@ -29,7 +29,7 @@ var Instance = function() {
       // Catch remaining arguments as parameters for computed properties
       var args = Array.prototype.slice.call(arguments).splice(1);
       //XXX Should return a deep copy of defaults and remote data
-      // var value = this.collections[key] || this.data.local[key] || this.data.remote[key] || this.model.defaults[key];
+      // var value = this.collections[key] || this.data.local[key] || this.data.remote[key] || this.model.defaults[key];
       var value = this.data.local[key];
       if(value === undefined) {
         value = this.data.remote[key];
@@ -64,7 +64,7 @@ var Instance = function() {
 
     // Register a local change
     set: function(valuesOrKey, value, options) {
-      options = options || {};
+      options = options || {};
       // Allow for setting single values or whole hashes
       var values;
       if(value === undefined) {
@@ -132,7 +132,7 @@ var Instance = function() {
       if(values) {
         self.set(values);
       }
-      if(self.isDirty() || !self.id) {
+      if(self.isDirty() || !self.id) {
         // Persist local changes to server
         var url = self.id ? self.url() : self.model.url();
         if(self.id) {

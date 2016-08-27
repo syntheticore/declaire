@@ -77,7 +77,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         return evalExpr(scope, item);
       });
     // Path or Magic variable
-    } else if(isPath(expr) || expr[0] == '$') {
+    } else if(isPath(expr) || expr[0] == '$') {
       // Arguments for helper functions
       if(_.contains(expr, '(')) {
         var parts = expr.split('(');
@@ -136,7 +136,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       _.each(values, function(value) {
         var op = ops.shift();
         if(op == '||') {
-          out = out || value;
+          out = out || value;
         } else if(op == '&&') {
           out = out && value;
         }
@@ -218,7 +218,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
 
       var recurse = function(frag, scope, pre) {
         _.each(node.children, function(child) {
-          frag.appendChild(self.evaluate(child, scope, pre || preFormated));
+          frag.appendChild(self.evaluate(child, scope, pre || preFormated));
         });
       };
 
@@ -298,7 +298,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
                 self.register(elem);
               };
               // Resolve Query or Collection
-              if(items.klass == 'Query' || items.klass == 'Collection') {
+              if(items.klass == 'Query' || items.klass == 'Collection') {
                 elem.iterator = items;
                 items.resolve(function(realItems) {
                   if(!realItems) realItems = _.clone(items.items);
@@ -531,10 +531,10 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           // Save binding paths for future updates
           paths = _.union(paths, mustachePaths);
         } else {
-          recurse(elem, scope, (node.tag == 'script' || node.tag == 'pre'));
+          recurse(elem, scope, (node.tag == 'script' || node.tag == 'pre'));
         }
         // If node had either dynamic content or dynamic attributes -> register for updates
-        if(paths.length || attributePaths.length) {
+        if(paths.length || attributePaths.length) {
           node.paths = paths; //XXX Should it be elem.paths?
           node.attributePaths = attributePaths;
           self.register(elem);
@@ -723,7 +723,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       return value.then(function(value) {
         if(_.hasValue(value)) {
           // Boolean attribute
-          if(value === true || value === false) {
+          if(value === true || value === false) {
             if(value) {
               elem.setAttribute(key, true);
             } else {
