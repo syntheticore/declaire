@@ -109,9 +109,7 @@ var Parser = {
       // Attach to next statement we encounter
       } else {
         if(alternativeStack.length) {
-          node.alternatives = _.map(alternativeStack.reverse(), function(alt) {
-            return alt.children;
-          });
+          node.alternatives = alternativeStack.reverse();
           alternativeStack = [];
         }
       }
@@ -261,36 +259,12 @@ var Parser = {
   parseStatement: function(line) {
     var m;
     var out;
-    // if-greater
-    if(m = line.match(/{{if\s+(.+)\s+>\s+(.+)\s*}}/)) {
-      out = {
-        type: 'Statement',
-        keyword: 'if-greater',
-        path1: m[1],
-        path2: m[2]
-      };
-    // if-equal
-    } else if(m = line.match(/{{if\s+(.+)\s+==\s+(.+)\s*}}/)) {
-      out = {
-        type: 'Statement',
-        keyword: 'if-equal',
-        path1: m[1],
-        path2: m[2]
-      };
-    // if-not-equal
-    } else if(m = line.match(/{{if\s+(.+)\s+!=\s+(.+)\s*}}/)) {
-      out = {
-        type: 'Statement',
-        keyword: 'if-not-equal',
-        path1: m[1],
-        path2: m[2]
-      };
     // if
-    } else if(m = line.match(/{{if\s+(.+)}}/)) {
+    if(m = line.match(/{{if\s+(.+)}}/)) {
       out = {
         type: 'Statement',
         keyword: 'if',
-        path: m[1]
+        expr: m[1]
       };
     // for
     } else if(m = line.match(/{{for\s+((\w+)\s+in\s+)?(.+)}}/)) {
@@ -350,9 +324,10 @@ var Parser = {
         path: m[1]
       };
     // =>
-    } else if(m = line.match(/{{=>}}/)) {
+    } else if(m = line.match(/{{=>\s*(.*)}}/)) {
       out = {
-        type: 'Alternative'
+        type: 'Alternative',
+        expr: m[1]
       };
     } else {
       throw('Unknown statement: ' + line);

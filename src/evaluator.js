@@ -228,56 +228,47 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
       
       // Evaluate statement
       } else if(node.type == 'Statement') {
-
-        var evaluateIf = function(expressions, condition) {
-          var elem = interface.createDOMElement('span', null, ['placeholder-if']);
-          // Evaluate expressions
-          var values = _.map(expressions, function(expr) {
-            return evalCompoundExpr(scope, expr);
-          });
-          node.paths = resolveCompoundPaths(expressions);
-          elem.node = node;
-          elem.scope = scope;
-          // Resolve potential promises among values
-          unfinish(frag);
-          _.resolvePromises(values).then(function(values) {
-            // Recurse into either regular children, or alternatives
-            if(condition(values)) {
-              recurse(elem, scope);
-            } else if(node.alternatives) {
-              _.each(node.alternatives[0], function(child) {
-                elem.appendChild(self.evaluate(child, scope));
-              });
-            }
-            finish(frag);
-          });
-          frag.appendChild(elem);
-          self.register(elem);
-        };
-
         switch(node.keyword) {
+          
           case 'if':
-            evaluateIf([node.path], function(values) {
-              return !!values[0];
+            var elem = interface.createDOMElement('span', null, ['placeholder-if']);
+            var alternatives = _.union([node], node.alternatives);
+            var expressions = _.map(alternatives, 'expr');
+            node.paths = resolveCompoundPaths(expressions);
+            elem.node = node;
+            elem.scope = scope;
+            // Find first matching alternative
+            var firstAlternative = function(index, cb) {
+              var alt = alternatives[index];
+              if(alt.expr) {
+                // Resolve potential promises among values
+                var promise = _.promiseFrom(evalCompoundExpr(scope, alt.expr));
+                var value = promise.then(function(value) {
+                  if(value) {
+                    cb(alt);
+                  } else if(index < alternatives.length - 1) {
+                    firstAlternative(index + 1, cb);
+                  } else {
+                    cb(null);
+                  }
+                });
+              } else {
+                // Fallback alternative
+                cb(alt);
+              }
+            };
+            unfinish(frag);
+            firstAlternative(0, function(alt) {
+              // Recurse into matching alternative
+              if(alt) {
+                _.each(alt.children, function(child) {
+                  elem.appendChild(self.evaluate(child, scope));
+                });
+              }
+              finish(frag);
             });
-            break;
-          
-          case 'if-greater':
-            evaluateIf([node.path1, node.path2], function(values) {
-              return values[0] > values[1];
-            });
-            break;
-          
-          case 'if-equal':
-            evaluateIf([node.path1, node.path2], function(values) {
-              return values[0] == values[1];
-            });
-            break;
-          
-          case 'if-not-equal':
-            evaluateIf([node.path1, node.path2], function(values) {
-              return values[0] != values[1];
-            });
+            frag.appendChild(elem);
+            self.register(elem);
             break;
           
           case 'for':
@@ -394,7 +385,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             if(_.onClient()) {
               recurse(frag, scope);
             } else if(node.alternatives) {
-              _.each(node.alternatives[0], function(child) {
+              _.each(node.alternatives[0].children, function(child) {
                 frag.appendChild(self.evaluate(child, scope));
               });
             }
@@ -411,7 +402,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
               var newScope = scope.clone().addLayer(params);
               recurse(elem, newScope);
             } else if(node.alternatives) {
-              _.each(node.alternatives[0], function(child) {
+              _.each(node.alternatives[0].children, function(child) {
                 elem.appendChild(self.evaluate(child, scope));
               });
             }
