@@ -105,7 +105,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     // Separate expression into values and operators
     var parts = expr.split(/\s+/);
     var booleans = ['||', '&&'];
-    var comparisons = ['==', '>', '<', '>=', '<='];
+    var comparisons = ['==', '!=', '>', '<', '>=', '<='];
     var allOps = _.union(booleans, comparisons);
     var values = [];
     var ops = [];
@@ -123,6 +123,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
         var op = ops[i];
         var v2 = values[i + 1];
         if(op == '==') return value == v2;
+        if(op == '!=') return value != v2;
         if(op == '>')  return value >  v2;
         if(op == '<')  return value <  v2;
         if(op == '>=') return value >= v2;
