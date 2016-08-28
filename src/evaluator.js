@@ -401,11 +401,18 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
             var params;
             var alternative = _.find(alternatives, function(alt) {
               var route = alt.expr;
+              if(!route) return;
               // Extract params from current URL
               params = _.extractUrlParams(scope.resolvePath('_page').value, route);
               return params;
             });
-            alternative = alternative || _.last(alternatives);
+            // Use fallback if no other route matched
+            if(!alternative) {
+              var last = _.last(alternatives);
+              if(!last.expr) {
+                alternative = last;
+              }
+            }
             // Fresh scope level
             var newScope = scope.clone();
             if(params) {
