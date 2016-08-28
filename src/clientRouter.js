@@ -15,7 +15,9 @@ var Router = function() {
     },
 
     // Push url to the stack and and trigger popstate event
-    navigate: function(url) {
+    navigate: function(url, silent) {
+      if(url == document.location.pathname) return;
+      if(silent) suppressNextPopstate = true;
       history.pushState({}, '', url);
       window.onpopstate();
       // Try to scroll to anchor after page has changed

@@ -125,6 +125,9 @@ var ClientApplication = function() {
             console.log("router " + document.location.pathname);
             mainModel.set('_page', document.location.pathname);
           });
+          mainModel.on('change:_page', function() {
+            router.navigate(mainModel.get('_page'), true);
+          });
           cbb && cbb();
         });
       });
