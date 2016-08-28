@@ -8,7 +8,6 @@ var express = require('express');
 var compression = require('compression')
 var morgan = require('morgan');
 var bodyParser = require('body-parser');
-var multer = require('multer');
 var lusca = require('lusca');
 var favicon = require('serve-favicon');
 var errorHandler = require('errorhandler');
@@ -87,9 +86,6 @@ var ServerApplication = function(options) {
   // Parse form data
   expressApp.use(bodyParser.json());
   expressApp.use(bodyParser.urlencoded({ extended: true }));
-  
-  // multipart/form-data
-  expressApp.use(multer());
   
   // Compile Stylus stylesheets
   expressApp.use(stylus.middleware({
