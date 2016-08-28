@@ -395,18 +395,26 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
           case 'route':
             var vars = {};
             var elem = interface.createDOMElement('span', null, ['placeholder-route']);
-            // Extract params from current URL
-            var params = _.extractUrlParams(scope.resolvePath('_page').value, node.path);
-            // Recurse if route matches
+            var alternatives = _.union([node], node.alternatives);
+            var routes = _.map(alternatives, 'expr');
+            // Find the first route that matches
+            var params;
+            var alternative = _.find(alternatives, function(alt) {
+              var route = alt.expr;
+              // Extract params from current URL
+              params = _.extractUrlParams(scope.resolvePath('_page').value, route);
+              return params;
+            });
+            alternative = alternative || _.last(alternatives);
+            // Fresh scope level
+            var newScope = scope.clone();
             if(params) {
-              // Fresh scope level
-              var newScope = scope.clone().addLayer(params);
-              recurse(elem, newScope);
-            } else if(node.alternatives) {
-              _.each(node.alternatives[0].children, function(child) {
-                elem.appendChild(self.evaluate(child, scope));
-              });
+              newScope.addLayer(params);
             }
+            // Recurse into matching route
+            _.each(alternative.children, function(child) {
+              elem.appendChild(self.evaluate(child, newScope));
+            });
             frag.appendChild(elem);
             node.paths = ['_page'];
             elem.node = node;

@@ -321,7 +321,7 @@ var Parser = {
       out = {
         type: 'Statement',
         keyword: 'route',
-        path: m[1]
+        expr: m[1]
       };
     // =>
     } else if(m = line.match(/{{=>\s*(.*)}}/)) {
