@@ -236,8 +236,7 @@ var ServerApplication = function(options) {
     app.mainModel = mainModel;
     // Build evaluator for main layout
     var topNode = parseTrees['layout.dcl'];
-    var evaluator = Evaluator(topNode, viewModels, parseTrees, StreamInterface());
-    evaluator.baseScope.addLayer(mainModel);
+    var evaluator = Evaluator(topNode, viewModels, parseTrees, StreamInterface(), mainModel);
     return evaluator;
   };
 
@@ -248,7 +247,6 @@ var ServerApplication = function(options) {
     var evaluator = buildEvaluator(req.url);
     // Stream chunks of rendered html
     evaluator.render().render(function(chunk) {
-      // console.log(chunk);
       res.write(chunk.data);
       res.flush();
       if(chunk.eof) {

@@ -25,9 +25,7 @@ var ClientApplication = function() {
     _.ajax({url: '/templates.json'}).then(function(templates) {
       var topNode = templates['layout.dcl'];
       var body = topNode.children[1];
-      var evaluator = Evaluator(body, viewModels, templates, DOMInterface());
-      // Add main model to baseScope
-      evaluator.baseScope.addLayer(mainModel);
+      var evaluator = Evaluator(body, viewModels, templates, DOMInterface(), mainModel);
       // Render and replace body after page load event
       var frag = evaluator.render(function() {
         _.documentReady(function() {

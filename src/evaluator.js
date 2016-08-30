@@ -4,7 +4,7 @@ var Scope = require('./scope.js');
 
 // Renders a parse tree from <topNode> downward and emits either
 // a document fragment or a virtual DOM
-var Evaluator = function(topNode, viewModels, parseTrees, interface) {
+var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) {
 
   // Replace all mustaches in text with the value at their paths
   var resolveMustaches = function(text, scope, cb) {
@@ -193,8 +193,11 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
     }
   };
 
+  // Add main model to baseScope
+  var baseScope = Scope().addLayer(mainModel);
+
   return {
-    baseScope: Scope(),
+    baseScope: baseScope,
 
     // Render the complete template
     // Returns a document fragment on the client and a virtual DOM on the server
@@ -369,7 +372,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface) {
               args._content = contentFrag;
               // Recurse into different template with a fresh scope
               var importedNode = parseTrees[node.templateName];
-              var newScope = Scope().addLayer(args);
+              var newScope = Scope().addLayer(mainModel).addLayer(args);
               elem.appendChild(self.evaluate(importedNode, newScope));
               self.register(elem);
               finish(frag);
