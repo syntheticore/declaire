@@ -717,7 +717,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
       var self = this;
       if(elem.parentNode) {
         // Build separate evaluator for element's node
-        var evaluator = Evaluator(elem.node, viewModels, parseTrees, interface);
+        var evaluator = Evaluator(elem.node, viewModels, parseTrees, interface, mainModel);
         evaluator.baseScope = elem.scope.clone();
         var frag = evaluator.render(function() {
           // Replace old element once rendering has completely finished
