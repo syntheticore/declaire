@@ -246,7 +246,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
               var alt = alternatives[index];
               if(alt.expr) {
                 // Resolve potential promises among values
-                var promise = _.promiseFrom(evalCompoundExpr(scope, alt.expr));
+                var promise = evalCompoundExpr(scope, alt.expr);
                 var value = promise.then(function(value) {
                   if(value) {
                     cb(alt);
@@ -269,10 +269,10 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
                   elem.appendChild(self.evaluate(child, scope));
                 });
               }
+              self.register(elem);
               finish(frag);
             });
             frag.appendChild(elem);
-            self.register(elem);
             break;
           
           case 'for':
@@ -715,13 +715,13 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
     // Replace DOM from this node downward with an updated version
     updateElement: function(elem) {
       var self = this;
+      self.unregister(elem);
       if(elem.parentNode) {
         // Build separate evaluator for element's node
         var evaluator = Evaluator(elem.node, viewModels, parseTrees, interface, mainModel);
         evaluator.baseScope = elem.scope.clone();
         var frag = evaluator.render(function() {
           // Replace old element once rendering has completely finished
-          self.unregister(elem);
           elem.parentNode.replaceChild(frag, elem);
         });
       }
