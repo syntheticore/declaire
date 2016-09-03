@@ -147,12 +147,13 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
   };
 
   // Return all paths used in the given compound expressions
-  var resolveCompoundPaths = function(expressions) {
+  var detectCompoundPaths = function(expressions) {
     return _.flatten(_.map(expressions, function(expr) {
-      if(expr[0] == '!') expr = expr.slice(1);
       var parts = expr.split(/\s+/);
-      return _.select(parts, function(part) {
+      return _.map(_.select(parts, function(part) {
         return isPath(part);
+      }), function(path) {
+        return path[0] == '!' ? path.slice(1) : path;
       });
     }));
   };
@@ -238,7 +239,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
             var elem = interface.createDOMElement('span', null, ['placeholder-if']);
             var alternatives = _.union([node], node.alternatives);
             var expressions = _.map(alternatives, 'expr');
-            node.paths = resolveCompoundPaths(expressions);
+            node.paths = detectCompoundPaths(expressions);
             elem.node = node;
             elem.scope = scope;
             // Find first matching alternative
@@ -466,7 +467,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
                 type: 'dynamic',
                 key: key,
                 expr: expr,
-                paths: resolveCompoundPaths([expr])
+                paths: detectCompoundPaths([expr])
               });
             }
             // Resolve attribute value
@@ -479,7 +480,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
                   type: 'CSS',
                   klassName: klassName,
                   expr: expr,
-                  paths: resolveCompoundPaths([expr])
+                  paths: detectCompoundPaths([expr])
                 });
               }
               return self.updateCssClass(elem, klassName, expr);
@@ -754,7 +755,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
 
     // Add or remove the given class name according to given expression
     updateCssClass: function(elem, klassName, expr) {
-      var value = _.promiseFrom(evalCompoundExpr(elem.scope, expr));
+      var value = evalCompoundExpr(elem.scope, expr);
       return value.then(function(bool) {
         if(bool) {
           if(!_.contains(elem.className, klassName)) elem.className += ' ' + klassName;
