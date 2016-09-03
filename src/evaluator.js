@@ -673,15 +673,14 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
 
     // Register a callback to be called when the data at <path> changes
     registerPath: function(elem, path, onceOnly, cb) {
-      if(isPath(path)) {
-        // Resolve actual instance the path points to
-        var reference = elem.scope.resolvePath(path).ref;
-        if(reference.lastInstance && reference.lastInstance.once) {
-          // Listen for changes of the individual property
-          var handler = (onceOnly ? reference.lastInstance.once('change:' + reference.lastInstanceKey, cb) : 
-                                    reference.lastInstance.on('change:' + reference.lastInstanceKey, cb));
-          elem.handlers.push({handler: handler, obj: reference.lastInstance});
-        }
+      if(!isPath(path)) throw "Should not happen";
+      // Resolve actual instance the path points to
+      var reference = elem.scope.resolvePath(path).ref;
+      if(reference.lastInstance && reference.lastInstance.once) {
+        // Listen for changes of the individual property
+        var handler = (onceOnly ? reference.lastInstance.once('change:' + reference.lastInstanceKey, cb) : 
+                                  reference.lastInstance.on('change:' + reference.lastInstanceKey, cb));
+        elem.handlers.push({handler: handler, obj: reference.lastInstance});
       }
     },
 
@@ -723,6 +722,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
         evaluator.baseScope = elem.scope.clone();
         var frag = evaluator.render(function() {
           // Replace old element once rendering has completely finished
+          self.unregister(elem);
           elem.parentNode.replaceChild(frag, elem);
         });
       }

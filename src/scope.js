@@ -52,7 +52,7 @@ var Scope = function() {
       _.each(segments, function(segment, i) {
         if(!obj) return;
         lastObj = obj;
-        if(lastObj.klass == 'Instance') {
+        if(lastObj.once && lastObj.on) {
           lastInstance = lastObj;
           lastInstanceKey = segment;
         }
