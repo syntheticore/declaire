@@ -10,23 +10,30 @@ var Collection = function(array) {
     add: function(item) {
       var self = this;
       var items = Array.isArray(item) ? item : [item];
+      var added = false;
       _.each(items, function(item) {
-        self.items.push(item);
-        if(item && item.klass == 'Instance') {
-          item.once('delete', function() {
-            self.remove(item);
-          });
-        };
+        if(!_.contains(self.items, item)) {
+          self.items.push(item);
+          if(item && item.klass == 'Instance') {
+            item.once('delete', function() {
+              self.remove(item);
+            });
+          };
+          added = true;
+        }
       });
-      self.emit('add');
-      self.emit('change:size');
-      self.emit('change');
+      if(added) {
+        self.emit('add');
+        self.emit('change:size');
+        self.emit('change');
+      }
       return self;
     },
 
     // Remove a given element
     remove: function(item) {
-      return this.removeAt(this.items.indexOf(item));
+      var index = this.items.indexOf(item);
+      return index != -1 ? this.removeAt(index) : this;
     },
 
     // Remove the element at the given index
