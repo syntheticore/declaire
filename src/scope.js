@@ -62,7 +62,8 @@ var Scope = function() {
           obj = self.readAttribute(obj, segment);
         }
       });
-      var lastSegment = (_.hasValue(obj) && segments.pop()) || firstSegment;
+      // var lastSegment = (_.hasValue(obj) && segments.pop()) || firstSegment;
+      var lastSegment = segments.pop() || firstSegment;
       var ref = {
         obj: lastObj,
         key: lastSegment,
