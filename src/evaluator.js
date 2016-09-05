@@ -41,6 +41,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
 
   // Is the given obj a string describing a data path?
   var isPath = function(obj) {
+    if(obj == 'true' || obj == 'false' || obj == 'null') return false;
     return obj.match && !!obj.match(/^!?[A-z][A-z0-9]*(\.[A-z][A-z0-9]*)*/);
   };
 
@@ -100,42 +101,54 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
     });
   };
 
-  // Evaluate expression of alternating values and boolean operators
+  // Evaluate expression of alternating values and operators
   var evalCompoundExpr = function(scope, expr) {
-    // Separate expression into values and operators
-    var parts = expr.split(/\s+/);
     var booleans = ['||', '&&'];
     var comparisons = ['==', '!=', '>', '<', '>=', '<='];
     var allOps = _.union(booleans, comparisons);
-    var values = [];
-    var ops = [];
-    _.each(parts, function(part) {
-      if(_.contains(allOps, part)) {
-        ops.push(part);
+    // Separate expression into values and operators
+    var parts = expr.split(/\s+/);
+    // Evaluate comparison operators first
+    var compare = function(a, b, op) {
+      return a.then(function(a) {
+        return b.then(function(b) {
+          if(op == '==') return a == b;
+          if(op == '!=') return a != b;
+          if(op == '>')  return a >  b;
+          if(op == '<')  return a <  b;
+          if(op == '>=') return a >= b;
+          if(op == '<=') return a <= b;
+        });
+      });
+    };
+    var boolParts = [];
+    for(var i = 0; i < parts.length; i++) {
+      var part = parts[i];
+      if(_.contains(comparisons, part)) {
+        // Comparison OP
+        var a = boolParts.pop();
+        var b = evalExpr(scope, parts[i + 1]);
+        boolParts.push(compare(a, b, part));
+        i++;
+      } else if(_.contains(booleans, part)) {
+        // Boolean OP
+        boolParts.push(part);
       } else {
-        values.push(evalExpr(scope, part));
+        // Value
+        boolParts.push(evalExpr(scope, part))
       }
+    }
+    // Separate boolean operators from values
+    var partition = _.partition(boolParts, function(part) {
+      return _.contains(booleans, part);
     });
-    // Resolve values
+    var boolOps = partition[0];
+    var values = partition[1];
+    // Eval boolean operators
     return _.resolvePromises(values).then(function(values) {
-      // Eval comparison operators
-      values = _.compact(_.map(values, function(value, i) {
-        var op = ops[i];
-        var v2 = values[i + 1];
-        if(op == '==') return value == v2;
-        if(op == '!=') return value != v2;
-        if(op == '>')  return value >  v2;
-        if(op == '<')  return value <  v2;
-        if(op == '>=') return value >= v2;
-        if(op == '<=') return value <= v2;
-        if(!_.contains(comparisons, ops[i - 1])) {
-          return value;
-        }
-      }));
-      // Eval boolean operators
       var out = values.shift();
       _.each(values, function(value) {
-        var op = ops.shift();
+        var op = boolOps.shift();
         if(op == '||') {
           out = out || value;
         } else if(op == '&&') {
