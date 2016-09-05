@@ -121,29 +121,24 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
         });
       });
     };
-    var boolParts = [];
+    var boolOps = [];
+    var values = [];
     for(var i = 0; i < parts.length; i++) {
       var part = parts[i];
-      if(_.contains(comparisons, part)) {
-        // Comparison OP
-        var a = boolParts.pop();
-        var b = evalExpr(scope, parts[i + 1]);
-        boolParts.push(compare(a, b, part));
-        i++;
-      } else if(_.contains(booleans, part)) {
+      if(_.contains(booleans, part)) {
         // Boolean OP
-        boolParts.push(part);
+        boolOps.push(part);
+      } else if(_.contains(comparisons, part)) {
+        // Comparison OP
+        var a = values.pop();
+        var b = evalExpr(scope, parts[i + 1]);
+        values.push(compare(a, b, part));
+        i++;
       } else {
         // Value
-        boolParts.push(evalExpr(scope, part))
+        values.push(evalExpr(scope, part));
       }
     }
-    // Separate boolean operators from values
-    var partition = _.partition(boolParts, function(part) {
-      return _.contains(booleans, part);
-    });
-    var boolOps = partition[0];
-    var values = partition[1];
     // Eval boolean operators
     return _.resolvePromises(values).then(function(values) {
       var out = values.shift();

@@ -53,7 +53,7 @@ var Instance = function() {
           });
           value = comp.value;
           // Remember dependencies
-          this.computedProperties[key] = _.clone(comp.keys);
+          this.computedProperties[key] = comp.keys;
         }
       } else {
         // Leave a trace in case we were called from a computed property
@@ -368,7 +368,7 @@ var findDependencies = function(cb) {
   var ret = cb();
   return {
     value: ret,
-    keys: propertiesUsed
+    keys: _.clone(propertiesUsed)
   };
 };
 
