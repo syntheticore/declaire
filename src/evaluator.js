@@ -366,7 +366,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
           
           case 'import':
             var elem = interface.createDOMElement('span', null, ['placeholder-import']);
-            node.paths = _.values(node.arguments);
+            node.paths = _.select(_.values(node.arguments), function(v) { return isPath(v) });
             elem.node = node;
             elem.scope = scope;
             // Render indented nodes for placement using content statement
@@ -616,9 +616,6 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
               // Call action method
               // The method may prevent event bubbling by returning false
               return elem.scope.resolvePath(statement.method, _.union([e], args)).value;
-            }).catch(function(err) {
-              console.error(err.name + ': ' + err.message);
-              console.error(err.stack);
             });
           });
         
@@ -681,7 +678,10 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
 
     // Register a callback to be called when the data at <path> changes
     registerPath: function(elem, path, onceOnly, cb) {
-      if(!isPath(path)) throw "Should not happen";
+      if(!isPath(path)) {
+        console.error("Should not happen");
+        return;
+      }
       // Resolve actual instance the path points to
       var reference = elem.scope.resolvePath(path).ref;
       if(reference.lastInstance && reference.lastInstance.once) {

@@ -61,7 +61,9 @@ var LocalStore = function(modelName) {
     var out = {};
     all(function(item, key) {
       var item = get(key);
-      if(matches(item, query)) out[key] = item.data;
+      if(matches(item, query) && item.meta._pending != 'delete') {
+        out[key] = item.data;
+      }
     });
     return out;
   };
@@ -89,7 +91,8 @@ var LocalStore = function(modelName) {
   return {
     // Returns the cleaned up object at the given key
     get: function(localId) {
-      return get(localId).data;
+      var entry = get(localId);
+      return entry.meta._pending != 'delete' ? entry.data : null;
     },
     
     // Persist object data to local storage under the given key
