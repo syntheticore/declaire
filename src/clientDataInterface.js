@@ -33,7 +33,14 @@ var ClientDataInterface = function(model) {
       // Use callback to return complete results from server
       _.ajax({url: url, data: options}).then(function(data) {
         cb(null, _.map(data, function(item) {
-          return cache[item._id] ? cache[item._id] : init(item);
+          if(cache[item._id]) {
+            return cache[item._id];
+          } else {
+            var inst = init(item);
+            // Store local copy on first fetch
+            localStore.set(inst);
+            return inst;
+          }
         }));
       }).catch(function() {
         // Gracefully return incomplete results when network fails
@@ -70,7 +77,10 @@ var ClientDataInterface = function(model) {
         } else {
           // Resort to ajax
           ajax(function(data) {
-            cb(null, init(data));
+            var inst = init(data);
+            // Store local copy on first fetch
+            localStore.set(inst);
+            cb(null, inst);
           });
         }
       }
@@ -109,9 +119,11 @@ var ClientDataInterface = function(model) {
     delete: function(id, cb) {
       var inst = cache[id];
       if(inst) {
+        // Mark object as collectable in case we're offline
         localStore.set(inst, {_pending: 'delete'});
         delete cache[id];
         _.ajax({verb: 'DELETE', url: url + '/' + id}).then(function() {
+          // Remove on acknowlede
           localStore.delete(id);
         });
       }
