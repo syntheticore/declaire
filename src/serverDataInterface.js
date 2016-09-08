@@ -42,8 +42,8 @@ var ServerDataInterface = function(app, model) {
       var fields = _.merge(inst.serialize(), {createdAt: new Date(), updatedAt: new Date()});
       app.db.collection(name).insert(fields, function(err, items) {
         var item = items[0];
-        if(!err) app.pubSub.publish({type: 'create', collection: name, id: item._id, data: item});
         cb(err, init(item));
+        if(!err) app.pubSub.publish({type: 'create', collection: name, id: item._id, data: item});
       });
       return this;
     },
@@ -57,16 +57,16 @@ var ServerDataInterface = function(app, model) {
         if(err) {
           cb(err);
         } else {
-          app.pubSub.publish({type: 'update', collection: name, id: id, data: values});
           cb(null, values);
+          app.pubSub.publish({type: 'update', collection: name, id: id, data: values});
         }
       });
     },
 
     delete: function(id, cb) {
       app.db.collection(name).remove({_id: new mongo.ObjectID(id)}, function(err) {
-        if(!err) app.pubSub.publish({type: 'delete', collection: name, id: id});
         cb(err);
+        if(!err) app.pubSub.publish({type: 'delete', collection: name, id: id});
       });
     }
   };
