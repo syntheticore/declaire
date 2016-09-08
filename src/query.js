@@ -11,13 +11,13 @@ var Query = function(modelOrCollection, query, options) {
 
   var getItems = function(onlyOne, cb) {
     if(modelOrCollection.klass == 'Model') {
-      modelOrCollection.dataInterface.all(_.merge(options, {query: query}), function(err, items) {
-        // inst.length = items.length;
-        allCache = items;
-        cb && cb(filter(items), onlyOne);
+      var localItems = modelOrCollection.dataInterface.all(_.merge(options, {query: query}), function(err, items) {
+        // allCache = items;
+        cb && cb(filter(items, onlyOne));
       });
+      return filter(localItems, onlyOne);
     } else {
-      cb(filter(modelOrCollection.items, onlyOne));
+      cb && cb(filter(modelOrCollection.items, onlyOne));
     }
   };
 
@@ -36,7 +36,6 @@ var Query = function(modelOrCollection, query, options) {
         modelOrCollection.app.pubSub.subscribe('create update delete', modelOrCollection.name, function(data) {
           console.log("Updating query due to pubsub");
           getItems(false, function() {
-            console.log("Got new items");
             inst.emit('change:' + 'size');
             inst.emit('change');
           });
@@ -70,11 +69,16 @@ var Query = function(modelOrCollection, query, options) {
     resolve: function(cb) {
       var self = this;
       if(allCache) {
-        cb && cb(allCache);
+        cb(allCache);
       } else {
-        getItems(false, function(items) {
-          cb && cb(items);
+        var localResolve = false;
+        var localItems = getItems(false, function(items) {
+          if(!localResolve) cb(items);
         });
+        if(localItems && localItems.length) {
+          localResolve = true;
+          cb(localItems);
+        }
       }
       return self;
     },
