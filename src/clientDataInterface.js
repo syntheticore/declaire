@@ -7,28 +7,31 @@ var ClientDataInterface = function(model) {
   var url = model.url();
   var cache = {};
   
-  // Fetch object from cache
-  // or create first local representation otherwise
-  var init = function(data) {
-    // if(cache[data._id]) return cache[data._id];
+  // Create live instance from network or local data
+  var init = function(data, meta) {
+    // Construct instance
     var inst = model.create();
     inst.id = data._id;
     inst.data.remote = data;
-    cache[inst.id] = inst;
+    inst.localId = meta && meta.localId
     // Update local storage on all network updates
     inst.on('fetch', function() {
       localStore.set(inst);
     });
-    inst.connect();
+    // Store in cache
+    cache[inst.id || inst.localId] = inst; //XXX remove dead locals
+    // Connect to pubsub if instance was persisted already
+    if(inst.id) inst.connect();
     return inst;
   };
 
   return {
     all: function(options, cb) {
       // Build incomplete results from local storage
-      var datas = localStore.query(options.query || {}, options.limit);
-      var instances = _.map(datas, function(data) {
-        return cache[data._id] ? cache[data._id] : init(data);
+      var locals = localStore.query(options.query || {}, options.limit);
+      var instances = _.map(locals, function(local) {
+        var id = local.meta.id || local.meta.localId;
+        return cache[id] ? cache[id] : init(local.data, local.meta);
       });
       // Use callback to return complete results from server
       _.ajax({url: url, data: options}).then(function(data) {
@@ -42,10 +45,6 @@ var ClientDataInterface = function(model) {
             return inst;
           }
         }));
-      }).catch(function() {
-        // Gracefully return incomplete results when network fails
-        cb(null, instances);
-        // cb('error', null);
       });
       // Return incomplete results synchronously
       return instances;
@@ -94,11 +93,13 @@ var ClientDataInterface = function(model) {
       _.ajax({verb: 'POST', url: url, data: inst.serialize()}).then(function(data) {
         // Remove local storage entry under old ID
         localStore.delete(inst.localId);
+        delete cache[inst.localId];
         // Save again with final ID from server
         inst.id = data._id;
-        cb(null, data);
         // inst.data.remote = data;
         localStore.set(inst);
+        cache[inst.id] = inst;
+        cb(null, data);
       }).catch(function() {
         cb(null, inst.serialize());
       });

@@ -31,9 +31,11 @@ var LocalStore = function(modelName) {
 
   // Save object data to local storage
   // Also leave a timestamp and purge if neccessary
-  var set = function(key, obj, options) {
-    var json = JSON.stringify({data: obj, meta: _.merge(options, {_lastRequested: new Date()})});
-    localStorage.setItem(modelName + ':' + key, json);
+  var set = function(inst, options) {
+    var data = inst.serialize();
+    var meta = _.merge(options, {id: inst.id, localId: inst.localId, lastRequested: new Date()});
+    var json = JSON.stringify({data: data, meta: meta});
+    localStorage.setItem(modelName + ':' + (inst.id || inst.localId), json);
     purge();
   };
 
@@ -62,7 +64,7 @@ var LocalStore = function(modelName) {
     all(function(item, key) {
       var item = get(key);
       if(matches(item, query) && item.meta._pending != 'delete') {
-        out[key] = item.data;
+        out[key] = item;
       }
     });
     return out;
@@ -77,7 +79,7 @@ var LocalStore = function(modelName) {
     if(keys.length > maxItems) {
       // Sort by descending popularity
       keys.sort(function(a, b) {
-        return get(b)._lastRequested.localeCompare(get(a)._lastRequested);
+        return get(b).meta.lastRequested.localeCompare(get(a).meta.lastRequested);
       });
       // Shave the given percentage off the bottom
       var startIndex = Math.round(maxItems * (deletePercentage / 100));
@@ -97,7 +99,7 @@ var LocalStore = function(modelName) {
     
     // Persist object data to local storage under the given key
     set: function(inst, options) {
-      set(inst.id || inst.localId, inst.serialize(), options);
+      set(inst, options);
       return this;
     },
 

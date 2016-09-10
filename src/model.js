@@ -142,17 +142,17 @@ var Instance = function() {
           });
         } else {
           // Create fresh instance on the server
-          //XXX offline case
           self.model.dataInterface.create(self, function(err, data) {
             self.data.remote = data;
             // self.id = data._id;
             self.connect();
             finish();
           });
+          // Emit create event
+          self.model.emit('create', [self]);
         }
         var finish = function() {
           self.data.local = {};
-          // cb && typeof(cb) == 'function' && cb();
           self.emit('save');
         };
       } else {
@@ -199,7 +199,7 @@ var Instance = function() {
 
     // Returns a reference object, usable for storage in the db
     reference: function() {
-      return {_ref: {id: this.id || this.localId, collection: this.model.name}};
+      return {_ref: {id: this.id, localId: this.localId, collection: this.model.name}};
     },
 
     // Serialize object into a representation suitable for
@@ -356,6 +356,7 @@ var Model = function(dbCollection, reference, constructor) {
     }
   };
   models[model.name] = model;
+  _.eventHandling(model);
   return model;
 };
 

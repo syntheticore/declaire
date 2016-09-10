@@ -40,6 +40,10 @@ var Query = function(modelOrCollection, query, options) {
             inst.emit('change');
           });
         });
+        modelOrCollection.on('create', function() {
+          inst.emit('change:' + 'size');
+          inst.emit('change');
+        });
         subscribed = true;
       }
     } else if(modelOrCollection.klass == 'Collection') {
