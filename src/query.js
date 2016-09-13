@@ -93,7 +93,7 @@ var Query = function(modelOrCollection, query, options) {
       if(allCache && allCache[0]) {
         cb(allCache[0]);
       } else {
-        getItems(true, function(items) {
+        getItems(true, function(items) { //XXX return local items
           cb(items[0]);
         });
       }

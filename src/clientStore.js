@@ -25,8 +25,7 @@ var LocalStore = function(modelName) {
 
   // Retrieve object data from local storage
   var get = function(key) {
-    var item = JSON.parse(localStorage.getItem(modelName + ':' + key));
-    return item;
+    return JSON.parse(localStorage.getItem(modelName + ':' + key));
   };
 
   // Save object data to local storage
@@ -94,6 +93,7 @@ var LocalStore = function(modelName) {
     // Returns the cleaned up object at the given key
     get: function(localId) {
       var entry = get(localId);
+      if(!entry) return null;
       return entry.meta._pending != 'delete' ? entry.data : null;
     },
     
