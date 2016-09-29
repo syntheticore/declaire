@@ -731,7 +731,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
         var frag = evaluator.render(function() {
           // Replace old element once rendering has completely finished
           self.unregister(elem);
-          elem.parentNode.replaceChild(frag, elem);
+          if(elem.parentNode) elem.parentNode.replaceChild(frag, elem);
         });
       }
     },

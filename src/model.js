@@ -168,13 +168,13 @@ var Instance = function() {
       var self = this;
       self.model.dataInterface.one(self.id, function(err, data) {
         if(err) {
-          cb(null);
+          cb && cb(null);
         } else {
           //XXX Rebuild collections
           //XXX Trigger change events
           self.data.remote = data;
           // localStore.save(self.localId, self.data);
-          cb(self);
+          cb && cb(self);
           self.emit('fetch');
         }
       }, true);

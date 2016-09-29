@@ -14,7 +14,7 @@ var REST = function(name, express, dataInterface) {
         var options = JSON.parse(req.query.data);
         dataInterface.all(options, function(err, items) {
           if(err) {
-            res.send(404, err);
+            res.status(404).send(err);
           } else {
             res.json(_.invoke(items, 'serialize'));
           }
@@ -25,7 +25,7 @@ var REST = function(name, express, dataInterface) {
       express.get(baseUrl + '/:id', function(req, res) {
         dataInterface.one(req.params.id, function(err, item) {
           if(err) {
-            res.send(404, err);
+            res.status(404).send(err);
           } else {
             res.json(item.serialize());
           }
@@ -36,7 +36,7 @@ var REST = function(name, express, dataInterface) {
       express.post(baseUrl, function(req, res) {
         dataInterface.create({serialize: function() { return req.body }}, function(err, item) {
           if(err) {
-            res.send(404, err);
+            res.status(404).send(err);
           } else {
             res.json(item.serialize());
           }
@@ -47,7 +47,7 @@ var REST = function(name, express, dataInterface) {
       express.post(baseUrl + '/:id', function(req, res) {
         dataInterface.update(req.params.id, req.body, function(err, updatedValues) {
           if(err) {
-            res.send(404, err);
+            res.status(404).send(err);
           } else {
             res.json(updatedValues);
           }
@@ -58,7 +58,7 @@ var REST = function(name, express, dataInterface) {
       express.delete(baseUrl + '/:id', function(req, res) {
         dataInterface.delete(req.params.id, function(err) {
           if(err) {
-            res.send(404, err);
+            res.status(404).send(err);
           } else {
             res.end();
           }

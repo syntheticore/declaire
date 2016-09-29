@@ -4,6 +4,7 @@ var _ = require('./utils.js');
 
 var ServerDataInterface = function(app, model) {
   var name = model.name;
+  var remoteOnly = {_image: 0, _salt: 0, _hash: 0, _username: 0};
 
   var init = function(data) {
     var inst = model.create();
@@ -19,7 +20,7 @@ var ServerDataInterface = function(app, model) {
         from: 0,
         limit: 0
       }, options);
-      app.db.collection(name).find(options.query, {image:0, salt:0, hash:0}).skip(options.from).limit(options.limit).toArray(function(err, items) {
+      app.db.collection(name).find(options.query, remoteOnly).skip(options.from).limit(options.limit).toArray(function(err, items) {
         items = _.map(items, function(item) {
           return init(item);
         });
@@ -29,7 +30,7 @@ var ServerDataInterface = function(app, model) {
     },
 
     one: function(id, cb) {
-      app.db.collection(name).findOne({_id: new mongo.ObjectID(id)}, {image:0, salt:0, hash:0}, function(err, item) {
+      app.db.collection(name).findOne({_id: new mongo.ObjectID(id)}, remoteOnly, function(err, item) {
         if(!item) {
           cb("Object with id '" + id + "' could not be found in the collection '" + name + "'", null);
         } else {

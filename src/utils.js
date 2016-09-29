@@ -1,4 +1,3 @@
-var rsvp = require('rsvp');
 var _ = require('eakwell');
 
 // Check if we are executing on the server

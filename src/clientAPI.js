@@ -5,5 +5,6 @@ module.exports = {
   Collection: require('./collection.js'),
   Query: require('./query.js'),
   utils: require('./utils.js'),
+  Auth: require('./clientAuth.js'),
   UndoManager: require('./undoManager.js')
 };

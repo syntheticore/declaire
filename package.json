@@ -39,6 +39,7 @@
     "mongodb": "^1.4.33",
     "morgan": "^1.7.0",
     "nib": "^1.1.2",
+    "request-context": "^1.0.0",
     "rsvp": "^3.2.1",
     "serve-favicon": "^2.3.0",
     "stylus": "^0.54.5"

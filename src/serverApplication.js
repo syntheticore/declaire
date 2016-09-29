@@ -15,6 +15,7 @@ var stylus = require('stylus');
 var nib = require('nib');
 var browserify = require('browserify');
 var session = require('express-session');
+var contextService = require('request-context');
 var MongoStore = require('connect-mongo')(session);
 
 var _ = require('./utils.js');
@@ -27,7 +28,9 @@ var Collection = require('./collection.js');
 var Query = require('./query.js');
 var DataInterface = require('./serverDataInterface.js');
 var REST = require('./REST.js');
+var Auth = require('./serverAuth.js');
 
+var oneDay = 86400000;
 
 
 var ServerApplication = function(options) {
@@ -60,8 +63,12 @@ var ServerApplication = function(options) {
   expressApp.use(session({
     secret: process.env.SESSION_SECRET || 'devSecret',
     store: new MongoStore({url: options.mongoUrl}),
-    saveUninitialized: true,
-    resave: true
+    saveUninitialized: false,
+    resave: false,
+    cookie: {
+      secure: (environment == 'production'),
+      maxAge: oneDay
+    }
   }));
   
   // Prevent common vulnerabilities and attacks
@@ -102,7 +109,6 @@ var ServerApplication = function(options) {
   }));
   
   // Serve public files
-  var oneDay = 86400000;
   expressApp.use(express.static('./public', {maxAge: oneDay}));
   _.each(options.npmPublic, function(folder) {
     expressApp.use('/' + _.last(folder.split('/')), express.static('./node_modules/' + folder, {maxAge: oneDay}));
@@ -240,6 +246,13 @@ var ServerApplication = function(options) {
     return evaluator;
   };
 
+  // Make the logged in user accessible during template evaluation
+  expressApp.use(contextService.middleware('declaire'));
+  expressApp.use(function (req, res, next) {
+    contextService.set('declaire:user', req.session.user);
+    next();
+  });
+
   // Render layout for the requested page
   expressApp.get('/pages/*', function(req, res) {
     res.setHeader('Content-Type', 'text/html');
@@ -301,6 +314,8 @@ var ServerApplication = function(options) {
         if(err) throw err;
         console.log("done");
         self.db = dbs;
+        // Authentication
+        Auth.serve(expressApp, self.db);
         // Mongo PubSub
         process.stdout.write("Preparing PubSub...");
         self.pubSub = require('./serverPublisher.js')(expressApp, self.db).init(function() {
