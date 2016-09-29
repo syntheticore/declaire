@@ -33,11 +33,11 @@ module.exports = {
   },
 
   logout: function() {
-    _.ajax({
-      verb: 'POST',
-      url: '/signup'
-    });
     clearCookie();
+    return _.ajax({
+      verb: 'POST',
+      url: '/logout'
+    });
   },
 
   // Return the ID of the current user
