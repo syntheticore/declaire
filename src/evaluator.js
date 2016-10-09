@@ -17,8 +17,8 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
       var i = m.index;
       var l = m[0].length;
       var expr = m[1];
-      if(isPath(expr)) paths.push(expr);
-      return _.promiseFrom(evalExpr(scope, expr)).then(function(value) {
+      paths = paths.concat(detectCompoundPaths([expr]));
+      return evalCompoundExpr(scope, expr).then(function(value) {
         return {
           index: m.index,
           length: m[0].length,
@@ -738,7 +738,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
 
     // Set or remove attribute according to given expression
     updateAttribute: function(elem, key, expr) {
-      var value = _.promiseFrom(evalCompoundExpr(elem.scope, expr));
+      var value = evalCompoundExpr(elem.scope, expr);
       return value.then(function(value) {
         if(_.hasValue(value)) {
           // Boolean attribute
