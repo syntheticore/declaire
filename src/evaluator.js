@@ -83,8 +83,8 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
       var attr = node.attributes[attrName];
       if(attr.type == 'static') {
         ret = attr.value;
-      } else {
-        ret = evalCompoundExpr(scope, attr.value, node);
+      } else if(attr.type == 'dynamic') {
+        ret = evalCompoundExpr(scope, attr.expression, node);
       }
     // Path
     } else if(isPath(expr) || expr == '$this') {
