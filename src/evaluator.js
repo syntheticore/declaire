@@ -7,7 +7,7 @@ var Scope = require('./scope.js');
 var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) {
 
   // Replace all mustaches in text with the value at their paths
-  var resolveMustaches = function(text, scope, cb) {
+  var resolveMustaches = function(text, scope, node, cb) {
     // Collect mustaches in reverse order
     var matches = _.scan(text, /{(.*?)}/g).reverse();
     // Resolve all - potentially asynchronous - expressions
@@ -18,7 +18,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
       var l = m[0].length;
       var expr = m[1];
       paths = paths.concat(detectCompoundPaths([expr]));
-      return evalCompoundExpr(scope, expr).then(function(value) {
+      return evalCompoundExpr(scope, expr, node).then(function(value) {
         return {
           index: m.index,
           length: m[0].length,
@@ -52,7 +52,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
 
   // Evaluate a template expression,
   // which can either be a JS literal or a path
-  var evalExpr = function(scope, expr) {
+  var evalExpr = function(scope, expr, node) {
     var m;
     // Negation
     var negate = (expr[0] == '!');
@@ -75,17 +75,26 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
     // Array
     } else if(m = expr.match(/^\[(.*)\]$/)) {
       ret = _.map(m[1].split(','), function(item) {
-        return evalExpr(scope, item);
+        return evalExpr(scope, item, node);
       });
-    // Path or Magic variable
-    } else if(isPath(expr) || expr[0] == '$') {
+    // Magic variable
+    } else if(expr[0] == '$' && expr != '$this') {
+      var attrName = expr.slice(1);
+      var attr = node.attributes[attrName];
+      if(attr.type == 'static') {
+        ret = attr.value;
+      } else {
+        ret = evalCompoundExpr(scope, attr.value, node);
+      }
+    // Path
+    } else if(isPath(expr) || expr == '$this') {
       // Arguments for helper functions
       if(_.contains(expr, '(')) {
         var parts = expr.split('(');
         expr = parts[0];
         var args = parts[1].slice(0, -1).split(',');
         args = _.map(args, function(arg) {
-          return evalExpr(scope, arg.trim());
+          return evalExpr(scope, arg.trim(), node);
         });
         ret = _.resolvePromises(args).then(function(args) {
           return scope.resolvePath(expr, args).value;
@@ -102,7 +111,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
   };
 
   // Evaluate expression of alternating values and operators
-  var evalCompoundExpr = function(scope, expr) {
+  var evalCompoundExpr = function(scope, expr, node) {
     var booleans = ['||', '&&'];
     var comparisons = ['==', '!=', '>', '<', '>=', '<='];
     var allOps = _.union(booleans, comparisons);
@@ -131,12 +140,12 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
       } else if(_.contains(comparisons, part)) {
         // Comparison OP
         var a = values.pop();
-        var b = evalExpr(scope, parts[i + 1]);
+        var b = evalExpr(scope, parts[i + 1], node);
         values.push(compare(a, b, part));
         i++;
       } else {
         // Value
-        values.push(evalExpr(scope, part));
+        values.push(evalExpr(scope, part, node));
       }
     }
     // Eval boolean operators
@@ -255,7 +264,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
               var alt = alternatives[index];
               if(alt.expr) {
                 // Resolve potential promises among values
-                var promise = evalCompoundExpr(scope, alt.expr);
+                var promise = evalCompoundExpr(scope, alt.expr, node);
                 var value = promise.then(function(value) {
                   if(value) {
                     cb(alt);
@@ -290,7 +299,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
             elem.node = node;
             elem.scope = scope;
             // Resolve actual iterable at path
-            var items = evalExpr(scope, node.itemsPath);
+            var items = evalExpr(scope, node.itemsPath, node);
             unfinish(frag);
             items.then(function(items) {
               // Render every child,
@@ -340,7 +349,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
               if(viewModel) {
                 // Evaluate constructor arguments
                 var args = _.map(node.arguments, function(arg) {
-                  return evalExpr(scope, arg);
+                  return evalExpr(scope, arg, node);
                 });
                 unfinish(frag);
                 _.resolvePromises(args).then(function(args) {
@@ -374,7 +383,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
             recurse(contentFrag, scope);
             // Look up arguments in scope
             var args = _.map(node.arguments, function(expr) {
-              return evalExpr(scope, expr);
+              return evalExpr(scope, expr, node);
             });
             unfinish(frag);
             _.resolvePromises(args).then(function(args) {
@@ -543,7 +552,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
         if(node.content) {
           // Replace mustaches with actual values
           unfinish(frag);
-          var mustachePaths = resolveMustaches(node.content, scope, function(text) {
+          var mustachePaths = resolveMustaches(node.content, scope, node, function(text) {
             elem.innerHTML = text;
             finish(frag);
           });
@@ -610,7 +619,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
             e.preventDefault();
             // Evaluate arguments to be passed to the method
             var args = _.map(statement.args, function(arg) {
-              return evalExpr(elem.scope, arg);
+              return evalExpr(elem.scope, arg, elem.node);
             });
             return _.resolvePromises(args).then(function(args) {
               // Call action method
@@ -738,7 +747,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
 
     // Set or remove attribute according to given expression
     updateAttribute: function(elem, key, expr) {
-      var value = evalCompoundExpr(elem.scope, expr);
+      var value = evalCompoundExpr(elem.scope, expr, elem.node);
       return value.then(function(value) {
         if(_.hasValue(value)) {
           // Boolean attribute
@@ -763,7 +772,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
 
     // Add or remove the given class name according to given expression
     updateCssClass: function(elem, klassName, expr) {
-      var value = evalCompoundExpr(elem.scope, expr);
+      var value = evalCompoundExpr(elem.scope, expr, elem.node);
       return value.then(function(bool) {
         if(bool) {
           if(!_.contains(elem.className, klassName)) elem.className += ' ' + klassName;
