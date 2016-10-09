@@ -160,7 +160,7 @@ var Parser = {
       } else {
         attrDefinitions = inParens;
       }
-      _.each(_.scan(attrDefinitions, /([\w-]+?)=(['"])(.+?)\2\s?/g), function(m) { // '
+      _.each(_.scan(attrDefinitions, /([\w-]+?)\s*=\s*(['"])(.+?)\2\s?/g), function(m) { // '
         var key = m[1];
         var value = m[3];
         attributes[key] = self.parseAttribute(value);
