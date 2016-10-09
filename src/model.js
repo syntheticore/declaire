@@ -35,9 +35,9 @@ var Instance = function() {
         value = this.data.remote[key];
       }
       // Defaults may have changed in code since object was created
-      //XXX Do the same for default collections and queries
       if(value === undefined) {
-        value = this.model.defaults[key];
+        var def = this.model.defaults[key];
+        value = (def && def.clone ? def.clone() : _.clone(def));
       }
       // Use temporary value as last resort
       if(value === undefined) {
@@ -289,7 +289,7 @@ var Model = function(dbCollection, reference, constructor) {
   var model = {
     klass: 'Model',
     name: dbCollection,
-    defaults: ref.defaults,
+    defaults: _.merge(_.merge(ref.defaults, ref.collections), ref.queries),
 
     // The server URL of this model's collection
     url: function() {
