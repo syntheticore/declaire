@@ -2,6 +2,7 @@ var _ = require('./utils.js');
 
 
 var Collection = function(array) {
+  if(array && array.klass == 'Collection') return array;
   var col = {
     klass: 'Collection',
     items: [],
@@ -99,6 +100,22 @@ var Collection = function(array) {
   if(array) col.add(array);
 
   return col;
+};
+
+// Wrap all arrays in <data> with a Collection
+// and mirror updates to a parent <inst>
+Collection.makeCollections = function(data, inst) {
+  return _.map(data, function(value, key) {
+    if(Array.isArray(value)) {
+      var col = Collection(value);
+      if(inst) col.on('change', function() {
+        inst.data.local[key] = col;
+      });
+      return col;
+    } else {
+      return value;
+    }
+  });
 };
 
 

@@ -1,5 +1,6 @@
-var _ = require('./utils.js');
 var ClientStore = require('./clientStore.js');
+var Collection = require('./collection.js');
+var _ = require('./utils.js');
 
 
 var ClientDataInterface = function(model) {
@@ -12,7 +13,7 @@ var ClientDataInterface = function(model) {
     // Construct instance
     var inst = model.create();
     inst.id = data._id;
-    inst.data.remote = data;
+    inst.data.remote = Collection.makeCollections(data, inst);
     inst.localId = meta && meta.localId
     // Update local storage on all network updates
     inst.on('fetch', function() {
@@ -132,7 +133,6 @@ var ClientDataInterface = function(model) {
     }
   };
 };
-
 
 module.exports = ClientDataInterface;
 

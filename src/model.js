@@ -28,8 +28,7 @@ var Instance = function() {
     get: function(key) {
       // Catch remaining arguments as parameters for computed properties
       var args = Array.prototype.slice.call(arguments).splice(1);
-      //XXX Should return a deep copy of defaults and remote data
-      // var value = this.collections[key] || this.data.local[key] || this.data.remote[key] || this.model.defaults[key];
+      // Determine value
       var value = this.data.local[key];
       if(value === undefined) {
         value = this.data.remote[key];
@@ -37,7 +36,11 @@ var Instance = function() {
       // Defaults may have changed in code since object was created
       if(value === undefined) {
         var def = this.model.defaults[key];
-        value = (def && def.clone ? def.clone() : _.clone(def));
+        if(def !== undefined) {
+          value = (def.clone ? def.clone() : _.clone(def)); //XXX Should be deep clone
+          // Write back the copied default value
+          this.data.local[key] = value;
+        }
       }
       // Use temporary value as last resort
       if(value === undefined) {
@@ -136,8 +139,8 @@ var Instance = function() {
         // Persist local changes to server
         var url = self.id ? self.url() : self.model.url();
         if(self.id) {
-          self.model.dataInterface.update(self.id, self.data.local, function(err, updatedValues) {
-            self.data.remote = _.merge(self.data.remote, updatedValues);
+          self.model.dataInterface.update(self.id, references(self.data.local), function(err, updatedValues) {
+            self.data.remote = _.merge(self.data.remote, Collection.makeCollections(updatedValues, self));
             finish();
           });
         } else {
@@ -236,7 +239,7 @@ var Instance = function() {
       self.model.app.pubSub.subscribe('update', self.model.name, self.id, function(data) {
         console.log("Received push update");
         console.log(data.data);
-        self.data.remote = _.merge(self.data.remote, data.data);
+        self.data.remote = _.merge(self.data.remote, Collection.makeCollections(data.data, self));
         for(var key in data.data) {
           self.emit('change:' + key);
         }
@@ -279,7 +282,6 @@ var references = function(values) {
   }
   return out;
 };
-
 
 var models = {}; //XXX This is per package and should be per app
 
