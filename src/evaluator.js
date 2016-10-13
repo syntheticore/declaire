@@ -78,7 +78,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
         return evalExpr(scope, item, node);
       });
     // Magic variable
-    } else if(expr[0] == '$' && expr != '$this') {
+    } else if(expr[0] == '$' && expr.slice(0, 5) != '$this') {
       var attrName = expr.slice(1);
       var attr = node.attributes[attrName];
       if(attr.type == 'static') {
@@ -87,7 +87,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
         ret = evalCompoundExpr(scope, attr.expression, node);
       }
     // Path
-    } else if(isPath(expr) || expr == '$this') {
+    } else if(isPath(expr) || expr.slice(0, 5) == '$this') {
       // Arguments for helper functions
       if(_.contains(expr, '(')) {
         var parts = expr.split('(');
