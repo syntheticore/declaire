@@ -354,7 +354,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
                 unfinish(frag);
                 _.resolvePromises(args).then(function(args) {
                   // Instantiate view model
-                  viewModel.create(args, elem, function(view) {
+                  viewModel.create(args, elem).then(function(view) {
                     // Add view model instance to new scope level
                     var newScope = scope.clone().addLayer(view).addLayer({$this: view});
                     view.scope = newScope;

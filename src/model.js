@@ -127,42 +127,57 @@ var Instance = function() {
     // Also save local modifications to the server if possible
     save: function(values) {
       var self = this;
-      // Detect event object to allow calling from actions
-      if(values && values.target) {
-        values = undefined;
-      }
-      // Allow setting values immediately before saving
-      if(values) {
-        self.set(values);
-      }
-      if(self.isDirty() || !self.id) {
-        // Persist local changes to server
-        var url = self.id ? self.url() : self.model.url();
-        if(self.id) {
-          self.model.dataInterface.update(self.id, references(self.data.local), function(err, updatedValues) {
-            self.data.remote = _.merge(self.data.remote, Collection.makeCollections(updatedValues, self));
-            finish();
-          });
-        } else {
-          // Create fresh instance on the server
-          self.model.dataInterface.create(self, function(err, data) {
-            self.data.remote = data;
-            // self.id = data._id;
-            self.connect();
-            finish();
-          });
-          // Emit create event
-          self.model.emit('create', [self]);
+      return _.promise(function(ok, fail) {
+        // Detect event object to allow calling from actions
+        if(values && values.target) {
+          values = undefined;
         }
-        var finish = function() {
-          self.data.local = {};
-          self.emit('save');
-        };
-      } else {
-        // Emit save event anyway to be more predictable
-        self.emit('save');
-      }
-      return self;
+        // Allow setting values immediately before saving
+        if(values) {
+          self.set(values);
+        }
+        // Save referenced model instances first
+        var saves = _.compact(_.flatten(_.map(self.data.local, function(value, key) {
+          if(value && value.klass == 'Instance') {
+            return value.save();
+          } else if(value && value.klass == 'Collection') {
+            return _.map(value.items, function(item) {
+              return item && item.klass == 'Instance' ? item.save() : null;
+            });
+          }
+        })));
+        _.resolvePromises(saves).then(function() {
+          if(self.isDirty() || !self.id) {
+            // Persist local changes to server
+            var url = self.id ? self.url() : self.model.url();
+            if(self.id) {
+              self.model.dataInterface.update(self.id, references(self.data.local), function(err, updatedValues) {
+                self.data.remote = _.merge(self.data.remote, Collection.makeCollections(updatedValues, self));
+                finish();
+              });
+            } else {
+              // Create fresh instance on the server
+              self.model.dataInterface.create(self, function(err, data) {
+                self.id = data._id;
+                self.data.remote = Collection.makeCollections(data, self);
+                self.connect();
+                finish();
+              });
+              // Emit create event
+              self.model.emit('create', [self]);
+            }
+            var finish = function() {
+              self.data.local = {};
+              self.emit('save');
+              ok();
+            };
+          } else {
+            // Emit save event anyway to be more predictable
+            self.emit('save');
+            ok();
+          }
+        });
+      });
     },
 
     // Update the base state of the object from the server,
@@ -212,21 +227,24 @@ var Instance = function() {
     },
 
     // Load all referenced model instances
-    resolve: function(cb) {
+    resolve: function() {
       var self = this;
       var resolved = _.map(self.data.remote, function(item) {
-        if(item && item._ref) {
-          var model = models[item._ref.collection];
-          return model.load(item._ref.id);
+        if(item && item.klass == 'Collection') {
+          return _.resolvePromises(_.map(item.items, function(it) {
+            return unserialize(it);
+          })).then(function(items) {
+            item.items = items;
+            return item;
+          });
         } else {
-          return RSVP.resolve(item);
+          return unserialize(item);
         }
       });
-      RSVP.hash(resolved).then(function(instances) {
+      return RSVP.hash(resolved).then(function(instances) {
         _.each(instances, function(inst, key) {
           self.data.remote[key] = inst;
         });
-        cb();
       });
     },
 
@@ -281,6 +299,15 @@ var references = function(values) {
     }
   }
   return out;
+};
+
+var unserialize = function(item) {
+  if(item && item._ref) {
+    var model = models[item._ref.collection];
+    return model.load(item._ref.id);
+  } else {
+    return RSVP.resolve(item);
+  }
 };
 
 var models = {}; //XXX This is per package and should be per app

@@ -58,11 +58,10 @@ var ViewModel = function(name, reference, constructor) {
       };
       
       // Resolve instance
-      inst.resolve(function() {
+      return inst.resolve().then(function() {
         // Completely execute asynchronous or synchronous constructor before calling back
         var promise = constructor && constructor.apply(inst, args);
-        _.promiseFrom(promise).then(function() {
-          cb(inst);
+        return _.promiseFrom(promise).then(function() {
           if(_.onClient()) {
             // Defer once to be executed after view element has been filled
             _.defer(function() {
@@ -73,6 +72,7 @@ var ViewModel = function(name, reference, constructor) {
               });
             });
           }
+          return inst;
         });
       });
     }

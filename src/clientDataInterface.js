@@ -95,12 +95,12 @@ var ClientDataInterface = function(model) {
         // Remove local storage entry under old ID
         localStore.delete(inst.localId);
         delete cache[inst.localId];
+        cb(null, data);
         // Save again with final ID from server
-        inst.id = data._id;
+        // inst.id = data._id;
         // inst.data.remote = data;
         localStore.set(inst);
         cache[inst.id] = inst;
-        cb(null, data);
       }).catch(function() {
         cb(null, inst.serialize());
       });

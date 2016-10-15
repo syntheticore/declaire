@@ -9,13 +9,25 @@ var Query = function(modelOrCollection, query, options) {
 
   var allCache;
 
-  var getItems = function(onlyOne, cb) {
+  var getItems = function(onlyOne, cb, remoteFinished) {
     if(modelOrCollection.klass == 'Model') {
+      var local = false;
       var localItems = modelOrCollection.dataInterface.all(_.merge(options, {query: query}), function(err, items) {
         // allCache = items;
-        cb && cb(filter(items, onlyOne));
+        if(!local) {
+          resolveInstances(items).then(function() {
+            cb && cb(filter(items, onlyOne));
+          });
+        }
+        remoteFinished && remoteFinished();
       });
-      return filter(localItems, onlyOne);
+      if(localItems && localItems.length) {
+        local = true;
+        resolveInstances(localItems).then(function() {
+          cb && cb(filter(localItems, onlyOne));
+        });
+      }
+      // return filter(localItems, onlyOne);
     } else {
       cb && cb(filter(modelOrCollection.items, onlyOne));
     }
@@ -27,6 +39,12 @@ var Query = function(modelOrCollection, query, options) {
     }, onlyOne ? 1 : options.limit);
   };
 
+  var resolveInstances = function(instances) {
+    return _.resolvePromises(_.map(instances, function(inst) {
+      return inst.resolve();
+    }));
+  };
+
   var subscribed = false;
 
   var subscribe = function() {
@@ -35,7 +53,7 @@ var Query = function(modelOrCollection, query, options) {
         console.log("subscribe " + modelOrCollection.name);
         modelOrCollection.app.pubSub.subscribe('create update delete', modelOrCollection.name, function(data) {
           console.log("Updating query due to pubsub");
-          getItems(false, function() {
+          getItems(false, null, function() {
             inst.emit('change:' + 'size');
             inst.emit('change');
           });
@@ -65,7 +83,6 @@ var Query = function(modelOrCollection, query, options) {
 
   var inst = {
     klass: 'Query',
-    // length: 0,
     query: query,
 
     // Return actual results for this query,
@@ -75,14 +92,15 @@ var Query = function(modelOrCollection, query, options) {
       if(allCache) {
         cb(allCache);
       } else {
-        var localResolve = false;
-        var localItems = getItems(false, function(items) {
-          if(!localResolve) cb(items);
-        });
-        if(localItems && localItems.length) {
-          localResolve = true;
-          cb(localItems);
-        }
+        // var localResolve = false;
+        // var localItems = getItems(false, function(items) {
+        //   if(!localResolve) cb(items);
+        // });
+        // if(localItems && localItems.length) {
+        //   localResolve = true;
+        //   cb(localItems);
+        // }
+        getItems(false, cb);
       }
       return self;
     },
