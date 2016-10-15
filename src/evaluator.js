@@ -116,7 +116,9 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
     var comparisons = ['==', '!=', '>', '<', '>=', '<='];
     var allOps = _.union(booleans, comparisons);
     // Separate expression into values and operators
-    var parts = expr.split(/\s+/);
+    var parts = _.map(expr.split(/(\|\||&&|==|!=|>|<|>=|<=)/), function(part) {
+      return part.trim();
+    });
     // Evaluate comparison operators first
     var compare = function(a, b, op) {
       return a.then(function(a) {
