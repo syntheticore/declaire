@@ -40,37 +40,41 @@ var Scope = function() {
       var lastObj = self.getFirstRespondent(firstSegment);
       var lastInstance = lastObj;
       var lastInstanceKey = firstSegment;
-      var obj;
+      var objP;
       // If arguments are supplied, they are meant for
       // the final method call
       if(segments.length == 0 && args) {
-        obj = self.readAttribute(lastObj, firstSegment, args);
+        objP = _.promiseFrom(self.readAttribute(lastObj, firstSegment, args));
       } else {
-        obj = self.readAttribute(lastObj, firstSegment);
+        objP = _.promiseFrom(self.readAttribute(lastObj, firstSegment));
       }
       // Then follow the regular object structure
       _.each(segments, function(segment, i) {
-        if(!obj) return;
-        lastObj = obj;
-        if(lastObj.once && lastObj.on) {
-          lastInstance = lastObj;
-          lastInstanceKey = segment;
-        }
-        if(i == segments.length - 1) {
-          obj = self.readAttribute(obj, segment, args);
-        } else {
-          obj = self.readAttribute(obj, segment);
-        }
+        objP = objP.then(function(obj) {
+          if(!obj) return;
+          lastObj = obj;
+          if(lastObj.once && lastObj.on) {
+            lastInstance = lastObj;
+            lastInstanceKey = segment;
+          }
+          if(i == segments.length - 1) {
+            return _.promiseFrom(self.readAttribute(obj, segment, args));
+          } else {
+            return _.promiseFrom(self.readAttribute(obj, segment));
+          }
+        });
       });
-      // var lastSegment = (_.hasValue(obj) && segments.pop()) || firstSegment;
-      var lastSegment = segments.pop() || firstSegment;
-      var ref = {
-        obj: lastObj,
-        key: lastSegment,
-        lastInstance: lastInstance,
-        lastInstanceKey: lastInstanceKey
-      };
-      return {value: obj, ref: ref};
+      return objP.then(function(obj) {
+        // var lastSegment = (_.hasValue(obj) && segments.pop()) || firstSegment;
+        var lastSegment = segments.pop() || firstSegment;
+        var ref = {
+          obj: lastObj,
+          key: lastSegment,
+          lastInstance: lastInstance,
+          lastInstanceKey: lastInstanceKey
+        };
+        return {value: obj, ref: ref};
+      });
     },
 
     // Resolve path segment by using getter or direct property access
@@ -83,7 +87,9 @@ var Scope = function() {
           return obj[seg].apply(obj, args);
         } else {
           // Return property or computed property
-          return obj.get(seg);
+          return obj.resolve().then(function() {
+            return obj.get(seg);
+          });
         }
       } else {
         if(typeof obj[seg] == 'function') {

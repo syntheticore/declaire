@@ -27,7 +27,7 @@
     "codeclimate-test-reporter": "^0.3.3",
     "compression": "^1.6.2",
     "connect-mongo": "^0.8.0",
-    "eakwell": "^0.2.3",
+    "eakwell": "^0.2.4",
     "errorhandler": "^1.4.3",
     "express": "^4.14.0",
     "express-session": "^1.14.1",

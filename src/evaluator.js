@@ -97,10 +97,14 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
           return evalExpr(scope, arg.trim(), node);
         });
         ret = _.resolvePromises(args).then(function(args) {
-          return scope.resolvePath(expr, args).value;
+          return scope.resolvePath(expr, args).then(function(path) {
+            return path.value;
+          });
         });
       } else {
-        ret = scope.resolvePath(expr).value;
+        ret = scope.resolvePath(expr).then(function(path) {
+          return path.value;
+        });
       }
     } else {
       console.error('Cannot evaluate expression "' + expr + '"');
@@ -401,8 +405,10 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
             break;
           
           case 'content':
-            var content = scope.resolvePath('_content').value;
-            frag.appendChild(content);
+            //XXX unfinish?
+            scope.resolvePath('_content').then(function(path) {
+              frag.appendChild(path.value);
+            });
             break;
           
           case 'client':
@@ -422,34 +428,44 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
             var routes = _.map(alternatives, 'expr');
             // Find the first route that matches
             var params;
-            var alternative = _.find(alternatives, function(alt) {
+            var resolvedParams = _.resolvePromises(_.map(alternatives, function(alt) {
               var route = alt.expr;
               if(!route) return;
               // Extract params from current URL
-              params = _.extractUrlParams(scope.resolvePath('_page').value, route);
-              return params;
-            });
-            // Use fallback if no other route matched
-            if(!alternative) {
-              var last = _.last(alternatives);
-              if(!last.expr) {
-                alternative = last;
+              return scope.resolvePath('_page').then(function(path) {
+                var url = path.value;
+                return _.extractUrlParams(url, route);
+              })
+            }));
+            unfinish(frag);
+            resolvedParams.then(function(resolvedParams) {
+              var alternative = _.find(alternatives, function(alt, i) {
+                params = resolvedParams[i];
+                return !!params;
+              });
+              // Use fallback if no other route matched
+              if(!alternative) {
+                var last = _.last(alternatives);
+                if(!last.expr) {
+                  alternative = last;
+                }
               }
-            }
-            // Fresh scope level
-            var newScope = scope.clone();
-            if(params) {
-              newScope.addLayer(params);
-            }
-            // Recurse into matching route
-            _.each(alternative.children, function(child) {
-              elem.appendChild(self.evaluate(child, newScope));
+              // Fresh scope level
+              var newScope = scope.clone();
+              if(params) {
+                newScope.addLayer(params);
+              }
+              // Recurse into matching route
+              _.each(alternative.children, function(child) {
+                elem.appendChild(self.evaluate(child, newScope));
+              });
+              node.paths = ['_page'];
+              elem.node = node;
+              elem.scope = scope;
+              self.register(elem);
+              finish(frag);
             });
             frag.appendChild(elem);
-            node.paths = ['_page'];
-            elem.node = node;
-            elem.scope = scope;
-            self.register(elem);
             break;
         }
       
@@ -521,30 +537,32 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
           var eventName = (elem.tagName == 'INPUT' && elem.type == 'text') ? 'keyup' : 'change';
           elem.addEventListener(eventName, function() {
             _.each(twoWayBindings, function(binding, attr) {
-              var ref = scope.resolvePath(binding.expr).ref;
-              var value;
-              var booleans = ['checked', 'selected', 'disabled', 'readonly', 'multiple', 'defer', 'declare', 'noresize'];
-              if(_.contains(booleans, attr)) {
-                // Boolean input
-                value = !!elem[attr];
-              } else if(attr == 'value') {
-                // String input
-                value = elem.value;
-                // Numeric input
-                if(elem.tagName == 'INPUT' && elem.type == 'number') {
-                  value = parseFloat(value);
+              scope.resolvePath(binding.expr).then(function(path) {
+                var ref = path.ref;
+                var value;
+                var booleans = ['checked', 'selected', 'disabled', 'readonly', 'multiple', 'defer', 'declare', 'noresize'];
+                if(_.contains(booleans, attr)) {
+                  // Boolean input
+                  value = !!elem[attr];
+                } else if(attr == 'value') {
+                  // String input
+                  value = elem.value;
+                  // Numeric input
+                  if(elem.tagName == 'INPUT' && elem.type == 'number') {
+                    value = parseFloat(value);
+                  }
+                } else {
+                  console.error('Trying to activate two-way binding from unknown attribute');
                 }
-              } else {
-                console.error('Trying to activate two-way binding from unknown attribute');
-              }
-              if(ref.obj.klass == 'Instance') {
-                ref.obj.set(ref.key, value);
-              } else {
-                ref.obj[ref.key] = value;
-                ref.lastInstance.emit('change:' + ref.lastInstanceKey);
-              }
-              // Also save if two exclamation marks were used
-              if(binding.save) ref.lastInstance.save();
+                if(ref.obj.klass == 'Instance') {
+                  ref.obj.set(ref.key, value);
+                } else {
+                  ref.obj[ref.key] = value;
+                  ref.lastInstance.emit('change:' + ref.lastInstanceKey);
+                }
+                // Also save if two exclamation marks were used
+                if(binding.save) ref.lastInstance.save();
+              });
             });
           });
         }
@@ -626,7 +644,9 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
             return _.resolvePromises(args).then(function(args) {
               // Call action method
               // The method may prevent event bubbling by returning false
-              return elem.scope.resolvePath(statement.method, _.union([e], args)).value;
+              return elem.scope.resolvePath(statement.method, _.union([e], args)).then(function(path) {
+                return path.value;
+              });
             });
           });
         
@@ -694,13 +714,15 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
         return;
       }
       // Resolve actual instance the path points to
-      var reference = elem.scope.resolvePath(path).ref;
-      if(reference.lastInstance && reference.lastInstance.once) {
-        // Listen for changes of the individual property
-        var handler = (onceOnly ? reference.lastInstance.once('change:' + reference.lastInstanceKey, cb) : 
-                                  reference.lastInstance.on('change:' + reference.lastInstanceKey, cb));
-        elem.handlers.push({handler: handler, obj: reference.lastInstance});
-      }
+      return elem.scope.resolvePath(path).then(function(path) {
+        var reference = path.ref;
+        if(reference.lastInstance && reference.lastInstance.once) {
+          // Listen for changes of the individual property
+          var handler = (onceOnly ? reference.lastInstance.once('change:' + reference.lastInstanceKey, cb) : 
+                                    reference.lastInstance.on('change:' + reference.lastInstanceKey, cb));
+          elem.handlers.push({handler: handler, obj: reference.lastInstance});
+        }
+      });
     },
 
     // Unbind event handlers and discard views for all elements below this one
