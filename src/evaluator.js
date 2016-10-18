@@ -17,7 +17,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
       var i = m.index;
       var l = m[0].length;
       var expr = m[1];
-      paths = paths.concat(detectCompoundPaths([expr]));
+      paths = paths.concat(detectCompoundPaths(expr));
       return evalCompoundExpr(scope, expr, node).then(function(value) {
         return {
           index: m.index,
@@ -41,7 +41,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
 
   // Is the given obj a string describing a data path?
   var isPath = function(obj) {
-    if(obj == 'true' || obj == 'false' || obj == 'null') return false;
+    if(obj == 'true' || obj == 'false' || obj == 'null' || obj == '') return false;
     return obj.match && !!obj.match(/^!?[A-z][A-z0-9]*(\.[A-z][A-z0-9]*)*/);
   };
 
@@ -50,8 +50,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
     return camel;
   };
 
-  // Evaluate a template expression,
-  // which can either be a JS literal or a path
+  // Evaluate a template expression
   var evalExpr = function(scope, expr, node) {
     var m;
     // Negation
@@ -170,15 +169,35 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
   };
 
   // Return all paths used in the given compound expressions
-  var detectCompoundPaths = function(expressions) {
-    return _.flatten(_.map(expressions, function(expr) {
-      var parts = expr.split(/\s+/);
-      return _.map(_.select(parts, function(part) {
-        return isPath(part);
-      }), function(path) {
-        return path[0] == '!' ? path.slice(1) : path;
+  var detectCompoundPaths = function(expr) {
+    // Extract undividual expressions
+    var parts = _.map(expr.split(/\|\||&&|==|!=|>|<|>=|<=/), function(part) {
+      return part.trim();
+    });
+    // Detect paths
+    var paths = _.select(parts, function(part) {
+      return isPath(part);
+    });
+    // Remove duplicates
+    return _.unique(_.flatten(_.map(paths, function(path) {
+      // Remove negation
+      if(path[0] == '!') path = path.slice(1);
+      // Path itself
+      var ret = path.split('(');
+      path = ret[0];
+      // Method arguments can be paths as well
+      var args = ret[1];
+      if(args) {
+        args = args.slice(0, -1).split(',');
+        args = _.map(args, function(arg) {
+          return arg.trim();
+        });
+      }
+      var argPaths = _.select(args || [], function(arg) {
+        return isPath(arg);
       });
-    }));
+      return [path].concat(argPaths);
+    })));
   };
 
   var walkTheDOM = function(node, cb) {
@@ -262,7 +281,9 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
             var elem = interface.createDOMElement('span', null, ['placeholder-if']);
             var alternatives = _.union([node], node.alternatives);
             var expressions = _.map(alternatives, 'expr');
-            node.paths = detectCompoundPaths(expressions);
+            node.paths = _.unique(_.flatten(_.map(expressions, function(expr) {
+              return detectCompoundPaths(expr);
+            })));
             elem.node = node;
             elem.scope = scope;
             // Find first matching alternative
@@ -502,7 +523,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
                 type: 'dynamic',
                 key: key,
                 expr: expr,
-                paths: detectCompoundPaths([expr])
+                paths: detectCompoundPaths(expr)
               });
             }
             // Resolve attribute value
@@ -515,7 +536,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
                   type: 'CSS',
                   klassName: klassName,
                   expr: expr,
-                  paths: detectCompoundPaths([expr])
+                  paths: detectCompoundPaths(expr)
                 });
               }
               return self.updateCssClass(elem, klassName, expr);

@@ -34,6 +34,9 @@ var Scope = function() {
     // so that updated values can be requested at a later time
     resolvePath: function(path, args) {
       var self = this;
+      // Cut away the arguments part
+      // These are supplied by the evaluator already
+      path = path.split('(')[0];
       var segments = path.split('.');
       // Do the first lookup through the actual scope
       var firstSegment = segments.shift();

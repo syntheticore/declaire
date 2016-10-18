@@ -369,15 +369,13 @@ var Model = function(dbCollection, reference, constructor) {
     // Load the object with the given id
     // Local storage will be used immediately if available
     // Server data gets fetched afterwards
-    load: function(id, cb) {
+    load: function(id) {
       var self = this;
       return _.promise(function(ok, fail) {
         self.dataInterface.one(id, function(err, inst) {
           if(inst) {
-            cb && cb(inst);
             ok(inst);
           } else {
-            cb && cb();
             fail('Could not load ' + self.name + '#' + id);
           }
         });
