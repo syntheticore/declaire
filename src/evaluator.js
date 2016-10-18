@@ -417,8 +417,12 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
               args._content = contentFrag;
               // Recurse into different template with a fresh scope
               var importedNode = parseTrees[node.templateName];
-              var newScope = Scope().addLayer(mainModel).addLayer(args);
-              elem.appendChild(self.evaluate(importedNode, newScope));
+              if(importedNode) {
+                var newScope = Scope().addLayer(mainModel).addLayer(args);
+                elem.appendChild(self.evaluate(importedNode, newScope));
+              } else {
+                console.error('Template not found: ' + node.templateName);
+              }
               self.register(elem);
               finish(frag);
             });
