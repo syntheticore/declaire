@@ -338,7 +338,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
                 self.register(elem);
               };
               // Resolve Query or Collection
-              if(items.klass == 'Query' || items.klass == 'Collection') {
+              if(items && (items.klass == 'Query' || items.klass == 'Collection')) {
                 elem.iterator = items;
                 items.resolve(function(realItems) {
                   if(!realItems) realItems = _.clone(items.items);
