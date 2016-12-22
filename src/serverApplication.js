@@ -140,6 +140,9 @@ var ServerApplication = function(options) {
     b.ignore('request');
     b.ignore('canvas');
     b.ignore('socket.io');
+    _.each(options.npmIgnore, function(ignore) {
+      b.ignore(ignore);
+    });
     // Exchange require calls
     b.transform(require('aliasify'), {
       aliases: {
