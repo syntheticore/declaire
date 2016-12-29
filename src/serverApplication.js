@@ -91,8 +91,8 @@ var ServerApplication = function(options) {
   }));
   
   // Parse form data
-  expressApp.use(bodyParser.json());
-  expressApp.use(bodyParser.urlencoded({ extended: true }));
+  expressApp.use(bodyParser.json({limit: '100mb'}));
+  expressApp.use(bodyParser.urlencoded({limit: '100mb', extended: true}));
   
   // Compile Stylus stylesheets
   expressApp.use(stylus.middleware({

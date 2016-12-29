@@ -33,8 +33,9 @@ var Router = function() {
       // Register event once and for all on the body
       _.delegate(document.body, 'click', 'a', function(e) {
         var href = e.target.getAttribute('href');
+        var target = e.target.getAttribute('target');
         // Internal links
-        if(href.slice(0, 1) == '/' && href.slice(1, 2) != '/') {
+        if(href.slice(0, 1) == '/' && href.slice(1, 2) != '/' && !target == '_blank') {
           e.preventDefault();
           // Navigate locally unless target url is the same
           if(window.location.pathname + window.location.hash != href) self.navigate(href);
