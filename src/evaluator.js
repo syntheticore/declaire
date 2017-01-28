@@ -741,7 +741,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
       // Resolve actual instance the path points to
       return elem.scope.resolvePath(path).then(function(path) {
         var reference = path.ref;
-        if(reference.lastInstance && reference.lastInstance.once) {
+        if(reference.lastInstance && reference.lastInstance.once && elem.handlers) {
           // Listen for changes of the individual property
           var handler = (onceOnly ? reference.lastInstance.once('change:' + reference.lastInstanceKey, cb) : 
                                     reference.lastInstance.on('change:' + reference.lastInstanceKey, cb));

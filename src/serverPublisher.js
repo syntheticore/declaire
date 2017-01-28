@@ -38,7 +38,7 @@ var Publisher = function(express, db) {
       // Wait for these to rush through before feeding data to clients
       pubsub
       .find({}, {tailable: true, awaitdata: true, numberOfRetries: -1})
-      .sort({$natural: 1})
+      // .sort({$natural: 1})
       .each(function(err, doc) {
         if(doc) {
           delete doc._id;

@@ -1,5 +1,3 @@
-var RSVP = require('rsvp');
-
 var Query = require('./query.js');
 var Collection = require('./collection.js');
 var _ = require('./utils.js');
@@ -241,7 +239,7 @@ var Instance = function() {
           return unserialize(item);
         }
       });
-      return RSVP.hash(resolved).then(function(instances) {
+      return _.resolvePromises(resolved).then(function(instances) {
         _.each(instances, function(inst, key) {
           self.data.remote[key] = inst;
         });
@@ -306,7 +304,7 @@ var unserialize = function(item) {
     var model = models[item._ref.collection];
     return model.load(item._ref.id);
   } else {
-    return RSVP.resolve(item);
+    return Promise.resolve(item);
   }
 };
 

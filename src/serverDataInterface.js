@@ -41,8 +41,8 @@ var ServerDataInterface = function(app, model) {
 
     create: function(inst, cb) {
       var fields = _.merge(inst.serialize(), {createdAt: new Date(), updatedAt: new Date()});
-      app.db.collection(name).insert(fields, function(err, items) {
-        var item = items[0];
+      app.db.collection(name).insert(fields, function(err, res) {
+        var item = res.ops[0];
         cb(err, init(item));
         if(!err) app.pubSub.publish({type: 'create', collection: name, id: item._id, data: item});
       });
