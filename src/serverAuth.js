@@ -37,8 +37,8 @@ module.exports = {
       var users = db.collection('users');
       users.findOne({_username: name}, function(err, user) {
         if(!user) {
-          users.insert({_username: name, _hash: sha256(pw), createdAt: new Date(), updatedAt: new Date()}, function(err, users) {
-            var id = users[0]._id;
+          users.insert({_username: name, _hash: sha256(pw), createdAt: new Date(), updatedAt: new Date()}, function(err, insert) {
+            var id = insert.ops[0]._id;
             req.session.user = id;
             res.status(201).send(id); // Created
           });
