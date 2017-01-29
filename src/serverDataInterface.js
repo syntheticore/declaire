@@ -41,10 +41,14 @@ var ServerDataInterface = function(app, model) {
 
     create: function(inst, cb) {
       var fields = _.merge(inst.serialize(), {createdAt: new Date(), updatedAt: new Date()});
-      app.db.collection(name).insert(fields, function(err, res) {
-        var item = res.ops[0];
-        cb(err, init(item));
-        if(!err) app.pubSub.publish({type: 'create', collection: name, id: item._id, data: item});
+      //XXX Should not be neccessary
+      delete fields._id;
+      app.db.collection(name).insertOne(fields, function(err, res) {
+        if(err) return cb(err);
+        var id = res.insertedId || res.getInsertedIds()[0];
+        fields._id = id;
+        cb(null, fields);
+        app.pubSub.publish({type: 'create', collection: name, id: fields._id, data: fields});
       });
       return this;
     },
@@ -54,7 +58,7 @@ var ServerDataInterface = function(app, model) {
       delete values._id;
       delete values.createdAt;
       values.updatedAt = new Date();
-      app.db.collection(name).update({_id: new mongo.ObjectID(id)}, {$set: values}, function(err) {
+      app.db.collection(name).updateOne({_id: new mongo.ObjectID(id)}, {$set: values}, function(err) {
         if(err) {
           cb(err);
         } else {
@@ -65,7 +69,7 @@ var ServerDataInterface = function(app, model) {
     },
 
     delete: function(id, cb) {
-      app.db.collection(name).remove({_id: new mongo.ObjectID(id)}, function(err) {
+      app.db.collection(name).deleteOne({_id: new mongo.ObjectID(id)}, function(err) {
         cb(err);
         if(!err) app.pubSub.publish({type: 'delete', collection: name, id: id});
       });

@@ -38,7 +38,7 @@ var REST = function(name, express, dataInterface) {
           if(err) {
             res.status(404).send(err);
           } else {
-            res.json(item.serialize());
+            res.json(item);
           }
         });
       });
