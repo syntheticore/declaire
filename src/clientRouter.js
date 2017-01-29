@@ -35,7 +35,7 @@ var Router = function() {
         var href = e.target.getAttribute('href');
         var target = e.target.getAttribute('target');
         // Internal links
-        if(href.slice(0, 1) == '/' && href.slice(1, 2) != '/' && !target == '_blank') {
+        if(href.slice(0, 1) == '/' && href.slice(1, 2) != '/' && target != '_blank') {
           e.preventDefault();
           // Navigate locally unless target url is the same
           if(window.location.pathname + window.location.hash != href) self.navigate(href);
