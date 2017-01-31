@@ -36,7 +36,7 @@
     "lusca": "^1.4.1",
     "minifyify": "^7.3.3",
     "mocha": "^3.0.2",
-    "mongodb": "^2.2.21",
+    "mongodb": "^2.2.22",
     "morgan": "^1.7.0",
     "nib": "^1.1.2",
     "request-context": "^1.0.0",

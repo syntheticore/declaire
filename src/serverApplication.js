@@ -79,7 +79,7 @@ var ServerApplication = function(options) {
     csp: {
       policy: {
         // 'default-src': "'self'",
-        'img-src': '*'
+        // 'img-src': '*'
       }
     },
     // Prevent clickjacking
