@@ -200,17 +200,30 @@ var ServerApplication = function(options) {
     });
   };
 
+  var walkSync = function(dir, cb) {
+    if(dir[dir.length - 1] != '/') dir += '/';
+    var files = fs.readdirSync(dir);
+    files.forEach(function(file) {
+      if(fs.statSync(dir + file).isDirectory()) {
+        walkSync(dir + file + '/', cb);
+      } else {
+        cb(dir + file);
+      }
+    });
+  };
+
   // Load and parse all templates in the views folder
   var parseTrees;
   var parseTemplates = function() {
     parseTrees = {};
-    _.each(fs.readdirSync(options.viewsFolder), function(file) {
+    walkSync(options.viewsFolder, function(file) {
       if(path.extname(file) == '.dcl'){
-        console.log("Parsing " + file);
-        var fn = path.normalize(options.viewsFolder + file);
+        var fn = path.normalize(file);
+        var name = file.replace(options.viewsFolder, '');
+        console.log("Parsing " + name);
         try {
           var node = Parser.parseTemplate(fs.readFileSync(fn, 'utf8'));
-          parseTrees[file] = node;
+          parseTrees[name] = node;
         } catch(e) {
           console.error( "Parse error: " + e.message + "\n  at " + fn + ":" + e.lineNum);
           throw e;

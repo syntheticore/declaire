@@ -287,7 +287,7 @@ var Parser = {
         arguments: args
       };
     // import
-    } else if(m = line.match(/{{import\s+(\w+)(\(.*\))?}}/)) {
+    } else if(m = line.match(/{{import\s+([\w\/]+)(\(.*\))?}}/)) {
       var parens = m[2];
       var args = {};
       if(parens) {
