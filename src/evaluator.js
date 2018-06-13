@@ -272,11 +272,11 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
       // Evaluate the whole tree
       if(node.type == 'TOP') {
         recurse(frag, scope);
-      
+
       // Evaluate statement
       } else if(node.type == 'Statement') {
         switch(node.keyword) {
-          
+
           case 'if':
             var elem = interface.createDOMElement('span', null, ['placeholder-if']);
             var alternatives = _.union([node], node.alternatives);
@@ -319,7 +319,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
             });
             frag.appendChild(elem);
             break;
-          
+
           case 'for':
             var elem = interface.createDOMElement('span', null, ['placeholder-for']);
             node.paths = [node.itemsPath];
@@ -356,7 +356,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
                   finish(frag);
                 });
               // Regular array
-              } else if(Array.isArray(items)) {
+              } else if(Array.isArray(items) || typeof(items) == 'object') {
                 loop(items);
                 finish(frag);
               } else {
@@ -366,7 +366,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
             });
             frag.appendChild(elem);
             break;
-          
+
           case 'view':
             var elem = interface.createDOMElement('span', null, ['placeholder-view']);
             var viewModel = viewModels[node.viewModel];
@@ -399,7 +399,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
             }
             frag.appendChild(elem);
             break;
-          
+
           case 'import':
             var elem = interface.createDOMElement('span', null, ['placeholder-import']);
             node.paths = _.select(_.values(node.arguments), function(v) { return isPath(v) });
@@ -428,14 +428,15 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
             });
             frag.appendChild(elem);
             break;
-          
+
           case 'content':
-            //XXX unfinish?
+            var elem = interface.createDOMElement('span', null, ['placeholder-content']);
             scope.resolvePath('_content').then(function(path) {
-              frag.appendChild(path.value);
+              elem.appendChild(path.value);
             });
+            frag.appendChild(elem);
             break;
-          
+
           case 'client':
             if(_.onClient()) {
               recurse(frag, scope);
@@ -445,7 +446,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
               });
             }
             break;
-          
+
           case 'route':
             var vars = {};
             var elem = interface.createDOMElement('span', null, ['placeholder-route']);
@@ -493,7 +494,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
             frag.appendChild(elem);
             break;
         }
-      
+
       // Evaluate HTML tag
       } else if(node.type == 'HTMLTag') {
         // Don't regenerate script tags as these
@@ -583,7 +584,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
                   ref.obj.set(ref.key, value);
                 } else {
                   ref.obj[ref.key] = value;
-                  ref.lastInstance.emit('change:' + ref.lastInstanceKey);
+                  ref.lastInstance.emit && ref.lastInstance.emit('change:' + ref.lastInstanceKey);
                 }
                 // Also save if two exclamation marks were used
                 if(binding.save) ref.lastInstance.save();
@@ -613,7 +614,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
           self.register(elem);
         }
         frag.appendChild(elem);
-      
+
       // Evaluate free text
       } else if(node.type == 'Text') {
         var text;
@@ -674,7 +675,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
               });
             });
           });
-        
+
         // Add a variable pointing to the current element to the scope
         } else if(statement.statement == 'as') {
           elem.scope.addLayer().getTopLayer()[statement.varName] = elem;
@@ -743,7 +744,7 @@ var Evaluator = function(topNode, viewModels, parseTrees, interface, mainModel) 
         var reference = path.ref;
         if(reference.lastInstance && reference.lastInstance.once && elem.handlers) {
           // Listen for changes of the individual property
-          var handler = (onceOnly ? reference.lastInstance.once('change:' + reference.lastInstanceKey, cb) : 
+          var handler = (onceOnly ? reference.lastInstance.once('change:' + reference.lastInstanceKey, cb) :
                                     reference.lastInstance.on('change:' + reference.lastInstanceKey, cb));
           elem.handlers.push({handler: handler, obj: reference.lastInstance});
         }
