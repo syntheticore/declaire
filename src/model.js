@@ -186,9 +186,8 @@ var Instance = function() {
         if(err) {
           cb && cb(null);
         } else {
-          //XXX Rebuild collections
           //XXX Trigger change events
-          self.data.remote = data;
+          self.data.remote = Collection.makeCollections(data, self);
           // localStore.save(self.localId, self.data);
           cb && cb(self);
           self.emit('fetch');
