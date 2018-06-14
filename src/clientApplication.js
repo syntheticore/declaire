@@ -110,7 +110,15 @@ var ClientApplication = function() {
     init: function(cb) {
       // No init phase on client -> execute callback directly
       cb(function(cbb) {
+        // Start routing
         var router = Router();
+        router.on('*', function() {
+          console.log("router " + document.location.pathname);
+          mainModel.set('_page', document.location.pathname);
+        });
+        mainModel.on('change:_page', function() {
+          router.navigate(mainModel.get('_page'), true);
+        });
         // Replace page with client generated version
         install(function() {
           // Make links use history api instead of default action
@@ -118,14 +126,6 @@ var ClientApplication = function() {
           console.log("Anchors have been hijacked");
           // Reproduce events captured during bootstrap phase
           replayEvents();
-          // Start routing
-          router.on('*', function() {
-            console.log("router " + document.location.pathname);
-            mainModel.set('_page', document.location.pathname);
-          });
-          mainModel.on('change:_page', function() {
-            router.navigate(mainModel.get('_page'), true);
-          });
           cbb && cbb();
         });
       });
