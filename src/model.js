@@ -96,6 +96,11 @@ var Instance = function() {
       return this;
     },
 
+    // Report changes in deeper structure at this <key>
+    touch: function(key) {
+      this.set(key, this.get(key));
+    },
+
     // The current state of the object, including local modifications
     properties: function() {
       return _.merge(this.data.remote, this.data.local);
@@ -191,6 +196,7 @@ var Instance = function() {
           // localStore.save(self.localId, self.data);
           cb && cb(self);
           self.emit('fetch');
+          self.emit('change');
         }
       }, true);
       return self;
@@ -198,7 +204,6 @@ var Instance = function() {
 
     // Delete object from all local models and collections it's referenced from
     // Also delete from the database, if model was persisted
-    //XXX All references from remote models and collections will auto-dissolve on next read
     delete: function(cb) {
       var self = this;
       self.disconnect();
@@ -226,16 +231,18 @@ var Instance = function() {
     // Load all referenced model instances
     resolve: function() {
       var self = this;
-      var resolved = _.map(self.data.remote, function(item) {
+      var resolved = _.map(self.data.remote, function(item, key) {
         if(item && item.klass == 'Collection') {
+          // Auto-dissolve references to items that don't exist anymore
           return _.resolvePromises(_.map(item.items, function(it) {
-            return unserialize(it);
+            return unserialize(it).catch(function() { return undefined });
           })).then(function(items) {
-            item.items = items;
+            item.items.length = 0;
+            item.add(_.compact(items));
             return item;
           });
         } else {
-          return unserialize(item);
+          return unserialize(item).catch(function() { return null });
         }
       });
       return _.resolvePromises(resolved).then(function(instances) {
