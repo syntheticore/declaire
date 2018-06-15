@@ -378,6 +378,7 @@ var Model = function(dbCollection, reference, constructor) {
       return _.promise(function(ok, fail) {
         self.dataInterface.one(id, function(err, inst) {
           if(inst) {
+            inst.data.remote = Collection.makeCollections(inst.data.remote, inst);
             ok(inst);
           } else {
             fail('Could not load ' + self.name + '#' + id);
