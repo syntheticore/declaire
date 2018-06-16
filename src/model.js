@@ -82,17 +82,19 @@ var Instance = function() {
           this.data.local[key] = values[key];
         }
         //XXX Catch attempt to set a computed property or collection
-        // Emit specific change event
-        this.emit('change:' + key);
-        // Emit change events for computed properties as well
-        for(var k in this.computedProperties) {
-          if(_.contains(this.computedProperties[k], key)) {
-            this.emit('change:' + k);
+        if(!options.silent) {
+          // Emit specific change event
+          this.emit('change:' + key);
+          // Emit change events for computed properties as well
+          for(var k in this.computedProperties) {
+            if(_.contains(this.computedProperties[k], key)) {
+              this.emit('change:' + k);
+            }
           }
         }
       }
       // Emit generic change event
-      this.emit('change');
+      if(!options.silent) this.emit('change');
       return this;
     },
 
